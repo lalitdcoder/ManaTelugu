@@ -1112,83 +1112,82 @@ class LessonsRepository: ObservableObject {
               currentIndex + 1 < levels.count else { return nil }
         return levels[currentIndex + 1]
     }
-}
 
-// MARK: - Data Structure for JSON
-private struct LessonsData: Codable {
-    let levels: [LearningLevel]
-}
+    // MARK: - Data Structure for JSON
+    private struct LessonsData: Codable {
+        let levels: [LearningLevel]
+    }
 
-private func assignTopicTitles(to levels: [LearningLevel]) -> [LearningLevel] {
-    return levels.map { level in
-        let topics = topicTitles(for: level.id)
-        let sorted = level.lessons.sorted { $0.order < $1.order }
-        let renamed = sorted.enumerated().map { (idx, lesson) in
-            let newTitle = idx < topics.count ? topics[idx] : lesson.title
-            return Lesson(id: lesson.id, title: newTitle, description: lesson.description, levelId: lesson.levelId, order: lesson.order, difficulty: lesson.difficulty, xpReward: lesson.xpReward, estimatedMinutes: lesson.estimatedMinutes, activities: lesson.activities)
+    private func assignTopicTitles(to levels: [LearningLevel]) -> [LearningLevel] {
+        return levels.map { level in
+            let topics = topicTitles(for: level.id)
+            let sorted = level.lessons.sorted { $0.order < $1.order }
+            let renamed = sorted.enumerated().map { (idx, lesson) in
+                let newTitle = idx < topics.count ? topics[idx] : lesson.title
+                return Lesson(id: lesson.id, title: newTitle, description: lesson.description, levelId: lesson.levelId, order: lesson.order, difficulty: lesson.difficulty, xpReward: lesson.xpReward, estimatedMinutes: lesson.estimatedMinutes, activities: lesson.activities)
+            }
+            return LearningLevel(id: level.id, title: level.title, description: level.description, difficulty: level.difficulty, lessons: renamed, requiredXP: level.requiredXP, color: level.color)
         }
-        return LearningLevel(id: level.id, title: level.title, description: level.description, difficulty: level.difficulty, lessons: renamed, requiredXP: level.requiredXP, color: level.color)
     }
-}
 
-private func topicTitles(for levelId: String) -> [String] {
-    switch levelId {
-    case "level_1_beginner":
-        return [
-            "Vowels – Part 1 (అ, ఆ, ఇ, ఈ)",
-            "Vowels – Part 2 (ఉ, ఊ, ఎ, ఏ)",
-            "Velar Consonants (క ఖ గ ఘ ఙ)",
-            "Palatal Consonants (చ ఛ జ ఝ ఞ)",
-            "Forming Syllables (క + vowels)",
-            "Numbers 1–10",
-            "Greetings and Politeness",
-            "Family and People Words",
-            "Daily Activities – Common Verbs",
-            "Simple Present-Tense Sentences"
-        ]
-    case "level_2_basic":
-        return [
-            "Complex Syllables – All Vowels",
-            "Double Consonants (క్క, ప్ప, etc.)",
-            "Body Parts Vocabulary",
-            "Colors and Objects",
-            "Numbers 11–20",
-            "Animals and Sounds",
-            "Basic Phrases and Q&A",
-            "Action Verbs – Conjugation",
-            "Possessives (నా, నీ) in Phrases",
-            "Conversation Starters"
-        ]
-    case "level_3_intermediate":
-        return [
-            "Present Tense – Continuous",
-            "Past Tense – Simple",
-            "Future Tense – Intentions",
-            "Forming Questions (ఎక్కడ? ఎప్పుడు?)",
-            "Directions and Movement",
-            "Talking About Time",
-            "Short Story – Comprehension",
-            "Adjectives in Sentences",
-            "Comparisons (కంటే, చాలా)",
-            "Complex Sentences (అయితే, కానీ)"
-        ]
-    case "level_4_advanced":
-        return [
-            "Conditionals (అయితే, అయినా)",
-            "Passive Voice Transformations",
-            "Idioms and Phrases in Context",
-            "Formal Speech (మీరు, తమరు)",
-            "Simple Telugu Poetry",
-            "Reading News – Summaries",
-            "Formal Letter Writing",
-            "Culture and Traditions",
-            "Complex Grammar – Exceptions",
-            "Comprehensive Mixed Practice"
-        ]
-    default:
-        return (1...10).map { "Lesson \($0)" }
+    private func topicTitles(for levelId: String) -> [String] {
+        switch levelId {
+        case "level_1_beginner":
+            return [
+                "Vowels – Part 1 (అ, ఆ, ఇ, ఈ)",
+                "Vowels – Part 2 (ఉ, ఊ, ఎ, ఏ)",
+                "Velar Consonants (క ఖ గ ఘ ఙ)",
+                "Palatal Consonants (చ ఛ జ ఝ ఞ)",
+                "Forming Syllables (క + vowels)",
+                "Numbers 1–10",
+                "Greetings and Politeness",
+                "Family and People Words",
+                "Daily Activities – Common Verbs",
+                "Simple Present-Tense Sentences"
+            ]
+        case "level_2_basic":
+            return [
+                "Complex Syllables – All Vowels",
+                "Double Consonants (క్క, ప్ప, etc.)",
+                "Body Parts Vocabulary",
+                "Colors and Objects",
+                "Numbers 11–20",
+                "Animals and Sounds",
+                "Basic Phrases and Q&A",
+                "Action Verbs – Conjugation",
+                "Possessives (నా, నీ) in Phrases",
+                "Conversation Starters"
+            ]
+        case "level_3_intermediate":
+            return [
+                "Present Tense – Continuous",
+                "Past Tense – Simple",
+                "Future Tense – Intentions",
+                "Forming Questions (ఎక్కడ? ఎప్పుడు?)",
+                "Directions and Movement",
+                "Talking About Time",
+                "Short Story – Comprehension",
+                "Adjectives in Sentences",
+                "Comparisons (కంటే, చాలా)",
+                "Complex Sentences (అయితే, కానీ)"
+            ]
+        case "level_4_advanced":
+            return [
+                "Conditionals (అయితే, అయినా)",
+                "Passive Voice Transformations",
+                "Idioms and Phrases in Context",
+                "Formal Speech (మీరు, తమరు)",
+                "Simple Telugu Poetry",
+                "Reading News – Summaries",
+                "Formal Letter Writing",
+                "Culture and Traditions",
+                "Complex Grammar – Exceptions",
+                "Comprehensive Mixed Practice"
+            ]
+        default:
+            return (1...10).map { "Lesson \($0)" }
+        }
     }
-}
 
     private func customizeContentForTopics(_ levels: [LearningLevel]) -> [LearningLevel] {
         return levels.map { level in
@@ -1227,12 +1226,12 @@ private func topicTitles(for levelId: String) -> [String] {
         if title.contains("Conversation Starters") { return "Topic: Openings and small talk — introductions, likes, and polite turns." }
         // INTERMEDIATE
         if title.contains("Continuous") { return "Topic: Present continuous — చేస్తున్నాను/చేస్తున్నాను patterns in real contexts." }
-        if title.contains("Past Tense") { return "Topic: Simple past — చేశాను/తిన్నాను forms. Tell recent actions." }
+        if title.contains("Past Tense Formation") { return "Topic: Simple past — చేశాను/తిన్నాను forms. Tell recent actions." }
         if title.contains("Future Tense") { return "Topic: Future intentions — చేస్తాను/వెళ్తాను. Plans and promises." }
         if title.contains("Forming Questions") { return "Topic: WH-questions — ఎక్కడ, ఎప్పుడు, ఎవరు, ఎందుకు. Structure and tone." }
-        if title.contains("Directions") { return "Topic: Directions — ఎడమ, కుడి, ముందు, వెనుక. Asking and giving routes." }
-        if title.contains("Talking About Time") { return "Topic: Time — ఇప్పుడు, ఈరోజు, రేపు, నిన్న, గంటలు-నిమిషాలు." }
-        if title.contains("Short Story") { return "Topic: Short story reading — gist, keywords, and sequencing." }
+        if title.contains("Directions and Navigation") { return "Topic: Directions — ఎడమ, కుడి, ముందు, వెనుక. Asking and giving routes." }
+        if title.contains("Time Expressions") { return "Topic: Time — ఇప్పుడు, ఈరోజు, రేపు, నిన్న, గంటలు-నిమిషాలు." }
+        if title.contains("Story Reading") { return "Topic: Short story reading — gist, keywords, and sequencing." }
         if title.contains("Adjectives") { return "Topic: Adjectives — పెద్ద, చిన్న, మంచి, వేగంగా. Modify nouns correctly." }
         if title.contains("Comparisons") { return "Topic: Comparatives — కంటే, చాలా, అత్యంత. Compare people and things." }
         if title.contains("Complex Sentences") { return "Topic: Connectors అయితే, కానీ — Contrast and conditions in multi-clause sentences." }
@@ -1241,16 +1240,17 @@ private func topicTitles(for levelId: String) -> [String] {
         if title.contains("Passive Voice") { return "Topic: Passive voice — transform and interpret agentless sentences." }
         if title.contains("Idioms") { return "Topic: Idioms — meaning in context; avoid literal translations." }
         if title.contains("Formal Speech") { return "Topic: Formal address — మీరు, తమరు; polite verb forms and honorifics." }
-        if title.contains("Poetry") { return "Topic: Simple poetry — meter hints, imagery, and pronunciation." }
-        if title.contains("News") { return "Topic: News reading — headline grammar, summarizing key points." }
-        if title.contains("Letter") { return "Topic: Formal letter — salutations, body, closing with respect markers." }
-        if title.contains("Culture") { return "Topic: Culture — festivals, customs, and respectful forms in speech." }
-        if title.contains("Grammar – Exceptions") { return "Topic: Complex grammar — exceptions, irregulars, and edge cases." }
-        if title.contains("Comprehensive Mixed Practice") { return "Topic: Mixed practice — combine grammar, vocab, and reading." }
+        if title.contains("Poetry") || title.contains("Literary Telugu") { return "Topic: Simple poetry — meter hints, imagery, and pronunciation." }
+        if title.contains("News Articles") { return "Topic: News reading — headline grammar, summarizing key points." }
+        if title.contains("Letter Writing") { return "Topic: Formal letter — salutations, body, closing with respect markers." }
+        if title.contains("Cultural") { return "Topic: Culture — festivals, customs, and respectful forms in speech." }
+        if title.contains("Grammar Rules") { return "Topic: Complex grammar — exceptions, irregulars, and edge cases." }
+        if title.contains("Assessment") || title.contains("Mastery Test") { return "Topic: Mixed practice — combine grammar, vocab, and reading." }
         return fallback
     }
 
     private func topicActivitiesFor(levelId: String, title: String, lessonId: String, difficulty: Int) -> [LessonActivity] {
+        print("🔍 topicActivitiesFor called with title: '\(title)' for levelId: '\(levelId)'")
         // Build 10 questions with varied types mapped to the topic. Use deterministic IDs.
         func mcq(_ id: String, _ q: String, _ ans: String, _ opts: [String]) -> ActivityQuestion {
             return ActivityQuestion(id: id, type: .multipleChoice, question: q, correctAnswer: ans, options: opts, audioFile: nil, strokeOrder: nil, explanation: nil)
@@ -1725,34 +1725,8 @@ private func topicTitles(for levelId: String) -> [String] {
             ]
         }
         
-        // INTERMEDIATE LEVEL TOPICS (Level 3)
-        if title.contains("Present Tense – Continuous") {
-            let reading = [
-                mcq("q_\(lessonId)_r1", "'I am eating' in Telugu", "నేను తింటున్నాను", ["నేను తింటున్నాను", "నేను తిన్నాను", "నేను తింటాను", "నేను తింటాను"]),
-                mcq("q_\(lessonId)_r2", "'You are reading' in Telugu", "నువ్వు చదువుతున్నావు", ["నువ్వు చదువుతున్నావు", "నువ్వు చదివావు", "నువ్వు చదువుతావు", "నువ్వు చదవాలి"]),
-                mcq("q_\(lessonId)_r3", "'She is walking' in Telugu", "ఆమె నడుస్తుంది", ["ఆమె నడుస్తుంది", "ఆమె నడిచింది", "ఆమె నడుస్తుంది", "ఆమె నడవాలి"])
-            ]
-            let writing = [
-                mcq("q_\(lessonId)_w1", "Write 'నేను రాస్తున్నాను' (I am writing)", "నేను రాస్తున్నాను", ["నేను రాస్తున్నాను", "Option2", "Option3", "Option4"]),
-                mcq("q_\(lessonId)_w2", "Write 'అతను వస్తున్నాడు' (he is coming)", "అతను వస్తున్నాడు", ["అతను వస్తున్నాడు", "Option2", "Option3", "Option4"]),
-                mcq("q_\(lessonId)_w3", "Write 'మేము మాట్లాడుతున్నాము' (we are talking)", "మేము మాట్లాడుతున్నాము", ["మేము మాట్లాడుతున్నాము", "Option2", "Option3", "Option4"])
-            ]
-            let listening = [
-                listen("q_\(lessonId)_l1", "Identify 'నేను తింటున్నాను'", "నేను తింటున్నాను", ["నేను తింటున్నాను", "నేను తిన్నాను", "నేను తింటాను", "నేను తింటాను"]),
-                listen("q_\(lessonId)_l2", "Identify 'ఆమె నడుస్తుంది'", "ఆమె నడుస్తుంది", ["ఆమె నడుస్తుంది", "ఆమె నడిచింది", "ఆమె నడుస్తుంది", "ఆమె నడవాలి"])
-            ]
-            let speaking = [
-                speak("q_\(lessonId)_s1", "Say 'నేను తింటున్నాను'", "నేను తింటున్నాను"),
-                speak("q_\(lessonId)_s2", "Say 'అతను వస్తున్నాడు'", "అతను వస్తున్నాడు")
-            ]
-            return [
-                LessonActivity(id: "activity_\(lessonId)_reading", type: .reading, title: "Reading Practice", instructions: "Read continuous tense", xpValue: baseXP, questions: reading, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_writing", type: .writing, title: "Writing Practice", instructions: "Write continuous forms", xpValue: baseXP, questions: writing, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_listening", type: .listening, title: "Listening Practice", instructions: "Identify continuous tense", xpValue: baseXP, questions: listening, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_speaking", type: .speaking, title: "Speaking Practice", instructions: "Say continuous forms", xpValue: baseXP, questions: speaking, canSkip: true)
-            ]
-        }
-        if title.contains("Past Tense") {
+        // Past Tense Formation
+        if title.contains("Past Tense Formation") {
             let reading = [
                 mcq("q_\(lessonId)_r1", "'I ate' in Telugu", "నేను తిన్నాను", ["నేను తిన్నాను", "నేను తింటాను", "నేను తింటున్నాను", "నేను తింటాను"]),
                 mcq("q_\(lessonId)_r2", "'You went' in Telugu", "నువ్వు వెళ్లావు", ["నువ్వు వెళ్లావు", "నువ్వు వెళ్తావు", "నువ్వు వెళ్తున్నావు", "నువ్వు వెళ్లాలి"]),
@@ -1778,7 +1752,33 @@ private func topicTitles(for levelId: String) -> [String] {
                 LessonActivity(id: "activity_\(lessonId)_speaking", type: .speaking, title: "Speaking Practice", instructions: "Say past forms", xpValue: baseXP, questions: speaking, canSkip: true)
             ]
         }
-        if title.contains("Future Tense") {
+        if title.contains("Future Tense Usage") {
+            let reading = [
+                mcq("q_\(lessonId)_r1", "'I will eat' in Telugu", "నేను తింటాను", ["నేను తింటాను", "నేను తిన్నాను", "నేను తింటున్నాను", "నేను తిన్నాను"]),
+                mcq("q_\(lessonId)_r2", "'You will go' in Telugu", "నువ్వు వెళ్తావు", ["నువ్వు వెళ్తావు", "నువ్వు వెళ్లావు", "నువ్వు వెళ్తున్నావు", "నువ్వు వెళ్లాలి"]),
+                mcq("q_\(lessonId)_r3", "'She will come' in Telugu", "ఆమె వస్తుంది", ["ఆమె వస్తుంది", "ఆమె వచ్చింది", "ఆమె వస్తుంది", "ఆమె వచ్చింది"])
+            ]
+            let writing = [
+                mcq("q_\(lessonId)_w1", "Write 'నేను చదువుతాను' (I will read)", "నేను చదువుతాను", ["నేను చదువుతాను", "Option2", "Option3", "Option4"]),
+                mcq("q_\(lessonId)_w2", "Write 'అతను రాస్తాడు' (he will write)", "అతను రాస్తాడు", ["అతను రాస్తాడు", "Option2", "Option3", "Option4"]),
+                mcq("q_\(lessonId)_w3", "Write 'మేము చూస్తాము' (we will see)", "మేము చూస్తాము", ["మేము చూస్తాము", "Option2", "Option3", "Option4"])
+            ]
+            let listening = [
+                listen("q_\(lessonId)_l1", "Identify 'నేను తిన్నాను'", "నేను తిన్నాను", ["నేను తిన్నాను", "నేను తింటాను", "నేను తింటున్నాను", "నేను తింటాను"]),
+                listen("q_\(lessonId)_l2", "Identify 'అతను వచ్చాడు'", "అతను వచ్చాడు", ["అతను వచ్చాడు", "అతను వస్తాడు", "అతను వస్తున్నాడు", "అతను రావాలి"])
+            ]
+            let speaking = [
+                speak("q_\(lessonId)_s1", "Say 'నేను తిన్నాను'", "నేను తిన్నాను"),
+                speak("q_\(lessonId)_s2", "Say 'అతను వచ్చాడు'", "అతను వచ్చాడు")
+            ]
+            return [
+                LessonActivity(id: "activity_\(lessonId)_reading", type: .reading, title: "Reading Practice", instructions: "Read past tense", xpValue: baseXP, questions: reading, canSkip: false),
+                LessonActivity(id: "activity_\(lessonId)_writing", type: .writing, title: "Writing Practice", instructions: "Write past forms", xpValue: baseXP, questions: writing, canSkip: false),
+                LessonActivity(id: "activity_\(lessonId)_listening", type: .listening, title: "Listening Practice", instructions: "Identify past tense", xpValue: baseXP, questions: listening, canSkip: false),
+                LessonActivity(id: "activity_\(lessonId)_speaking", type: .speaking, title: "Speaking Practice", instructions: "Say past forms", xpValue: baseXP, questions: speaking, canSkip: true)
+            ]
+        }
+        if title.contains("Future Tense Usage") {
             let reading = [
                 mcq("q_\(lessonId)_r1", "'I will eat' in Telugu", "నేను తింటాను", ["నేను తింటాను", "నేను తిన్నాను", "నేను తింటున్నాను", "నేను తిన్నాను"]),
                 mcq("q_\(lessonId)_r2", "'You will go' in Telugu", "నువ్వు వెళ్తావు", ["నువ్వు వెళ్తావు", "నువ్వు వెళ్లావు", "నువ్వు వెళ్తున్నావు", "నువ్వు వెళ్లావు"]),
@@ -1804,7 +1804,7 @@ private func topicTitles(for levelId: String) -> [String] {
                 LessonActivity(id: "activity_\(lessonId)_speaking", type: .speaking, title: "Speaking Practice", instructions: "Say future forms", xpValue: baseXP, questions: speaking, canSkip: true)
             ]
         }
-        if title.contains("Forming Questions") {
+        if title.contains("Question Formation") {
             let reading = [
                 mcq("q_\(lessonId)_r1", "'Where?' in Telugu", "ఎక్కడ?", ["ఎక్కడ?", "ఎప్పుడు?", "ఎవరు?", "ఎందుకు?"]),
                 mcq("q_\(lessonId)_r2", "'When?' in Telugu", "ఎప్పుడు?", ["ఎప్పుడు?", "ఎక్కడ?", "ఎవరు?", "ఎలా?"]),
@@ -1826,36 +1826,8 @@ private func topicTitles(for levelId: String) -> [String] {
             return [
                 LessonActivity(id: "activity_\(lessonId)_reading", type: .reading, title: "Reading Practice", instructions: "Read question words", xpValue: baseXP, questions: reading, canSkip: false),
                 LessonActivity(id: "activity_\(lessonId)_writing", type: .writing, title: "Writing Practice", instructions: "Write question words", xpValue: baseXP, questions: writing, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_listening", type: .listening, title: "Listening Practice", instructions: "Identify question words", xpValue: baseXP, questions: listening, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_speaking", type: .speaking, title: "Speaking Practice", instructions: "Ask questions", xpValue: baseXP, questions: speaking, canSkip: true)
-            ]
-        }
-        
-        // Add missing vowel topics
-        if title.contains("Vowels – Part 3") {
-            let reading = [
-                mcq("q_\(lessonId)_r1", "Which is 'ఐ' (ai)?", "ఐ", ["ఐ", "ఒ", "ఓ", "ఔ"]),
-                mcq("q_\(lessonId)_r2", "Which is 'ఒ' (o)?", "ఒ", ["ఒ", "ఓ", "ఔ", "ఐ"]),
-                mcq("q_\(lessonId)_r3", "Pick the diphthong 'ఔ'", "ఔ", ["ఔ", "ఐ", "ఒ", "ఓ"])
-            ]
-            let writing = [
-                trace("q_\(lessonId)_w1", "Trace 'ఐ'", "ఐ"),
-                mcq("q_\(lessonId)_w2", "Type the vowel in 'ఒకటి'", "ఒ", ["ఒ", "ఓ", "ఔ", "ఐ"]),
-                mcq("q_\(lessonId)_w3", "Type long 'oo' sound", "ఓ", ["ఓ", "ఒ", "ఔ", "ఐ"])
-            ]
-            let listening = [
-                listen("q_\(lessonId)_l1", "Identify 'ఐ' sound", "ఐ", ["ఐ", "ఒ", "ఓ", "ఔ"]),
-                listen("q_\(lessonId)_l2", "Identify 'ఔ' sound", "ఔ", ["ఔ", "ఐ", "ఒ", "ఓ"])
-            ]
-            let speaking = [
-                speak("q_\(lessonId)_s1", "Say 'ఐ' clearly", "ఐ"),
-                speak("q_\(lessonId)_s2", "Say 'ఔ' clearly", "ఔ")
-            ]
-            return [
-                LessonActivity(id: "activity_\(lessonId)_reading", type: .reading, title: "Reading Practice", instructions: "Recognize diphthongs", xpValue: baseXP, questions: reading, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_writing", type: .writing, title: "Writing Practice", instructions: "Write diphthongs", xpValue: baseXP, questions: writing, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_listening", type: .listening, title: "Listening Practice", instructions: "Identify diphthongs", xpValue: baseXP, questions: listening, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_speaking", type: .speaking, title: "Speaking Practice", instructions: "Say diphthongs", xpValue: baseXP, questions: speaking, canSkip: true)
+                LessonActivity(id: "activity_\(lessonId)_listening", type: .listening, title: "Listening Practice", instructions: "Listen to question words", xpValue: baseXP, questions: listening, canSkip: false),
+                LessonActivity(id: "activity_\(lessonId)_speaking", type: .speaking, title: "Speaking Practice", instructions: "Practice question words", xpValue: baseXP, questions: speaking, canSkip: true)
             ]
         }
         if title.contains("Vowels – Part 4") {
@@ -2290,7 +2262,7 @@ private func topicTitles(for levelId: String) -> [String] {
         }
         
         // Directions and Movement
-        if title.contains("Directions") {
+        if title.contains("Directions and Navigation") {
             let reading = [
                 mcq("q_\(lessonId)_r1", "'Left' in Telugu", "ఎడమ", ["ఎడమ", "కుడి", "ముందు", "వెనుక"]),
                 mcq("q_\(lessonId)_r2", "'Go straight' in Telugu", "నేరుగా వెళ్లు", ["నేరుగా వెళ్లు", "ఎడమకు తిరుగు", "కుడికి తిరుగు", "వెనుకకు రా"]),
@@ -2318,7 +2290,7 @@ private func topicTitles(for levelId: String) -> [String] {
         }
         
         // Talking About Time
-        if title.contains("Talking About Time") {
+        if title.contains("Time Expressions") {
             let reading = [
                 mcq("q_\(lessonId)_r1", "'Today' in Telugu", "ఈరోజు", ["ఈరోజు", "రేపు", "నిన్న", "ఇప్పుడు"]),
                 mcq("q_\(lessonId)_r2", "'Yesterday' in Telugu", "నిన్న", ["నిన్న", "ఈరోజు", "రేపు", "మొన్న"]),
@@ -2346,7 +2318,7 @@ private func topicTitles(for levelId: String) -> [String] {
         }
         
         // Short Story Comprehension
-        if title.contains("Short Story") {
+        if title.contains("Story Reading") {
             let reading = [
                 mcq("q_\(lessonId)_r1", "In the story, what did రాము do?", "రాము పుస్తకం చదివాడు", ["రాము పుస్తకం చదివాడు", "రాము ఆట ఆడాడు", "రాము తిన్నాడు", "రాము నిద్రపోయాడు"]),
                 mcq("q_\(lessonId)_r2", "Where did సీత go?", "సీత పాఠశాలకు వెళ్లింది", ["సీత పాఠశాలకు వెళ్లింది", "సీత ఇంటికి వెళ్లింది", "సీత దుకాణానికి వెళ్లింది", "సీత పార్కుకు వెళ్లింది"]),
@@ -2374,7 +2346,7 @@ private func topicTitles(for levelId: String) -> [String] {
         }
         
         // Complex Sentence Structures
-        if title.contains("Complex Sentence") {
+        if title.contains("Complex Sentences") || title.contains("Comparative Sentences") || title.contains("Adjective Usage") {
             let reading = [
                 mcq("q_\(lessonId)_r1", "Complex sentence with 'because'", "నేను వెళ్లలేదు ఎందుకంటే వర్షం వస్తోంది", ["నేను వెళ్లలేదు ఎందుకంటే వర్షం వస్తోంది", "నేను వెళ్లాను కానీ ఆలస్యం అయింది", "అతను వచ్చాడు మరియు మాట్లాడాడు", "ఆమె పాడింది లేదా నృత్యం చేసింది"]),
                 mcq("q_\(lessonId)_r2", "Sentence with 'although'", "వర్షం వచ్చినప్పటికీ నేను వెళ్లాను", ["వర్షం వచ్చినప్పటికీ నేను వెళ్లాను", "వర్షం వస్తే నేను వెళ్లను", "వర్షం లేకపోతే వెళ్లతాను", "వర్షం వచ్చాక వెళ్లాను"]),
@@ -2710,10 +2682,11 @@ private func topicTitles(for levelId: String) -> [String] {
         }
         
         // If a topic is not handled specifically, fall back to the existing builder
+        print("⚠️ No specific content found for title: '\(title)' - using fallback")
         return createStandardActivitiesGlobal(lessonId.replacingOccurrences(of: "lesson_", with: ""), level: difficulty)
     }
 
-private func createStandardActivitiesGlobal(_ lessonId: String, level: Int) -> [LessonActivity] {
+    private func createStandardActivitiesGlobal(_ lessonId: String, level: Int) -> [LessonActivity] {
     let baseXP = level * 20
     let readingQuestions: [ActivityQuestion] = (1...3).map { idx in
         ActivityQuestion(
@@ -2801,4 +2774,5 @@ private func createStandardActivitiesGlobal(_ lessonId: String, level: Int) -> [
             canSkip: true
         )
     ]
+    }
 }
