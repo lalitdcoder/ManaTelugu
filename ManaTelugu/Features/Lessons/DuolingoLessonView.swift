@@ -205,8 +205,8 @@ struct DuolingoLessonView: View {
             
             Spacer()
             
-            // Letters Grid
-            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: MTSpacing.medium), count: 2), spacing: MTSpacing.large) {
+            // Letters Grid - Show all 4 letters in a single row
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: MTSpacing.medium), count: 4), spacing: MTSpacing.large) {
                 ForEach(getLettersForLesson(), id: \.self) { letter in
                     VStack(spacing: MTSpacing.small) {
                         Text(letter.glyph)
