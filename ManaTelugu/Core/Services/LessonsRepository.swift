@@ -118,7 +118,7 @@ class LessonsRepository: ObservableObject {
                 generated = (startIndex...15).map { i in
                     Lesson(
                         id: "lesson_1_\(i)",
-                        title: "Lesson \(i)",
+                        title: getBeginnerTitle(i),
                         description: getBeginnerDescription(i),
                         levelId: level.id,
                         order: i,
@@ -132,7 +132,7 @@ class LessonsRepository: ObservableObject {
                 generated = (startIndex...15).map { i in
                     Lesson(
                         id: "lesson_2_\(i)",
-                        title: "Lesson \(i)",
+                        title: getBasicTitle(i),
                         description: getBasicDescription(i),
                         levelId: level.id,
                         order: i,
@@ -146,7 +146,7 @@ class LessonsRepository: ObservableObject {
                 generated = (startIndex...15).map { i in
                     Lesson(
                         id: "lesson_3_\(i)",
-                        title: "Lesson \(i)",
+                        title: getIntermediateTitle(i),
                         description: getIntermediateDescription(i),
                         levelId: level.id,
                         order: i,
@@ -160,7 +160,7 @@ class LessonsRepository: ObservableObject {
                 generated = (startIndex...15).map { i in
                     Lesson(
                         id: "lesson_4_\(i)",
-                        title: "Lesson \(i)",
+                        title: getAdvancedTitle(i),
                         description: getAdvancedDescription(i),
                         levelId: level.id,
                         order: i,
@@ -750,6 +750,46 @@ class LessonsRepository: ObservableObject {
             LearningLevel(id: "level_3_intermediate", title: "Level 3: Intermediate", description: "Expand vocabulary - Learn common words and phrases", difficulty: 3, lessons: intermediateLessons, requiredXP: 0, color: "#FF9800"),
             LearningLevel(id: "level_4_advanced", title: "Level 4: Advanced", description: "Master Telugu - Learn complex sentences and grammar", difficulty: 4, lessons: advancedLessons, requiredXP: 0, color: "#9C27B0")
         ])
+    }
+    
+    private func getBeginnerTitle(_ lesson: Int) -> String {
+        let titles = [
+            "Vowels – Part 1", "Vowels – Part 2", "Vowels – Part 3", "Vowels – Part 4",
+            "Consonants – Part 1", "Consonants – Part 2", "Consonants – Part 3", "Consonants – Part 4",
+            "Syllable Formation – Part 1", "Syllable Formation – Part 2", "Syllable Formation – Part 3",
+            "Basic Words", "Simple Sentences", "Numbers and Counting", "Family and Relations"
+        ]
+        return titles[min(lesson - 1, titles.count - 1)]
+    }
+    
+    private func getBasicTitle(_ lesson: Int) -> String {
+        let titles = [
+            "Basic Phrases and Q&A", "Action Verbs – Conjugation", "Possessives in Phrases", "Conversation Starters",
+            "Directions and Movement", "Talking About Time", "Short Story Comprehension", "Complex Sentence Structures",
+            "Advanced Grammar Concepts", "Literature and Poetry", "Cultural Context and Traditions", "Business and Professional",
+            "Technology and Modern Life", "Travel and Transportation", "Health and Medical"
+        ]
+        return titles[min(lesson - 1, titles.count - 1)]
+    }
+    
+    private func getIntermediateTitle(_ lesson: Int) -> String {
+        let titles = [
+            "Present Tense Practice", "Past Tense Formation", "Future Tense Usage", "Question Formation",
+            "Directions and Navigation", "Time Expressions", "Story Reading", "Adjective Usage",
+            "Comparative Sentences", "Complex Sentences", "Conditional Sentences", "Passive Voice",
+            "Reported Speech", "Advanced Grammar", "Formal Speech"
+        ]
+        return titles[min(lesson - 1, titles.count - 1)]
+    }
+    
+    private func getAdvancedTitle(_ lesson: Int) -> String {
+        let titles = [
+            "Conditional Sentences", "Passive Voice", "Idioms", "Formal Speech",
+            "Poetry Reading", "News Articles", "Letter Writing", "Cultural Traditions",
+            "Grammar Rules", "Assessment", "Literary Telugu", "Business Communication",
+            "Technical Vocabulary", "Cultural Nuances", "Mastery Test"
+        ]
+        return titles[min(lesson - 1, titles.count - 1)]
     }
     
     private func getBeginnerDescription(_ lesson: Int) -> String {
@@ -1788,6 +1828,246 @@ private func topicTitles(for levelId: String) -> [String] {
                 LessonActivity(id: "activity_\(lessonId)_writing", type: .writing, title: "Writing Practice", instructions: "Write question words", xpValue: baseXP, questions: writing, canSkip: false),
                 LessonActivity(id: "activity_\(lessonId)_listening", type: .listening, title: "Listening Practice", instructions: "Identify question words", xpValue: baseXP, questions: listening, canSkip: false),
                 LessonActivity(id: "activity_\(lessonId)_speaking", type: .speaking, title: "Speaking Practice", instructions: "Ask questions", xpValue: baseXP, questions: speaking, canSkip: true)
+            ]
+        }
+        
+        // Add missing vowel topics
+        if title.contains("Vowels – Part 3") {
+            let reading = [
+                mcq("q_\(lessonId)_r1", "Which is 'ఐ' (ai)?", "ఐ", ["ఐ", "ఒ", "ఓ", "ఔ"]),
+                mcq("q_\(lessonId)_r2", "Which is 'ఒ' (o)?", "ఒ", ["ఒ", "ఓ", "ఔ", "ఐ"]),
+                mcq("q_\(lessonId)_r3", "Pick the diphthong 'ఔ'", "ఔ", ["ఔ", "ఐ", "ఒ", "ఓ"])
+            ]
+            let writing = [
+                trace("q_\(lessonId)_w1", "Trace 'ఐ'", "ఐ"),
+                mcq("q_\(lessonId)_w2", "Type the vowel in 'ఒకటి'", "ఒ", ["ఒ", "ఓ", "ఔ", "ఐ"]),
+                mcq("q_\(lessonId)_w3", "Type long 'oo' sound", "ఓ", ["ఓ", "ఒ", "ఔ", "ఐ"])
+            ]
+            let listening = [
+                listen("q_\(lessonId)_l1", "Identify 'ఐ' sound", "ఐ", ["ఐ", "ఒ", "ఓ", "ఔ"]),
+                listen("q_\(lessonId)_l2", "Identify 'ఔ' sound", "ఔ", ["ఔ", "ఐ", "ఒ", "ఓ"])
+            ]
+            let speaking = [
+                speak("q_\(lessonId)_s1", "Say 'ఐ' clearly", "ఐ"),
+                speak("q_\(lessonId)_s2", "Say 'ఔ' clearly", "ఔ")
+            ]
+            return [
+                LessonActivity(id: "activity_\(lessonId)_reading", type: .reading, title: "Reading Practice", instructions: "Recognize diphthongs", xpValue: baseXP, questions: reading, canSkip: false),
+                LessonActivity(id: "activity_\(lessonId)_writing", type: .writing, title: "Writing Practice", instructions: "Write diphthongs", xpValue: baseXP, questions: writing, canSkip: false),
+                LessonActivity(id: "activity_\(lessonId)_listening", type: .listening, title: "Listening Practice", instructions: "Identify diphthongs", xpValue: baseXP, questions: listening, canSkip: false),
+                LessonActivity(id: "activity_\(lessonId)_speaking", type: .speaking, title: "Speaking Practice", instructions: "Say diphthongs", xpValue: baseXP, questions: speaking, canSkip: true)
+            ]
+        }
+        if title.contains("Vowels – Part 4") {
+            let reading = [
+                mcq("q_\(lessonId)_r1", "Which is 'అం' (am)?", "అం", ["అం", "అః", "అ", "ఆ"]),
+                mcq("q_\(lessonId)_r2", "Which is visarga 'అః'?", "అః", ["అః", "అం", "అ", "ఆ"]),
+                mcq("q_\(lessonId)_r3", "Anusvara symbol", "అం", ["అం", "అః", "అ", "ఆ"])
+            ]
+            let writing = [
+                trace("q_\(lessonId)_w1", "Trace 'అం'", "అం"),
+                mcq("q_\(lessonId)_w2", "Write visarga", "అః", ["అః", "అం", "అ", "ఆ"]),
+                mcq("q_\(lessonId)_w3", "Write anusvara", "అం", ["అం", "అః", "అ", "ఆ"])
+            ]
+            let listening = [
+                listen("q_\(lessonId)_l1", "Identify 'అం' sound", "అం", ["అం", "అః", "అ", "ఆ"]),
+                listen("q_\(lessonId)_l2", "Identify 'అః' sound", "అః", ["అః", "అం", "అ", "ఆ"])
+            ]
+            let speaking = [
+                speak("q_\(lessonId)_s1", "Say 'అం' clearly", "అం"),
+                speak("q_\(lessonId)_s2", "Say 'అః' clearly", "అః")
+            ]
+            return [
+                LessonActivity(id: "activity_\(lessonId)_reading", type: .reading, title: "Reading Practice", instructions: "Special vowel marks", xpValue: baseXP, questions: reading, canSkip: false),
+                LessonActivity(id: "activity_\(lessonId)_writing", type: .writing, title: "Writing Practice", instructions: "Write special marks", xpValue: baseXP, questions: writing, canSkip: false),
+                LessonActivity(id: "activity_\(lessonId)_listening", type: .listening, title: "Listening Practice", instructions: "Identify special sounds", xpValue: baseXP, questions: listening, canSkip: false),
+                LessonActivity(id: "activity_\(lessonId)_speaking", type: .speaking, title: "Speaking Practice", instructions: "Say special sounds", xpValue: baseXP, questions: speaking, canSkip: true)
+            ]
+        }
+        
+        // Add missing consonant topics
+        if title.contains("Retroflex Consonants") {
+            let reading = [
+                mcq("q_\(lessonId)_r1", "Pick 'ట' (ṭa)", "ట", ["ట", "ఠ", "డ", "ఢ"]),
+                mcq("q_\(lessonId)_r2", "Which is aspirated 'ఠ'?", "ఠ", ["ఠ", "ట", "డ", "ఢ"]),
+                mcq("q_\(lessonId)_r3", "Retroflex nasal", "ణ", ["ణ", "న", "ఙ", "ఞ"])
+            ]
+            let writing = [
+                trace("q_\(lessonId)_w1", "Trace 'ట'", "ట"),
+                mcq("q_\(lessonId)_w2", "Write 'డ' (ḍa)", "డ", ["డ", "ట", "ఠ", "ఢ"]),
+                mcq("q_\(lessonId)_w3", "Write aspirated 'ఢ'", "ఢ", ["ఢ", "డ", "ట", "ఠ"])
+            ]
+            let listening = [
+                listen("q_\(lessonId)_l1", "Identify 'ట' sound", "ట", ["ట", "త", "ద", "థ"]),
+                listen("q_\(lessonId)_l2", "Identify 'డ' sound", "డ", ["డ", "ద", "ట", "త"])
+            ]
+            let speaking = [
+                speak("q_\(lessonId)_s1", "Say 'ట' clearly", "ట"),
+                speak("q_\(lessonId)_s2", "Say 'ణ' clearly", "ణ")
+            ]
+            return [
+                LessonActivity(id: "activity_\(lessonId)_reading", type: .reading, title: "Reading Practice", instructions: "Recognize retroflexes", xpValue: baseXP, questions: reading, canSkip: false),
+                LessonActivity(id: "activity_\(lessonId)_writing", type: .writing, title: "Writing Practice", instructions: "Write retroflex letters", xpValue: baseXP, questions: writing, canSkip: false),
+                LessonActivity(id: "activity_\(lessonId)_listening", type: .listening, title: "Listening Practice", instructions: "Identify retroflexes", xpValue: baseXP, questions: listening, canSkip: false),
+                LessonActivity(id: "activity_\(lessonId)_speaking", type: .speaking, title: "Speaking Practice", instructions: "Say retroflex letters", xpValue: baseXP, questions: speaking, canSkip: true)
+            ]
+        }
+        if title.contains("Dental Consonants") {
+            let reading = [
+                mcq("q_\(lessonId)_r1", "Pick 'త' (ta)", "త", ["త", "థ", "ద", "ధ"]),
+                mcq("q_\(lessonId)_r2", "Which is aspirated 'థ'?", "థ", ["థ", "త", "ద", "ధ"]),
+                mcq("q_\(lessonId)_r3", "Dental nasal", "న", ["న", "ణ", "ఙ", "ఞ"])
+            ]
+            let writing = [
+                trace("q_\(lessonId)_w1", "Trace 'త'", "త"),
+                mcq("q_\(lessonId)_w2", "Write 'ద' (da)", "ద", ["ద", "త", "థ", "ధ"]),
+                mcq("q_\(lessonId)_w3", "Write aspirated 'ధ'", "ధ", ["ధ", "ద", "త", "థ"])
+            ]
+            let listening = [
+                listen("q_\(lessonId)_l1", "Identify 'త' sound", "త", ["త", "ట", "ద", "డ"]),
+                listen("q_\(lessonId)_l2", "Identify 'న' sound", "న", ["న", "ణ", "మ", "ల"])
+            ]
+            let speaking = [
+                speak("q_\(lessonId)_s1", "Say 'త' clearly", "త"),
+                speak("q_\(lessonId)_s2", "Say 'న' clearly", "న")
+            ]
+            return [
+                LessonActivity(id: "activity_\(lessonId)_reading", type: .reading, title: "Reading Practice", instructions: "Recognize dentals", xpValue: baseXP, questions: reading, canSkip: false),
+                LessonActivity(id: "activity_\(lessonId)_writing", type: .writing, title: "Writing Practice", instructions: "Write dental letters", xpValue: baseXP, questions: writing, canSkip: false),
+                LessonActivity(id: "activity_\(lessonId)_listening", type: .listening, title: "Listening Practice", instructions: "Identify dentals", xpValue: baseXP, questions: listening, canSkip: false),
+                LessonActivity(id: "activity_\(lessonId)_speaking", type: .speaking, title: "Speaking Practice", instructions: "Say dental letters", xpValue: baseXP, questions: speaking, canSkip: true)
+            ]
+        }
+        if title.contains("Labial Consonants") {
+            let reading = [
+                mcq("q_\(lessonId)_r1", "Pick 'ప' (pa)", "ప", ["ప", "ఫ", "బ", "భ"]),
+                mcq("q_\(lessonId)_r2", "Which is aspirated 'ఫ'?", "ఫ", ["ఫ", "ప", "బ", "భ"]),
+                mcq("q_\(lessonId)_r3", "Labial nasal", "మ", ["మ", "న", "ణ", "ఙ"])
+            ]
+            let writing = [
+                trace("q_\(lessonId)_w1", "Trace 'ప'", "ప"),
+                mcq("q_\(lessonId)_w2", "Write 'బ' (ba)", "బ", ["బ", "ప", "ఫ", "భ"]),
+                mcq("q_\(lessonId)_w3", "Write aspirated 'భ'", "భ", ["భ", "బ", "ప", "ఫ"])
+            ]
+            let listening = [
+                listen("q_\(lessonId)_l1", "Identify 'ప' sound", "ప", ["ప", "బ", "మ", "వ"]),
+                listen("q_\(lessonId)_l2", "Identify 'మ' sound", "మ", ["మ", "న", "ల", "వ"])
+            ]
+            let speaking = [
+                speak("q_\(lessonId)_s1", "Say 'ప' clearly", "ప"),
+                speak("q_\(lessonId)_s2", "Say 'మ' clearly", "మ")
+            ]
+            return [
+                LessonActivity(id: "activity_\(lessonId)_reading", type: .reading, title: "Reading Practice", instructions: "Recognize labials", xpValue: baseXP, questions: reading, canSkip: false),
+                LessonActivity(id: "activity_\(lessonId)_writing", type: .writing, title: "Writing Practice", instructions: "Write labial letters", xpValue: baseXP, questions: writing, canSkip: false),
+                LessonActivity(id: "activity_\(lessonId)_listening", type: .listening, title: "Listening Practice", instructions: "Identify labials", xpValue: baseXP, questions: listening, canSkip: false),
+                LessonActivity(id: "activity_\(lessonId)_speaking", type: .speaking, title: "Speaking Practice", instructions: "Say labial letters", xpValue: baseXP, questions: speaking, canSkip: true)
+            ]
+        }
+        if title.contains("Semivowels and Sibilants") {
+            let reading = [
+                mcq("q_\(lessonId)_r1", "Pick 'య' (ya)", "య", ["య", "ర", "ల", "వ"]),
+                mcq("q_\(lessonId)_r2", "Which is 'వ' (va)?", "వ", ["వ", "య", "ర", "ల"]),
+                mcq("q_\(lessonId)_r3", "Palatal sibilant", "శ", ["శ", "ష", "స", "హ"])
+            ]
+            let writing = [
+                trace("q_\(lessonId)_w1", "Trace 'య'", "య"),
+                mcq("q_\(lessonId)_w2", "Write 'ర' (ra)", "ర", ["ర", "య", "ల", "వ"]),
+                mcq("q_\(lessonId)_w3", "Write 'ష' (ṣa)", "ష", ["ష", "శ", "స", "హ"])
+            ]
+            let listening = [
+                listen("q_\(lessonId)_l1", "Identify 'య' sound", "య", ["య", "ర", "ల", "వ"]),
+                listen("q_\(lessonId)_l2", "Identify 'శ' sound", "శ", ["శ", "ష", "స", "హ"])
+            ]
+            let speaking = [
+                speak("q_\(lessonId)_s1", "Say 'య' clearly", "య"),
+                speak("q_\(lessonId)_s2", "Say 'వ' clearly", "వ")
+            ]
+            return [
+                LessonActivity(id: "activity_\(lessonId)_reading", type: .reading, title: "Reading Practice", instructions: "Recognize semivowels", xpValue: baseXP, questions: reading, canSkip: false),
+                LessonActivity(id: "activity_\(lessonId)_writing", type: .writing, title: "Writing Practice", instructions: "Write semivowels", xpValue: baseXP, questions: writing, canSkip: false),
+                LessonActivity(id: "activity_\(lessonId)_listening", type: .listening, title: "Listening Practice", instructions: "Identify semivowels", xpValue: baseXP, questions: listening, canSkip: false),
+                LessonActivity(id: "activity_\(lessonId)_speaking", type: .speaking, title: "Speaking Practice", instructions: "Say semivowels", xpValue: baseXP, questions: speaking, canSkip: true)
+            ]
+        }
+        if title.contains("Special Consonants") {
+            let reading = [
+                mcq("q_\(lessonId)_r1", "Pick 'హ' (ha)", "హ", ["హ", "ళ", "క్ష", "జ్ఞ"]),
+                mcq("q_\(lessonId)_r2", "Which is retroflex 'ళ'?", "ళ", ["ళ", "ల", "హ", "స"]),
+                mcq("q_\(lessonId)_r3", "Conjunct 'క్ష'", "క్ష", ["క్ష", "జ్ఞ", "హ", "ళ"])
+            ]
+            let writing = [
+                trace("q_\(lessonId)_w1", "Trace 'హ'", "హ"),
+                mcq("q_\(lessonId)_w2", "Write 'ళ' (ḷa)", "ళ", ["ళ", "ల", "హ", "స"]),
+                mcq("q_\(lessonId)_w3", "Write 'జ్ఞ'", "జ్ఞ", ["జ్ఞ", "క్ష", "హ", "ళ"])
+            ]
+            let listening = [
+                listen("q_\(lessonId)_l1", "Identify 'హ' sound", "హ", ["హ", "ళ", "స", "శ"]),
+                listen("q_\(lessonId)_l2", "Identify 'క్ష' sound", "క్ష", ["క్ష", "జ్ఞ", "హ", "ళ"])
+            ]
+            let speaking = [
+                speak("q_\(lessonId)_s1", "Say 'హ' clearly", "హ"),
+                speak("q_\(lessonId)_s2", "Say 'ళ' clearly", "ళ")
+            ]
+            return [
+                LessonActivity(id: "activity_\(lessonId)_reading", type: .reading, title: "Reading Practice", instructions: "Special consonants", xpValue: baseXP, questions: reading, canSkip: false),
+                LessonActivity(id: "activity_\(lessonId)_writing", type: .writing, title: "Writing Practice", instructions: "Write special letters", xpValue: baseXP, questions: writing, canSkip: false),
+                LessonActivity(id: "activity_\(lessonId)_listening", type: .listening, title: "Listening Practice", instructions: "Identify special sounds", xpValue: baseXP, questions: listening, canSkip: false),
+                LessonActivity(id: "activity_\(lessonId)_speaking", type: .speaking, title: "Speaking Practice", instructions: "Say special letters", xpValue: baseXP, questions: speaking, canSkip: true)
+            ]
+        }
+        
+        // Add syllable formation topics
+        if title.contains("Syllable Formation – Part 2") {
+            let reading = [
+                mcq("q_\(lessonId)_r1", "క + ూ = ?", "కూ", ["కూ", "కు", "కా", "కి"]),
+                mcq("q_\(lessonId)_r2", "క + ె = ?", "కె", ["కె", "కే", "కా", "కి"]),
+                mcq("q_\(lessonId)_r3", "క + ే = ?", "కే", ["కే", "కె", "కా", "కి"])
+            ]
+            let writing = [
+                mcq("q_\(lessonId)_w1", "Form 'కై' (క + ై)", "కై", ["కై", "కె", "కే", "కా"]),
+                mcq("q_\(lessonId)_w2", "Form 'కొ' (క + ొ)", "కొ", ["కొ", "కో", "కా", "కు"]),
+                mcq("q_\(lessonId)_w3", "Form 'కౌ' (క + ౌ)", "కౌ", ["కౌ", "కై", "కొ", "కో"])
+            ]
+            let listening = [
+                listen("q_\(lessonId)_l1", "Identify 'కూ' sound", "కూ", ["కూ", "కు", "కా", "కి"]),
+                listen("q_\(lessonId)_l2", "Identify 'కె' sound", "కె", ["కె", "కే", "కా", "కి"])
+            ]
+            let speaking = [
+                speak("q_\(lessonId)_s1", "Say 'కూ' clearly", "కూ"),
+                speak("q_\(lessonId)_s2", "Say 'కై' clearly", "కై")
+            ]
+            return [
+                LessonActivity(id: "activity_\(lessonId)_reading", type: .reading, title: "Reading Practice", instructions: "Advanced syllables", xpValue: baseXP, questions: reading, canSkip: false),
+                LessonActivity(id: "activity_\(lessonId)_writing", type: .writing, title: "Writing Practice", instructions: "Form complex syllables", xpValue: baseXP, questions: writing, canSkip: false),
+                LessonActivity(id: "activity_\(lessonId)_listening", type: .listening, title: "Listening Practice", instructions: "Identify syllable sounds", xpValue: baseXP, questions: listening, canSkip: false),
+                LessonActivity(id: "activity_\(lessonId)_speaking", type: .speaking, title: "Speaking Practice", instructions: "Say syllables", xpValue: baseXP, questions: speaking, canSkip: true)
+            ]
+        }
+        if title.contains("Syllable Formation – Part 3") {
+            let reading = [
+                mcq("q_\(lessonId)_r1", "క + ం = ?", "కం", ["కం", "కః", "కా", "కి"]),
+                mcq("q_\(lessonId)_r2", "క + ః = ?", "కః", ["కః", "కం", "కా", "కి"]),
+                mcq("q_\(lessonId)_r3", "Final consonant cluster", "క్", ["క్", "కం", "కః", "కా"])
+            ]
+            let writing = [
+                mcq("q_\(lessonId)_w1", "Add anusvara to 'క'", "కం", ["కం", "కః", "కా", "కి"]),
+                mcq("q_\(lessonId)_w2", "Add visarga to 'క'", "కః", ["కః", "కం", "కా", "కి"]),
+                mcq("q_\(lessonId)_w3", "Write halant form", "క్", ["క్", "కం", "కః", "కా"])
+            ]
+            let listening = [
+                listen("q_\(lessonId)_l1", "Identify 'కం' sound", "కం", ["కం", "కః", "కా", "కి"]),
+                listen("q_\(lessonId)_l2", "Identify 'కః' sound", "కః", ["కః", "కం", "కా", "కి"])
+            ]
+            let speaking = [
+                speak("q_\(lessonId)_s1", "Say 'కం' clearly", "కం"),
+                speak("q_\(lessonId)_s2", "Say 'కః' clearly", "కః")
+            ]
+            return [
+                LessonActivity(id: "activity_\(lessonId)_reading", type: .reading, title: "Reading Practice", instructions: "Special syllable marks", xpValue: baseXP, questions: reading, canSkip: false),
+                LessonActivity(id: "activity_\(lessonId)_writing", type: .writing, title: "Writing Practice", instructions: "Add special marks", xpValue: baseXP, questions: writing, canSkip: false),
+                LessonActivity(id: "activity_\(lessonId)_listening", type: .listening, title: "Listening Practice", instructions: "Identify marked syllables", xpValue: baseXP, questions: listening, canSkip: false),
+                LessonActivity(id: "activity_\(lessonId)_speaking", type: .speaking, title: "Speaking Practice", instructions: "Say marked syllables", xpValue: baseXP, questions: speaking, canSkip: true)
             ]
         }
         
