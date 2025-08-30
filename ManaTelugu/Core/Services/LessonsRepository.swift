@@ -788,9 +788,14 @@ class LessonsRepository: ObservableObject {
             "First phrases: ఇది ఏమిటి? — Short Q&A practice",
             "Basic actions: తిను, త్రాగు, నడవు — Conjugation practice",
             "Possessives: నా, నీ — Build phrases: నా పుస్తకం",
-            "Simple conversation starters — Greetings and introductions"
+            "Simple conversation starters — Greetings and introductions",
+            "Family relationships: అమ్మ, నాన్న, అన్న — Family member names",
+            "Daily activities: తిను, త్రాగు, నిద్రపోవు — Daily routine verbs",
+            "Common objects: పుస్తకం, కలం, బ్యాగ్ — School and home items",
+            "Simple sentences: నేను విద్యార్థిని — Basic sentence formation",
+            "Basic conversations: నమస్కారం, ధన్యవాదాలు — Polite expressions"
         ]
-        return descriptions[lesson - 1]
+        return descriptions[min(lesson - 1, descriptions.count - 1)]
     }
     
     private func getIntermediateDescription(_ lesson: Int) -> String {
@@ -804,9 +809,14 @@ class LessonsRepository: ObservableObject {
             "Short story reading — Comprehension questions",
             "Adjectives: పెద్ద, చిన్న, మంచి — Modify nouns",
             "Comparisons: కంటే, చాలా — Comparative sentences",
-            "Complex sentences with అయితే, కానీ — Contrast and condition"
+            "Complex sentences with అయితే, కానీ — Contrast and condition",
+            "Conditional sentences: అయితే, అంటే — If-then constructions",
+            "Passive voice: చేయబడింది — Passive constructions",
+            "Reported speech: అన్నాడు, చెప్పాడు — Indirect speech",
+            "Advanced grammar: కారణంగా, వల్ల — Cause and effect",
+            "Formal language: మర్యాదపూర్వకంగా — Respectful expressions"
         ]
-        return descriptions[lesson - 1]
+        return descriptions[min(lesson - 1, descriptions.count - 1)]
     }
     
     private func getAdvancedDescription(_ lesson: Int) -> String {
@@ -820,9 +830,14 @@ class LessonsRepository: ObservableObject {
             "Formal letter structure — Openings and closings",
             "Telugu culture and traditions — Short notes",
             "Complex grammar rules — Exceptions and edge cases",
-            "Comprehensive assessment — Mixed practice"
+            "Comprehensive assessment — Mixed practice",
+            "Literary Telugu: Classical expressions and vocabulary",
+            "Business communication: Professional Telugu writing",
+            "Technical vocabulary: Modern terms and usage",
+            "Cultural nuances: Regional variations and customs",
+            "Mastery assessment: Complete language proficiency test"
         ]
-        return descriptions[lesson - 1]
+        return descriptions[min(lesson - 1, descriptions.count - 1)]
     }
     
     private func createStandardActivities(_ lessonId: String, level: Int) -> [LessonActivity] {
