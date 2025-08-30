@@ -14,6 +14,69 @@ class LessonsRepository: ObservableObject {
         loadProgress()
     }
     
+    // MARK: - Topic Explanations
+    func getTopicExplanation(for lesson: Lesson) -> String {
+        let title = lesson.title.lowercased()
+        
+        if title.contains("vowels") {
+            return "In this lesson, you'll learn Telugu vowels (స్వరాలు). Vowels are the foundation of Telugu script and pronunciation. We'll practice recognizing, writing, and pronouncing these essential sounds."
+        } else if title.contains("consonants") {
+            return "This lesson focuses on Telugu consonants (వ్యంజనాలు). Consonants combine with vowels to form syllables. You'll learn to identify and write these important characters."
+        } else if title.contains("numbers") {
+            return "Learn Telugu numbers from 1-10. Numbers are essential for daily communication. We'll practice reading, writing, and using numbers in simple contexts."
+        } else if title.contains("greetings") {
+            return "Master common Telugu greetings and polite expressions. These phrases will help you start conversations and show respect in Telugu culture."
+        } else if title.contains("family") {
+            return "Discover Telugu words for family members and relationships. Family is central to Telugu culture, and these words are used frequently in daily conversation."
+        } else if title.contains("daily activities") {
+            return "Learn vocabulary for everyday activities like eating, sleeping, and working. These verbs and phrases form the basis of describing your daily routine."
+        } else if title.contains("simple present") {
+            return "Practice forming simple present tense sentences in Telugu. This fundamental grammar structure helps you describe current actions and states."
+        } else if title.contains("question words") {
+            return "Master Telugu question words like 'what', 'where', 'when', and 'how'. These are essential for asking questions and gathering information."
+        } else if title.contains("past tense") {
+            return "Learn to form past tense verbs in Telugu. This grammar lesson helps you talk about completed actions and past events."
+        } else if title.contains("future tense") {
+            return "Practice future tense constructions in Telugu. Express your plans, intentions, and predictions about upcoming events."
+        } else if title.contains("action verbs") {
+            return "Study Telugu action verbs and their conjugations. Learn how verbs change based on who is performing the action (I, you, he/she, we, they)."
+        } else if title.contains("possessives") {
+            return "Master possessive forms in Telugu phrases. Learn to express ownership and relationships using 'my', 'your', 'his', 'her' constructions."
+        } else if title.contains("conversation starters") {
+            return "Practice common conversation starters and social phrases. These expressions help you begin and maintain friendly conversations in Telugu."
+        } else if title.contains("directions") {
+            return "Learn directional vocabulary and movement commands. Practice giving and understanding directions using left, right, and spatial terms."
+        } else if title.contains("time") {
+            return "Master time expressions in Telugu. Learn to talk about today, yesterday, tomorrow, and various time-related concepts."
+        } else if title.contains("story comprehension") {
+            return "Develop reading comprehension through short Telugu stories. Practice understanding narrative elements and answering questions about story content."
+        } else if title.contains("complex sentence") {
+            return "Learn advanced sentence structures using connectors like 'because', 'although', and 'if-then'. Build more sophisticated Telugu expressions."
+        } else if title.contains("advanced grammar") {
+            return "Study complex grammatical concepts including passive voice, causative forms, and reported speech. Enhance your Telugu language precision."
+        } else if title.contains("literature") || title.contains("poetry") {
+            return "Explore Telugu literary language and poetic expressions. Learn classical vocabulary and appreciate the beauty of Telugu literature."
+        } else if title.contains("cultural") || title.contains("traditions") {
+            return "Discover Telugu cultural vocabulary related to festivals, customs, and traditional practices. Understand the cultural context behind the language."
+        } else if title.contains("business") || title.contains("professional") {
+            return "Learn professional and business vocabulary in Telugu. Practice workplace terminology and formal communication skills."
+        } else if title.contains("technology") || title.contains("modern") {
+            return "Study modern Telugu vocabulary for technology and contemporary life. Learn terms for computers, internet, and digital communication."
+        } else if title.contains("travel") || title.contains("transportation") {
+            return "Master travel and transportation vocabulary. Learn terms for different modes of transport and travel-related expressions."
+        } else if title.contains("health") || title.contains("medical") {
+            return "Learn health and medical vocabulary in Telugu. Practice expressions for describing symptoms and medical situations."
+        } else if title.contains("education") || title.contains("learning") {
+            return "Study educational vocabulary and academic terms. Learn words related to school, studying, and the learning process."
+        } else if title.contains("sports") || title.contains("recreation") {
+            return "Explore sports and recreational vocabulary in Telugu. Learn terms for games, competitions, and leisure activities."
+        } else if title.contains("nature") || title.contains("environment") {
+            return "Discover vocabulary for natural elements and environmental terms. Learn words for weather, plants, animals, and natural phenomena."
+        } else {
+            return "This lesson covers essential Telugu vocabulary and grammar concepts. Practice reading, writing, listening, and speaking to strengthen your language skills."
+        }
+    }
+    
     // MARK: - Data Loading
     private func loadLevels() {
         guard let url = Bundle.main.url(forResource: "lessons", withExtension: "json"),

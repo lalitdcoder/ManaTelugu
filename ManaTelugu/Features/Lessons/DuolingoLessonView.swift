@@ -19,6 +19,7 @@ struct DuolingoLessonView: View {
     @State private var showingCompletion = false
     @State private var xpEarned = 0
     @State private var showingLetterIntro = true
+    @State private var showingTopicIntro = true
     
     private var currentActivity: LessonActivity? {
         guard currentActivityIndex < lesson.activities.count else { return nil }
@@ -51,7 +52,9 @@ struct DuolingoLessonView: View {
     
     var body: some View {
         GeometryReader { geometry in
-            if showingLetterIntro && isBeginnerLesson {
+            if showingTopicIntro {
+                topicIntroductionView(geometry: geometry)
+            } else if showingLetterIntro && isBeginnerLesson {
                 letterIntroductionView(geometry: geometry)
             } else {
                 VStack(spacing: 0) {
@@ -87,6 +90,102 @@ struct DuolingoLessonView: View {
     
     private var isBeginnerLesson: Bool {
         lesson.levelId.contains("beginner") || lesson.difficulty == 1
+    }
+    
+    private func topicIntroductionView(geometry: GeometryProxy) -> some View {
+        VStack(spacing: MTSpacing.large) {
+            // Header
+            VStack(spacing: MTSpacing.small) {
+                Text(lesson.title)
+                    .font(MTTypography.title(kidMode: session.userProfile.kidMode))
+                    .foregroundColor(MTColors.text)
+                    .multilineTextAlignment(.center)
+                
+                Text("Lesson Overview")
+                    .font(MTTypography.heading(kidMode: session.userProfile.kidMode))
+                    .foregroundColor(MTColors.primary)
+                    .fontWeight(.medium)
+            }
+            .padding(.top, MTSpacing.large)
+            
+            Spacer()
+            
+            // Topic Explanation
+            VStack(spacing: MTSpacing.medium) {
+                Image(systemName: "book.open")
+                    .font(.system(size: 60))
+                    .foregroundColor(MTColors.primary)
+                
+                Text(lessonsRepository.getTopicExplanation(for: lesson))
+                    .font(MTTypography.body(kidMode: session.userProfile.kidMode))
+                    .foregroundColor(MTColors.text)
+                    .multilineTextAlignment(.center)
+                    .lineSpacing(4)
+                    .padding(.horizontal, MTSpacing.medium)
+            }
+            .padding()
+            .background(MTColors.surfaceAlt)
+            .cornerRadius(16)
+            .padding(.horizontal)
+            
+            // Lesson Details
+            VStack(spacing: MTSpacing.small) {
+                HStack {
+                    Image(systemName: "clock")
+                        .foregroundColor(MTColors.text.opacity(0.7))
+                    Text("\(lesson.estimatedMinutes) minutes")
+                        .font(MTTypography.body(kidMode: session.userProfile.kidMode))
+                        .foregroundColor(MTColors.text.opacity(0.7))
+                    
+                    Spacer()
+                    
+                    Image(systemName: "star.fill")
+                        .foregroundColor(.yellow)
+                    Text("\(lesson.xpReward) XP")
+                        .font(MTTypography.body(kidMode: session.userProfile.kidMode))
+                        .foregroundColor(MTColors.text.opacity(0.7))
+                }
+                
+                HStack {
+                    Image(systemName: "list.bullet")
+                        .foregroundColor(MTColors.text.opacity(0.7))
+                    Text("\(totalQuestions) questions")
+                        .font(MTTypography.body(kidMode: session.userProfile.kidMode))
+                        .foregroundColor(MTColors.text.opacity(0.7))
+                    
+                    Spacer()
+                    
+                    Image(systemName: "chart.bar.fill")
+                        .foregroundColor(MTColors.text.opacity(0.7))
+                    Text("Level \(lesson.difficulty)")
+                        .font(MTTypography.body(kidMode: session.userProfile.kidMode))
+                        .foregroundColor(MTColors.text.opacity(0.7))
+                }
+            }
+            .padding()
+            .background(MTColors.surface)
+            .cornerRadius(12)
+            .padding(.horizontal)
+            
+            Spacer()
+            
+            // Continue Button
+            Button(action: {
+                showingTopicIntro = false
+            }) {
+                Text("Start Learning")
+                    .font(MTTypography.body(kidMode: session.userProfile.kidMode))
+                    .fontWeight(.bold)
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(MTColors.primary)
+                    .cornerRadius(12)
+            }
+            .padding(.horizontal)
+            .padding(.bottom, MTSpacing.large)
+        }
+        .background(MTColors.background)
     }
     
     private func letterIntroductionView(geometry: GeometryProxy) -> some View {
