@@ -90,12 +90,12 @@ class LessonsRepository: ObservableObject {
         do {
             let decoder = JSONDecoder()
             let lessonsData = try decoder.decode(LessonsData.self, from: data)
-            // Ensure each level has 10 lessons even if JSON provides fewer, then apply topic titles and enrich
-            var loadedLevels = padLevelsToTen(from: lessonsData.levels)
+            // Ensure each level has 15 lessons even if JSON provides fewer, then apply topic titles and enrich
+            var loadedLevels = padLevelsToFifteen(from: lessonsData.levels)
             loadedLevels = assignTopicTitles(to: loadedLevels)
             loadedLevels = customizeContentForTopics(loadedLevels)
             self.levels = loadedLevels.map { level in
-                let enrichedLessons = level.lessons.map { ensureTenQuestionsPerLesson($0) }
+                let enrichedLessons = level.lessons.map { ensureFifteenQuestionsPerLesson($0) }
                 return LearningLevel(id: level.id, title: level.title, description: level.description, difficulty: level.difficulty, lessons: enrichedLessons, requiredXP: level.requiredXP, color: level.color)
             }
             print("✅ Successfully loaded \(levels.count) levels with \(levels.flatMap(\.lessons).count) total lessons (padded, titled, topic-customized, enriched)")
@@ -107,15 +107,15 @@ class LessonsRepository: ObservableObject {
         }
     }
 
-    private func padLevelsToTen(from levels: [LearningLevel]) -> [LearningLevel] {
+    private func padLevelsToFifteen(from levels: [LearningLevel]) -> [LearningLevel] {
         return levels.map { level in
-            if level.lessons.count >= 10 { return level }
+            if level.lessons.count >= 15 { return level }
             let existing = level.lessons
             let startIndex = existing.count + 1
             let generated: [Lesson]
             switch level.id {
             case "level_1_beginner":
-                generated = (startIndex...10).map { i in
+                generated = (startIndex...15).map { i in
                     Lesson(
                         id: "lesson_1_\(i)",
                         title: "Lesson \(i)",
@@ -129,7 +129,7 @@ class LessonsRepository: ObservableObject {
                     )
                 }
             case "level_2_basic":
-                generated = (startIndex...10).map { i in
+                generated = (startIndex...15).map { i in
                     Lesson(
                         id: "lesson_2_\(i)",
                         title: "Lesson \(i)",
@@ -143,7 +143,7 @@ class LessonsRepository: ObservableObject {
                     )
                 }
             case "level_3_intermediate":
-                generated = (startIndex...10).map { i in
+                generated = (startIndex...15).map { i in
                     Lesson(
                         id: "lesson_3_\(i)",
                         title: "Lesson \(i)",
@@ -157,7 +157,7 @@ class LessonsRepository: ObservableObject {
                     )
                 }
             case "level_4_advanced":
-                generated = (startIndex...10).map { i in
+                generated = (startIndex...15).map { i in
                     Lesson(
                         id: "lesson_4_\(i)",
                         title: "Lesson \(i)",
@@ -173,7 +173,7 @@ class LessonsRepository: ObservableObject {
             default:
                 // If unknown id, pad using the level's difficulty
                 let levelNum = max(min(level.difficulty, 4), 1)
-                generated = (startIndex...10).map { i in
+                generated = (startIndex...15).map { i in
                     Lesson(
                         id: "lesson_\(levelNum)_\(i)",
                         title: "Lesson \(i)",
@@ -754,18 +754,27 @@ class LessonsRepository: ObservableObject {
     
     private func getBeginnerDescription(_ lesson: Int) -> String {
         let descriptions = [
-            "First Telugu vowels: అ, ఆ — Examples: అకు, ఆకు",
-            "Telugu vowels: ఇ, ఈ — Examples: ఇల్లు, ఈగ", 
-            "Complete vowel set: ఉ, ఊ, ఎ, ఏ — Examples: ఉడు, ఊరు, ఎలుగు, ఏనుగు",
-            "First consonants: క-వర్గం — Examples: క, ఖ, గ, ఘ, ఙ",
-            "More consonants: చ-వర్గం — Examples: చ, ఛ, జ, ఝ, ఞ",
-            "Simple syllables: కా, కి, కు — Build words like కాలి, కిలో, కుడి",
-            "Common syllables: మా, నా, పా — Examples: మామ, నాన్న, పాలు",
-            "Family words: అమ్మ, నాన్న — Example sentences: అమ్మ వంట చేస్తుంది",
-            "Basic needs: నీరు, అన్నం — Example sentences: నాకు నీరు కావాలి",
-            "Greetings: నమస్కారం, వచ్చు — Dialogues: నమస్కారం! ఎలా ఉన్నారు?"
+            // Vowels - Lessons 1-4
+            "First Telugu vowels: అ, ఆ, ఇ, ఈ — Learn basic vowel sounds and recognition",
+            "Telugu vowels: ఉ, ఊ, ఋ, ౠ — Practice vowel pronunciation and writing", 
+            "Telugu vowels: ఎ, ఏ, ఐ, ఒ — Complete vowel sound practice",
+            "Final vowels: ఓ, ఔ, అం, అః — Master all Telugu vowel sounds",
+            // Consonants - Lessons 5-10
+            "First consonants: క, ఖ, గ, ఘ — Learn ka-varga consonant group",
+            "Consonants: చ, ఛ, జ, ఝ — Practice cha-varga consonant sounds",
+            "Consonants: ట, ఠ, డ, ఢ — Master ta-varga (retroflex) sounds",
+            "Consonants: త, థ, ద, ధ — Learn tha-varga (dental) consonants",
+            "Consonants: ప, ఫ, బ, భ — Practice pa-varga consonant group",
+            "Consonants: మ, య, ర, ల — Learn semivowels and nasals",
+            // Additional consonants - Lessons 11-12
+            "More consonants: వ, శ, ష, స — Complete consonant learning",
+            "Final consonants: హ, ళ, క్ష, జ్ఞ — Master all Telugu consonants",
+            // Syllables - Lessons 13-15 (only after consonants complete)
+            "First syllables: కా, కి, కీ, కు — Combine consonants with vowels",
+            "More syllables: కూ, కె, కే, కై — Practice syllable formation",
+            "Complete syllables: కో, కౌ, కం, కః — Master all syllable combinations"
         ]
-        return descriptions[lesson - 1]
+        return descriptions[min(lesson - 1, descriptions.count - 1)]
     }
     
     private func getBasicDescription(_ lesson: Int) -> String {
@@ -907,12 +916,12 @@ class LessonsRepository: ObservableObject {
         ]
     }
 
-    // Ensure minimum of 10 practice questions per lesson (top-up if JSON provides fewer)
-    private func ensureTenQuestionsPerLesson(_ lesson: Lesson) -> Lesson {
+    // Ensure minimum of 15 practice questions per lesson (top-up if JSON provides fewer)
+    private func ensureFifteenQuestionsPerLesson(_ lesson: Lesson) -> Lesson {
         let totalExisting = lesson.activities.reduce(0) { $0 + $1.questions.count }
-        guard totalExisting < 10 else { return lesson }
+        guard totalExisting < 15 else { return lesson }
         var activities = lesson.activities
-        var remaining = 10 - totalExisting
+        var remaining = 15 - totalExisting
         func appendQuestions(to type: ActivityType, count: Int) {
             guard remaining > 0, let idx = activities.firstIndex(where: { $0.type == type }) else { return }
             let addCount = min(count, remaining)

@@ -256,28 +256,42 @@ struct DuolingoLessonView: View {
     private func getLettersForLesson() -> [Letter] {
         let allLetters = session.dataRepository.letters()
         
-        // Extract letters based on lesson order for beginner lessons
+        // Proper sequence: All vowels first, then consonants, then syllables
         switch lesson.order {
+        // Vowels - Lessons 1-4
         case 1:
-            return allLetters.filter { ["అ", "ఆ"].contains($0.glyph) }
+            return allLetters.filter { ["అ", "ఆ", "ఇ", "ఈ"].contains($0.glyph) }
         case 2:
-            return allLetters.filter { ["ఇ", "ఈ"].contains($0.glyph) }
+            return allLetters.filter { ["ఉ", "ఊ", "ఋ", "ౠ"].contains($0.glyph) }
         case 3:
-            return allLetters.filter { ["ఉ", "ఊ", "ఎ", "ఏ"].contains($0.glyph) }
+            return allLetters.filter { ["ఎ", "ఏ", "ఐ", "ఒ"].contains($0.glyph) }
         case 4:
-            return allLetters.filter { ["క", "ఖ", "గ", "ఘ"].contains($0.glyph) }
+            return allLetters.filter { ["ఓ", "ఔ", "అం", "అః"].contains($0.glyph) }
+        // Consonants - Lessons 5-10
         case 5:
-            return allLetters.filter { ["చ", "ఛ", "జ", "ఝ"].contains($0.glyph) }
+            return allLetters.filter { ["క", "ఖ", "గ", "ఘ"].contains($0.glyph) }
         case 6:
-            return allLetters.filter { ["కా", "కి", "కు"].contains($0.glyph) }
+            return allLetters.filter { ["చ", "ఛ", "జ", "ఝ"].contains($0.glyph) }
         case 7:
-            return allLetters.filter { ["మ", "న", "ప"].contains($0.glyph) }
+            return allLetters.filter { ["ట", "ఠ", "డ", "ఢ"].contains($0.glyph) }
         case 8:
-            return allLetters.filter { ["త", "ద", "ల"].contains($0.glyph) }
+            return allLetters.filter { ["త", "థ", "ద", "ధ"].contains($0.glyph) }
         case 9:
-            return allLetters.filter { ["వ", "య", "ర"].contains($0.glyph) }
+            return allLetters.filter { ["ప", "ఫ", "బ", "భ"].contains($0.glyph) }
         case 10:
-            return allLetters.filter { ["స", "హ"].contains($0.glyph) }
+            return allLetters.filter { ["మ", "య", "ర", "ల"].contains($0.glyph) }
+        // Additional consonants and syllables for extended lessons
+        case 11:
+            return allLetters.filter { ["వ", "శ", "ష", "స"].contains($0.glyph) }
+        case 12:
+            return allLetters.filter { ["హ", "ళ", "క్ష", "జ్ఞ"].contains($0.glyph) }
+        // Syllable formation starts only after consonants are complete
+        case 13:
+            return allLetters.filter { ["కా", "కి", "కీ", "కు"].contains($0.glyph) }
+        case 14:
+            return allLetters.filter { ["కూ", "కె", "కే", "కై"].contains($0.glyph) }
+        case 15:
+            return allLetters.filter { ["కో", "కౌ", "కం", "కః"].contains($0.glyph) }
         default:
             // For other lessons, show first 4 letters as fallback
             return Array(allLetters.prefix(4))
