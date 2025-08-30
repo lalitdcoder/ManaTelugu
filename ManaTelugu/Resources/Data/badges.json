@@ -1,0 +1,58 @@
+[
+  {
+    "id": "badge_streak_3",
+    "name": "3-Day Streak",
+    "criteria": {
+      "streak": 3
+    },
+    "imageName": "streak_3.png"
+  },
+  {
+    "id": "badge_streak_7",
+    "name": "Week Streak",
+    "criteria": {
+      "streak": 7
+    },
+    "imageName": "streak_7.png"
+  },
+  {
+    "id": "badge_letters_10",
+    "name": "Letter Master",
+    "criteria": {
+      "lettersMastered": 10
+    },
+    "imageName": "letters_master.png"
+  },
+  {
+    "id": "badge_words_20",
+    "name": "Vocabulary Builder",
+    "criteria": {
+      "wordsMastered": 20
+    },
+    "imageName": "words_builder.png"
+  },
+  {
+    "id": "badge_perfect_quiz_1",
+    "name": "Perfect Score",
+    "criteria": {
+      "lessonsCompleted": 1
+    },
+    "imageName": "perfect_score.png"
+  },
+  {
+    "id": "badge_streak_30",
+    "name": "30-Day Streak",
+    "criteria": {
+      "streak": 30
+    },
+    "imageName": "streak_30.png"
+  },
+  {
+    "id": "badge_words_100",
+    "name": "Century of Words",
+    "criteria": {
+      "wordsMastered": 100
+    },
+    "imageName": "words_100.png"
+  }
+]

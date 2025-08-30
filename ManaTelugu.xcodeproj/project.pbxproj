@@ -27,6 +27,7 @@
 		8B7C895B2E6028FC008F05C9 /* ManaTelugu.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ManaTelugu.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		8B7C89682E6028FD008F05C9 /* ManaTeluguTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ManaTeluguTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		8B7C89722E6028FD008F05C9 /* ManaTeluguUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ManaTeluguUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		8B7C89DC2E6034BC008F05C9 /* ManaTelugu.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = ManaTelugu.xcodeproj; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -75,6 +76,7 @@
 		8B7C89522E6028FC008F05C9 = {
 			isa = PBXGroup;
 			children = (
+				8B7C89DC2E6034BC008F05C9 /* ManaTelugu.xcodeproj */,
 				8B7C895D2E6028FC008F05C9 /* ManaTelugu */,
 				8B7C896B2E6028FD008F05C9 /* ManaTeluguTests */,
 				8B7C89752E6028FD008F05C9 /* ManaTeluguUITests */,
@@ -89,6 +91,11 @@
 				8B7C89682E6028FD008F05C9 /* ManaTeluguTests.xctest */,
 				8B7C89722E6028FD008F05C9 /* ManaTeluguUITests.xctest */,
 			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		8BF55F0B2E603BA10084271E /* Products */ = {
+			isa = PBXGroup;
 			name = Products;
 			sourceTree = "<group>";
 		};
@@ -198,6 +205,12 @@
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 8B7C895C2E6028FC008F05C9 /* Products */;
 			projectDirPath = "";
+			projectReferences = (
+				{
+					ProductGroup = 8BF55F0B2E603BA10084271E /* Products */;
+					ProjectRef = 8B7C89DC2E6034BC008F05C9 /* ManaTelugu.xcodeproj */;
+				},
+			);
 			projectRoot = "";
 			targets = (
 				8B7C895A2E6028FC008F05C9 /* ManaTelugu */,
@@ -391,10 +404,10 @@
 		8B7C897D2E6028FD008F05C9 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = G6PCD83XNA;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -402,6 +415,7 @@
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -418,10 +432,10 @@
 		8B7C897E2E6028FD008F05C9 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = G6PCD83XNA;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -429,6 +443,7 @@
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",

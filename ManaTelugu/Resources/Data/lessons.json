@@ -1,0 +1,40 @@
+{
+  "levels": [
+    {
+      "id": "level_1_beginner",
+      "title": "Level 1: Beginner",
+      "description": "Beginner overview: Learn core sounds and simple words. Explanation: Telugu has vowels and consonants that combine to form syllables. Examples: అ (a) in అన్నం, ఆ (aa) in ఆకు; simple words like అమ్మ (mother), నాన్న (father).",
+      "difficulty": 1,
+      "requiredXP": 0,
+      "color": "#4CAF50",
+      "lessons": []
+    },
+    {
+      "id": "level_2_basic",
+      "title": "Level 2: Basic",
+      "description": "Basic level: Build CV syllables and everyday words. Explanation: Add vowel signs to consonants to form syllables (క + ఆ → కా). Examples: కా, కి, కు; phrases: ఇది ఏమిటి?",
+      "difficulty": 2,
+      "requiredXP": 200,
+      "color": "#2196F3",
+      "lessons": []
+    },
+    {
+      "id": "level_3_intermediate",
+      "title": "Level 3: Intermediate", 
+      "description": "Intermediate level: Read and write simple sentences. Explanation: Use SOV order and present tense forms. Examples: నేను నీరు త్రాగుతాను; నేను పాఠం చదువుతాను.",
+      "difficulty": 3,
+      "requiredXP": 500,
+      "color": "#FF9800",
+      "lessons": []
+    },
+    {
+      "id": "level_4_advanced",
+      "title": "Level 4: Advanced",
+      "description": "Advanced level: Complex sentences and formal usage. Explanation: Conditionals, passive voice, and idioms in context. Examples: అయితే, అయినా constructions; formal మీరు/తమరు forms.",
+      "difficulty": 4,
+      "requiredXP": 1000,
+      "color": "#9C27B0",
+      "lessons": []
+    }
+  ]
+}
