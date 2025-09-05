@@ -6,9 +6,8 @@ struct RootTabView: View {
     var body: some View {
         TabView {
             homeTab
-            practiceTab
-            vocabularyTab
             lessonsTab
+            practiceTab
             progressTab
             settingsTab
         }
@@ -27,7 +26,9 @@ private extension RootTabView {
     }
     
     var lessonsTab: some View {
-        LessonsHubView()
+        NavigationStack {
+            LessonsHubView()
+        }
             .tabItem {
                 Image(systemName: "graduationcap")
                 Text("Lessons")
@@ -36,11 +37,13 @@ private extension RootTabView {
     
     // Move Practice earlier so it's always visible in the tab bar
     var practiceTab: some View {
-        PracticeView()
-            .tabItem {
-                Image(systemName: "book")
-                Text("Practice")
-            }
+        NavigationStack {
+            PracticeView()
+        }
+        .tabItem {
+            Image(systemName: "book")
+            Text("Practice")
+        }
     }
     
     var alphabetTab: some View {
@@ -54,11 +57,13 @@ private extension RootTabView {
     }
     
     var vocabularyTab: some View {
-        VocabularyThemesView()
-            .tabItem {
-                Image(systemName: "books.vertical")
-                Text("Vocabulary")
-            }
+        NavigationStack {
+            VocabularyThemesView()
+        }
+        .tabItem {
+            Image(systemName: "books.vertical")
+            Text("Vocabulary")
+        }
     }
     
     var progressTab: some View {

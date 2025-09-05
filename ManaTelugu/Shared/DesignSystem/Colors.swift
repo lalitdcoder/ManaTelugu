@@ -1,12 +1,26 @@
 import SwiftUI
 
 enum MTColors {
-    static let primary = Color("mtPrimary")
-    static let secondary = Color("mtSecondary")
-    static let success = Color("mtSuccess")
-    static let warning = Color("mtWarning")
-    static let surface = Color("mtSurface")
-    static let surfaceAlt = Color("mtSurfaceAlt")
-    static let text = Color("mtText")
-    static let background = Color("mtSurface")
+    // Apple's semantic color system
+    static let primary = Color(.systemBlue)
+    static let secondary = Color(.systemGreen)
+    static let success = Color(.systemGreen)
+    static let warning = Color(.systemOrange)
+    static let error = Color(.systemRed)
+    static let surface = Color(.systemBackground)
+    static let surfaceAlt = Color(.secondarySystemBackground)
+    static let text = Color(.label)
+    static let background = Color(.systemGroupedBackground)
+    
+    // Accent colors for different features
+    static let accent = Color(.systemBlue)
+    static let funBlue = Color(.systemBlue)
+    static let funGreen = Color(.systemGreen)
+    static let funYellow = Color(.systemYellow)
+    static let funPink = Color(.systemPink)
+    
+    // Legacy colors for backward compatibility
+    static let mascot = Color(.systemPink)
+    static let star = Color(.systemYellow)
+    static let badge = Color(.systemOrange)
 }

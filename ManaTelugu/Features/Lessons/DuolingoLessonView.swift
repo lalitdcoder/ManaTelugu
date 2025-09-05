@@ -20,6 +20,8 @@ struct DuolingoLessonView: View {
     @State private var xpEarned = 0
     @State private var showingLetterIntro = true
     @State private var showingTopicIntro = true
+    @State private var lessonLetters: [Letter] = []
+    @State private var teachingMomentAnimation = false
     
     private var currentActivity: LessonActivity? {
         guard currentActivityIndex < lesson.activities.count else { return nil }
@@ -50,11 +52,34 @@ struct DuolingoLessonView: View {
         return Double(completedQuestions) / Double(totalQuestions)
     }
     
+    private struct AudioToLetterMatchState {
+        var matched: [Int: String] = [:] // audioIndex: letter
+        var currentAudioIndex: Int? = nil
+    }
+
+    @State private var audioToLetterMatchState = AudioToLetterMatchState()
+    
     var body: some View {
         GeometryReader { geometry in
-            if showingTopicIntro {
+            if !isBeginnerLesson {
+                VStack {
+                    Spacer()
+                    Image(systemName: "hammer")
+                        .font(.system(size: 48))
+                        .foregroundColor(MTColors.primary)
+                        .padding(.bottom, 16)
+                    Text("These lessons are in development. Come back later.")
+                        .font(MTTypography.title(kidMode: session.userProfile.kidMode))
+                        .foregroundColor(MTColors.text)
+                        .multilineTextAlignment(.center)
+                        .padding()
+                    Spacer()
+                }
+            } else if showingTopicIntro {
                 topicIntroductionView(geometry: geometry)
-            } else if showingLetterIntro && isBeginnerLesson {
+            } else if showingLetterIntro && !isBeginnerLesson {
+                // Only show letter intro for non-beginner lessons
+                // Beginner lessons teach letters just-in-time
                 letterIntroductionView(geometry: geometry)
             } else {
                 VStack(spacing: 0) {
@@ -64,6 +89,44 @@ struct DuolingoLessonView: View {
                     // Question Content
                     if let question = currentQuestion {
                         questionView(question: question, geometry: geometry)
+                    } else if lesson.activities.isEmpty {
+                        // Debug: Show if no activities
+                        VStack(spacing: MTSpacing.large) {
+                            Text("Debug: No Activities Found")
+                                .font(MTTypography.title(kidMode: session.userProfile.kidMode))
+                                .foregroundColor(MTColors.primary)
+                            
+                            Text("Lesson: \(lesson.title)")
+                                .font(MTTypography.body(kidMode: session.userProfile.kidMode))
+                            
+                            Text("Activities count: \(lesson.activities.count)")
+                                .font(MTTypography.body(kidMode: session.userProfile.kidMode))
+                            
+                            Text("Level ID: \(lesson.levelId)")
+                                .font(MTTypography.body(kidMode: session.userProfile.kidMode))
+                            
+                            Text("Lesson ID: \(lesson.id)")
+                                .font(MTTypography.body(kidMode: session.userProfile.kidMode))
+                            
+                            Text("Difficulty: \(lesson.difficulty)")
+                                .font(MTTypography.body(kidMode: session.userProfile.kidMode))
+                            
+                            Text("Is Beginner: \(isBeginnerLesson ? "Yes" : "No")")
+                                .font(MTTypography.body(kidMode: session.userProfile.kidMode))
+                                .foregroundColor(isBeginnerLesson ? .green : .red)
+                            
+                            Button("Reload Lesson") {
+                                // Force reload
+                                Task {
+                                    lessonLetters = await getLettersForLessonSync()
+                                }
+                            }
+                            .padding()
+                            .background(MTColors.primary)
+                            .foregroundColor(.white)
+                            .cornerRadius(12)
+                        }
+                        .padding()
                     } else {
                         completionView
                     }
@@ -73,6 +136,19 @@ struct DuolingoLessonView: View {
         .navigationBarHidden(true)
         .onAppear {
             questionStartTime = Date()
+            Task {
+                lessonLetters = await getLettersForLessonSync()
+            }
+            
+            // For beginner lessons: show topic intro but skip bulk letter intro
+            // (letters will be taught just-in-time)
+            if isBeginnerLesson {
+                showingTopicIntro = true
+                showingLetterIntro = false // Skip bulk intro, teach just-in-time
+            } else {
+                showingTopicIntro = false
+                showingLetterIntro = false
+            }
         }
         .sheet(isPresented: $showingCompletion) {
             DuolingoCompletionView(
@@ -116,7 +192,7 @@ struct DuolingoLessonView: View {
                     .font(.system(size: 60))
                     .foregroundColor(MTColors.primary)
                 
-                Text(lessonsRepository.getTopicExplanation(for: lesson))
+                Text("Learn about \(lesson.title)")
                     .font(MTTypography.body(kidMode: session.userProfile.kidMode))
                     .foregroundColor(MTColors.text)
                     .multilineTextAlignment(.center)
@@ -207,7 +283,7 @@ struct DuolingoLessonView: View {
             
             // Letters Grid - Show all 4 letters in a single row
             LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: MTSpacing.medium), count: 4), spacing: MTSpacing.large) {
-                ForEach(getLettersForLesson(), id: \.self) { letter in
+                ForEach(lessonLetters, id: \.self) { letter in
                     VStack(spacing: MTSpacing.small) {
                         Text(letter.glyph)
                             .font(.system(size: 64))
@@ -253,48 +329,35 @@ struct DuolingoLessonView: View {
         .background(MTColors.background)
     }
     
-    private func getLettersForLesson() -> [Letter] {
-        let allLetters = session.dataRepository.letters()
-        
-        // Proper sequence: All vowels first, then consonants, then syllables
+    private func getLettersForLesson() async -> [Letter] {
+        return await getLettersForLessonSync()
+    }
+    
+    private func getLettersForLessonSync() async -> [Letter] {
+        let allLetters = await session.dataRepository.letters()
         switch lesson.order {
-        // Vowels - Lessons 1-4
         case 1:
             return allLetters.filter { ["అ", "ఆ", "ఇ", "ఈ"].contains($0.glyph) }
         case 2:
-            return allLetters.filter { ["ఉ", "ఊ", "ఋ", "ౠ"].contains($0.glyph) }
+            return allLetters.filter { ["ఉ", "ఊ", "ఋ", "ఎ", "ఏ"].contains($0.glyph) }
         case 3:
-            return allLetters.filter { ["ఎ", "ఏ", "ఐ", "ఒ"].contains($0.glyph) }
+            return allLetters.filter { ["ఐ", "ఒ", "ఓ", "ఔ", "అం", "అః"].contains($0.glyph) }
         case 4:
-            return allLetters.filter { ["ఓ", "ఔ", "అం", "అః"].contains($0.glyph) }
-        // Consonants - Lessons 5-10
+            return allLetters.filter { ["క", "ఖ", "గ", "ఘ", "ఙ"].contains($0.glyph) }
         case 5:
-            return allLetters.filter { ["క", "ఖ", "గ", "ఘ"].contains($0.glyph) }
+            return allLetters.filter { ["చ", "ఛ", "జ", "ఝ", "ఞ"].contains($0.glyph) }
         case 6:
-            return allLetters.filter { ["చ", "ఛ", "జ", "ఝ"].contains($0.glyph) }
+            return allLetters.filter { ["ట", "ఠ", "డ", "ఢ", "ణ"].contains($0.glyph) }
         case 7:
-            return allLetters.filter { ["ట", "ఠ", "డ", "ఢ"].contains($0.glyph) }
+            return allLetters.filter { ["త", "థ", "ద", "ధ", "న"].contains($0.glyph) }
         case 8:
-            return allLetters.filter { ["త", "థ", "ద", "ధ"].contains($0.glyph) }
+            return allLetters.filter { ["ప", "ఫ", "బ", "భ", "మ"].contains($0.glyph) }
         case 9:
-            return allLetters.filter { ["ప", "ఫ", "బ", "భ"].contains($0.glyph) }
+            return allLetters.filter { ["య", "ర", "ల", "వ", "శ", "ష", "స", "హ", "ళ", "క్ష", "ఱ"].contains($0.glyph) }
         case 10:
-            return allLetters.filter { ["మ", "య", "ర", "ల"].contains($0.glyph) }
-        // Additional consonants and syllables for extended lessons
-        case 11:
-            return allLetters.filter { ["వ", "శ", "ష", "స"].contains($0.glyph) }
-        case 12:
-            return allLetters.filter { ["హ", "ళ", "క్ష", "జ్ఞ"].contains($0.glyph) }
-        // Syllable formation starts only after consonants are complete
-        case 13:
-            return allLetters.filter { ["కా", "కి", "కీ", "కు"].contains($0.glyph) }
-        case 14:
-            return allLetters.filter { ["కూ", "కె", "కే", "కై"].contains($0.glyph) }
-        case 15:
-            return allLetters.filter { ["కో", "కౌ", "కం", "కః"].contains($0.glyph) }
+            return allLetters.filter { ["అ","ఆ","ఇ","ఈ","ఉ","ఊ","క","గ","చ","జ","త","ద"].contains($0.glyph) }
         default:
-            // For other lessons, show first 4 letters as fallback
-            return Array(allLetters.prefix(4))
+            return []
         }
     }
     
@@ -358,22 +421,107 @@ struct DuolingoLessonView: View {
     
     private func questionContent(for question: ActivityQuestion) -> some View {
         VStack(spacing: MTSpacing.medium) {
-            switch question.type {
-            case .multipleChoice, .characterRecognition, .wordTranslation:
-                multipleChoiceView(question: question)
-            case .textInput:
-                textInputView(question: question)
-            case .tracing:
-                tracingView(question: question)
-            case .audioIdentification:
-                audioView(question: question)
-            case .speaking:
-                speakingView(question: question)
-            default:
-                multipleChoiceView(question: question)
+            if question.question == "interactive_audio_match" {
+                audioToLetterMatchView(question: question)
+            } else if question.question == "teaching_moment" {
+                teachingMomentView(question: question)
+            } else {
+                switch question.type {
+                case .multipleChoice, .characterRecognition, .wordTranslation:
+                    multipleChoiceView(question: question)
+                case .textInput:
+                    textInputView(question: question)
+                case .tracing:
+                    tracingView(question: question)
+                case .audioIdentification:
+                    audioView(question: question)
+                case .speaking:
+                    speakingView(question: question)
+                default:
+                    multipleChoiceView(question: question)
+                }
             }
         }
         .padding(.horizontal, MTSpacing.large)
+    }
+    
+    private func audioToLetterMatchView(question: ActivityQuestion) -> some View {
+        let audioFiles = (question.audioFile ?? "").split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }
+        let options = question.options ?? []
+        return VStack(spacing: MTSpacing.large) {
+            Text("Match each sound to its letter")
+                .font(MTTypography.heading(kidMode: session.userProfile.kidMode))
+                .foregroundColor(MTColors.primary)
+            // Audio buttons
+            HStack(spacing: MTSpacing.medium) {
+                ForEach(audioFiles.indices, id: \.self) { idx in
+                    VStack {
+                        Button(action: {
+                            playAudioFile(audioFiles[idx])
+                            audioToLetterMatchState.currentAudioIndex = idx
+                        }) {
+                            Image(systemName: audioToLetterMatchState.matched[idx] != nil ? "checkmark.circle.fill" : "play.circle.fill")
+                                .font(.system(size: 40))
+                                .foregroundColor(audioToLetterMatchState.matched[idx] != nil ? MTColors.success : MTColors.primary)
+                        }
+                        Text("Sound \(idx + 1)")
+                            .font(MTTypography.body(kidMode: session.userProfile.kidMode))
+                    }
+                }
+            }
+            // Option letter cards
+            Text("Tap a sound, then tap the matching letter")
+                .font(MTTypography.body(kidMode: session.userProfile.kidMode))
+                .foregroundColor(MTColors.text.opacity(0.7))
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 60), spacing: 16)], spacing: 16) {
+                ForEach(options, id: \.self) { option in
+                    Button(action: {
+                        if let idx = audioToLetterMatchState.currentAudioIndex, audioToLetterMatchState.matched[idx] == nil {
+                            let correctLetter = String(audioFiles[idx].replacingOccurrences(of: ".mp3", with: ""))
+                            if option == correctLetter {
+                                audioToLetterMatchState.matched[idx] = option
+                                session.audioService.play(name: "success.mp3", rate: 1.0)
+                                #if os(iOS)
+                                session.hapticsService.success()
+                                #endif
+                            } else {
+                                session.audioService.play(name: "tryagain.mp3", rate: 1.0)
+                            }
+                            audioToLetterMatchState.currentAudioIndex = nil
+                        }
+                    }) {
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(MTColors.surfaceAlt)
+                                .frame(height: 60)
+                            Text(option)
+                                .font(MTTypography.title(kidMode: session.userProfile.kidMode))
+                                .foregroundColor(MTColors.text)
+                        }
+                    }
+                    .disabled(audioToLetterMatchState.matched.values.contains(option))
+                }
+            }
+            // Continue button
+            if audioToLetterMatchState.matched.count == audioFiles.count {
+                Button(action: nextQuestion) {
+                    Text("Continue")
+                        .font(MTTypography.body(kidMode: session.userProfile.kidMode))
+                        .padding()
+                        .background(MTColors.primary)
+                        .foregroundColor(.white)
+                        .cornerRadius(12)
+                }
+                .padding(.top, MTSpacing.large)
+            }
+        }
+        .onAppear {
+            audioToLetterMatchState = AudioToLetterMatchState()
+        }
+    }
+
+    private func playAudioFile(_ name: String) {
+        session.audioService.play(name: name, rate: 1.0)
     }
     
     private func multipleChoiceView(question: ActivityQuestion) -> some View {
@@ -488,7 +636,19 @@ struct DuolingoLessonView: View {
     
     private func bottomActionArea(for question: ActivityQuestion) -> some View {
         VStack(spacing: MTSpacing.medium) {
-            if showingFeedback {
+            if question.question == "teaching_moment" {
+                // Teaching moment - just continue button
+                Button(action: nextQuestion) {
+                    Text("Got it!")
+                        .font(MTTypography.body(kidMode: session.userProfile.kidMode))
+                        .fontWeight(.bold)
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(MTColors.primary)
+                        .cornerRadius(12)
+                }
+            } else if showingFeedback {
                 Button(action: nextQuestion) {
                     Text(isLastQuestion() ? "Complete Lesson" : "Continue")
                         .font(MTTypography.body(kidMode: session.userProfile.kidMode))
@@ -582,6 +742,12 @@ struct DuolingoLessonView: View {
         
         if isCorrect {
             xpEarned += questionXP
+            session.audioService.play(name: "success.mp3", rate: 1.0)
+            #if os(iOS)
+            session.hapticsService.success()
+            #endif
+        } else {
+            session.audioService.play(name: "tryagain.mp3", rate: 1.0)
         }
         
         withAnimation(.easeInOut(duration: 0.3)) {
@@ -638,7 +804,8 @@ struct DuolingoLessonView: View {
     }
     
     private func tracingView(question: ActivityQuestion) -> some View {
-        VStack(spacing: MTSpacing.large) {
+        let referenceStrokes = lessonLetters.first(where: { $0.glyph == question.correctAnswer })?.strokePathPoints ?? []
+        return VStack(spacing: MTSpacing.large) {
             Text("Writing Practice")
                 .font(MTTypography.heading(kidMode: session.userProfile.kidMode))
                 .foregroundColor(MTColors.text)
@@ -660,9 +827,18 @@ struct DuolingoLessonView: View {
             // Tracing Canvas
             TracingCanvasView(
                 targetCharacter: question.correctAnswer,
+                referenceStrokes: referenceStrokes,
                 onTracingComplete: { isCorrect in
                     selectedAnswer = question.correctAnswer
                     self.isCorrect = isCorrect
+                    if isCorrect {
+                        session.audioService.play(name: "success.mp3", rate: 1.0)
+                        #if os(iOS)
+                        session.hapticsService.success()
+                        #endif
+                    } else {
+                        session.audioService.play(name: "tryagain.mp3", rate: 1.0)
+                    }
                 }
             )
             .frame(height: 200)
@@ -723,7 +899,7 @@ struct DuolingoLessonView: View {
                 .foregroundColor(MTColors.text)
             
             Button(action: {
-                playAudioForCharacter(question.correctAnswer)
+                playQuestionAudio(question)
             }) {
                 HStack {
                     Image(systemName: "play.circle.fill")
@@ -775,16 +951,8 @@ struct DuolingoLessonView: View {
     
     private func saveProgress() {
         let correctCount = responses.filter { $0.isCorrect }.count
-        let totalTime = Date().timeIntervalSince(startTime)
         
-        lessonsRepository.completeLesson(
-            lesson,
-            xpEarned: xpEarned,
-            correctAnswers: correctCount,
-            totalQuestions: responses.count,
-            timeSpent: totalTime,
-            responses: responses
-        )
+        lessonsRepository.markLessonComplete(lessonId: lesson.id, levelId: lesson.levelId)
         
         session.userProfile.totalXP += xpEarned
         if correctCount > responses.count / 2 {
@@ -793,14 +961,101 @@ struct DuolingoLessonView: View {
     }
     
     // MARK: - Audio Playback
-    private func playAudioForCharacter(_ character: String) {
-        // Use text-to-speech for Telugu characters
-        let utterance = AVSpeechUtterance(string: character)
-        utterance.voice = AVSpeechSynthesisVoice(language: "te-IN") // Telugu voice
-        utterance.rate = 0.4 // Slower rate for learning
-        utterance.volume = 1.0
-        
-        let synthesizer = AVSpeechSynthesizer()
-        synthesizer.speak(utterance)
+    private func playQuestionAudio(_ question: ActivityQuestion) {
+        // 0) Special mapping for first four vowels
+        let vowelAudioMap: [String: String] = [
+            "అ": "letter_a.mp3",
+            "ఆ": "letter_aa.mp3",
+            "ఇ": "letter_i.mp3",
+            "ఈ": "letter_ii.mp3"
+        ]
+        if let mapped = vowelAudioMap[question.correctAnswer] {
+            session.audioService.play(name: mapped, rate: 1.0)
+            return
+        }
+        // 1) If the question specifies an audio file, use it
+        if let file = question.audioFile {
+            session.audioService.play(name: file, rate: 1.0)
+            return
+        }
+        // 2) If we have a matching letter in the lesson letters, use its audio file
+        if let letter = lessonLetters.first(where: { $0.glyph == question.correctAnswer }) {
+            session.audioService.play(name: letter.audioFile, rate: 1.0)
+            return
+        }
+        // 3) Try a file named directly after the glyph (e.g., "అ.mp3")
+        let directName = "\(question.correctAnswer).mp3"
+        session.audioService.play(name: directName, rate: 1.0)
+        if session.audioService.isPlaying() { return }
+        // 4) Fallback to iOS Telugu TTS
+        let utterance = AVSpeechUtterance(string: question.correctAnswer)
+        utterance.voice = AVSpeechSynthesisVoice(language: "te-IN")
+        utterance.rate = 0.5
+        AVSpeechSynthesizer().speak(utterance)
+    }
+    
+    private func teachingMomentView(question: ActivityQuestion) -> some View {
+        VStack(spacing: MTSpacing.large) {
+            Text("New Letter!")
+                .font(MTTypography.title(kidMode: session.userProfile.kidMode))
+                .foregroundColor(MTColors.primary)
+                .fontWeight(.bold)
+            
+            // Large letter display with animation
+            Text(question.correctAnswer)
+                .font(.system(size: 120, weight: .light))
+                .foregroundColor(MTColors.text)
+                .padding()
+                .background(
+                    Circle()
+                        .fill(MTColors.surfaceAlt)
+                        .overlay(
+                            Circle()
+                                .stroke(MTColors.primary.opacity(0.3), lineWidth: 3)
+                        )
+                )
+                .scaleEffect(teachingMomentAnimation ? 1.1 : 1.0)
+                .animation(.easeInOut(duration: 1.0).repeatForever(autoreverses: true), value: teachingMomentAnimation)
+            
+            // Audio play button
+            Button(action: {
+                playQuestionAudio(question)
+            }) {
+                HStack {
+                    Image(systemName: "speaker.wave.2.fill")
+                        .font(.title2)
+                    Text("Listen")
+                        .font(MTTypography.body(kidMode: session.userProfile.kidMode))
+                        .fontWeight(.medium)
+                }
+                .foregroundColor(.white)
+                .padding()
+                .background(MTColors.primary)
+                .cornerRadius(25)
+            }
+            
+            // Explanation
+            if let explanation = question.explanation {
+                Text(explanation)
+                    .font(MTTypography.body(kidMode: session.userProfile.kidMode))
+                    .foregroundColor(MTColors.text.opacity(0.8))
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal)
+            }
+            
+            Text("Listen carefully and get ready for questions about this letter!")
+                .font(MTTypography.body(kidMode: session.userProfile.kidMode))
+                .foregroundColor(MTColors.text.opacity(0.6))
+                .multilineTextAlignment(.center)
+                .padding(.horizontal)
+        }
+        .onAppear {
+            // Auto-play audio when teaching moment appears
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                playQuestionAudio(question)
+            }
+            // Start subtle animation
+            teachingMomentAnimation = true
+        }
     }
 }

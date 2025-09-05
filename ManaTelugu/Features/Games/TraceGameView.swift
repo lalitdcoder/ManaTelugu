@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 struct TraceGameView: View {
     @EnvironmentObject var session: AppSession
@@ -28,14 +29,16 @@ struct TraceGameView: View {
             Spacer()
         }
         .onAppear {
-            loadData()
+            Task {
+                await loadData()
+            }
         }
         .navigationTitle("Trace Letters")
         .navigationBarTitleDisplayMode(.large)
     }
     
-    private func loadData() {
-        letters = session.dataRepository.letters().prefix(5).map { $0 }
+    private func loadData() async {
+        letters = await session.dataRepository.letters().prefix(5).map { $0 }
     }
     
     private func updatePath() {
@@ -49,14 +52,37 @@ struct TraceGameView: View {
         }
     }
     
-    private func checkDrawingAccuracy() {
-        // Simple accuracy check - in a real app, this would use more sophisticated algorithms
-        let accuracy = min(Double(drawingPoints.count) / 50.0, 1.0) // Simple proxy for accuracy
-        
-        if accuracy > 0.8 {
-            feedbackMessage = "Great job! That looks like \(currentLetter?.glyph ?? "it")"
+    private func checkDrawingAccuracy(geometry: GeometryProxy) {
+        guard let letter = currentLetter else { return }
+        // 1. Flatten user points
+        let userPoints = drawingPoints
+        // 2. Flatten reference points (scale to canvas size)
+        let refPoints: [CGPoint] = letter.strokePathPoints.flatMap { stroke in
+            stroke.map { CGPoint(x: $0.x * geometry.size.width, y: $0.y * geometry.size.height) }
+        }
+        guard !userPoints.isEmpty, !refPoints.isEmpty else { return }
+        // 3. Compute average min distance from user to ref
+        var userToRefDistances: [Double] = []
+        for userPt in userPoints {
+            let minDist = refPoints.map { distance(from: $0, to: userPt) }.min() ?? 9999
+            userToRefDistances.append(minDist)
+        }
+        let avgUserToRef = userToRefDistances.reduce(0, +) / Double(userToRefDistances.count)
+        // 4. Compute average min distance from ref to user
+        var refToUserDistances: [Double] = []
+        for refPt in refPoints {
+            let minDist = userPoints.map { distance(from: $0, to: refPt) }.min() ?? 9999
+            refToUserDistances.append(minDist)
+        }
+        let avgRefToUser = refToUserDistances.reduce(0, +) / Double(refToUserDistances.count)
+        // 5. Accept if both averages are less than 15% of canvas size
+        let threshold: Double = Double(geometry.size.width) * 0.15
+        if avgUserToRef < threshold && avgRefToUser < threshold {
+            feedbackMessage = "Great job! That looks like \(letter.glyph) +15 XP"
             showSuccess = true
             session.hapticsService.success()
+            // Award XP for successful tracing
+            session.awardXP(15)
         } else {
             feedbackMessage = "Keep practicing! Try to follow the lines more closely."
             showSuccess = false
@@ -160,9 +186,7 @@ private extension TraceGameView {
                                 drawingPoints.append(value.location)
                                 updatePath()
                             }
-                            .onEnded { _ in
-                                checkDrawingAccuracy()
-                            }
+                            .onEnded { _ in checkDrawingAccuracy(geometry: geometry) }
                     )
             }
         }
@@ -213,4 +237,10 @@ struct ColoredCanvas: UIViewRepresentable {
     }
     
     func updateUIView(_ uiView: UIView, context: Context) {}
+}
+
+private func distance(from point1: CGPoint, to point2: CGPoint) -> Double {
+    let dx = point2.x - point1.x
+    let dy = point2.y - point1.y
+    return sqrt(Double(dx * dx + dy * dy))
 }

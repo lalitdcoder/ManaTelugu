@@ -1,2778 +1,1966 @@
 import Foundation
+import Combine
 
 class LessonsRepository: ObservableObject {
     @Published var levels: [LearningLevel] = []
-    @Published var lessonProgress: [String: LessonProgress] = [:]
-    @Published var levelProgress: [String: LevelProgress] = [:]
+    private var levelProgress: [String: Int] = [:]
     
-    private let userDefaults = UserDefaults.standard
-    private let progressKey = "lesson_progress"
-    private let levelProgressKey = "level_progress"
+    init() {}
     
-    init() {
-        loadLevels()
-        loadProgress()
-    }
-    
-    // MARK: - Topic Explanations
-    func getTopicExplanation(for lesson: Lesson) -> String {
-        let title = lesson.title.lowercased()
+    func loadLevels() async {
+        guard levels.isEmpty else { return }
         
-        if title.contains("vowels") {
-            return "In this lesson, you'll learn Telugu vowels (స్వరాలు). Vowels are the foundation of Telugu script and pronunciation. We'll practice recognizing, writing, and pronouncing these essential sounds."
-        } else if title.contains("consonants") {
-            return "This lesson focuses on Telugu consonants (వ్యంజనాలు). Consonants combine with vowels to form syllables. You'll learn to identify and write these important characters."
-        } else if title.contains("numbers") {
-            return "Learn Telugu numbers from 1-10. Numbers are essential for daily communication. We'll practice reading, writing, and using numbers in simple contexts."
-        } else if title.contains("greetings") {
-            return "Master common Telugu greetings and polite expressions. These phrases will help you start conversations and show respect in Telugu culture."
-        } else if title.contains("family") {
-            return "Discover Telugu words for family members and relationships. Family is central to Telugu culture, and these words are used frequently in daily conversation."
-        } else if title.contains("daily activities") {
-            return "Learn vocabulary for everyday activities like eating, sleeping, and working. These verbs and phrases form the basis of describing your daily routine."
-        } else if title.contains("simple present") {
-            return "Practice forming simple present tense sentences in Telugu. This fundamental grammar structure helps you describe current actions and states."
-        } else if title.contains("question words") {
-            return "Master Telugu question words like 'what', 'where', 'when', and 'how'. These are essential for asking questions and gathering information."
-        } else if title.contains("past tense") {
-            return "Learn to form past tense verbs in Telugu. This grammar lesson helps you talk about completed actions and past events."
-        } else if title.contains("future tense") {
-            return "Practice future tense constructions in Telugu. Express your plans, intentions, and predictions about upcoming events."
-        } else if title.contains("action verbs") {
-            return "Study Telugu action verbs and their conjugations. Learn how verbs change based on who is performing the action (I, you, he/she, we, they)."
-        } else if title.contains("possessives") {
-            return "Master possessive forms in Telugu phrases. Learn to express ownership and relationships using 'my', 'your', 'his', 'her' constructions."
-        } else if title.contains("conversation starters") {
-            return "Practice common conversation starters and social phrases. These expressions help you begin and maintain friendly conversations in Telugu."
-        } else if title.contains("directions") {
-            return "Learn directional vocabulary and movement commands. Practice giving and understanding directions using left, right, and spatial terms."
-        } else if title.contains("time") {
-            return "Master time expressions in Telugu. Learn to talk about today, yesterday, tomorrow, and various time-related concepts."
-        } else if title.contains("story comprehension") {
-            return "Develop reading comprehension through short Telugu stories. Practice understanding narrative elements and answering questions about story content."
-        } else if title.contains("complex sentence") {
-            return "Learn advanced sentence structures using connectors like 'because', 'although', and 'if-then'. Build more sophisticated Telugu expressions."
-        } else if title.contains("advanced grammar") {
-            return "Study complex grammatical concepts including passive voice, causative forms, and reported speech. Enhance your Telugu language precision."
-        } else if title.contains("literature") || title.contains("poetry") {
-            return "Explore Telugu literary language and poetic expressions. Learn classical vocabulary and appreciate the beauty of Telugu literature."
-        } else if title.contains("cultural") || title.contains("traditions") {
-            return "Discover Telugu cultural vocabulary related to festivals, customs, and traditional practices. Understand the cultural context behind the language."
-        } else if title.contains("business") || title.contains("professional") {
-            return "Learn professional and business vocabulary in Telugu. Practice workplace terminology and formal communication skills."
-        } else if title.contains("technology") || title.contains("modern") {
-            return "Study modern Telugu vocabulary for technology and contemporary life. Learn terms for computers, internet, and digital communication."
-        } else if title.contains("travel") || title.contains("transportation") {
-            return "Master travel and transportation vocabulary. Learn terms for different modes of transport and travel-related expressions."
-        } else if title.contains("health") || title.contains("medical") {
-            return "Learn health and medical vocabulary in Telugu. Practice expressions for describing symptoms and medical situations."
-        } else if title.contains("education") || title.contains("learning") {
-            return "Study educational vocabulary and academic terms. Learn words related to school, studying, and the learning process."
-        } else if title.contains("sports") || title.contains("recreation") {
-            return "Explore sports and recreational vocabulary in Telugu. Learn terms for games, competitions, and leisure activities."
-        } else if title.contains("nature") || title.contains("environment") {
-            return "Discover vocabulary for natural elements and environmental terms. Learn words for weather, plants, animals, and natural phenomena."
-        } else {
-            return "This lesson covers essential Telugu vocabulary and grammar concepts. Practice reading, writing, listening, and speaking to strengthen your language skills."
-        }
+        self.levels = await Task.detached {
+            await self.createComprehensiveLessons()
+        }.value
     }
     
-    // MARK: - Data Loading
-    private func loadLevels() {
-        guard let url = Bundle.main.url(forResource: "lessons", withExtension: "json"),
-              let data = try? Data(contentsOf: url) else {
-            print("❌ Failed to load lessons.json from bundle")
-            // Add fallback sample data
-            createSampleLevels()
-            return
-        }
-        
-        do {
-            let decoder = JSONDecoder()
-            let lessonsData = try decoder.decode(LessonsData.self, from: data)
-            // Ensure each level has 15 lessons even if JSON provides fewer, then apply topic titles and enrich
-            var loadedLevels = padLevelsToFifteen(from: lessonsData.levels)
-            loadedLevels = assignTopicTitles(to: loadedLevels)
-            loadedLevels = customizeContentForTopics(loadedLevels)
-            self.levels = loadedLevels.map { level in
-                let enrichedLessons = level.lessons.map { ensureFifteenQuestionsPerLesson($0) }
-                return LearningLevel(id: level.id, title: level.title, description: level.description, difficulty: level.difficulty, lessons: enrichedLessons, requiredXP: level.requiredXP, color: level.color)
-            }
-            print("✅ Successfully loaded \(levels.count) levels with \(levels.flatMap(\.lessons).count) total lessons (padded, titled, topic-customized, enriched)")
-            initializeLevelProgress()
-        } catch {
-            print("❌ Failed to decode lessons: \(error)")
-            // Add fallback sample data
-            createSampleLevels()
-        }
-    }
-
-    private func padLevelsToFifteen(from levels: [LearningLevel]) -> [LearningLevel] {
-        return levels.map { level in
-            if level.lessons.count >= 15 { return level }
-            let existing = level.lessons
-            let startIndex = existing.count + 1
-            let generated: [Lesson]
-            switch level.id {
-            case "level_1_beginner":
-                generated = (startIndex...15).map { i in
-                    Lesson(
-                        id: "lesson_1_\(i)",
-                        title: getBeginnerTitle(i),
-                        description: getBeginnerDescription(i),
-                        levelId: level.id,
-                        order: i,
-                        difficulty: 1,
-                        xpReward: 80 + (i * 5),
-                        estimatedMinutes: 12 + i,
-                        activities: createStandardActivities("1_\(i)", level: 1)
-                    )
-                }
-            case "level_2_basic":
-                generated = (startIndex...15).map { i in
-                    Lesson(
-                        id: "lesson_2_\(i)",
-                        title: getBasicTitle(i),
-                        description: getBasicDescription(i),
-                        levelId: level.id,
-                        order: i,
-                        difficulty: 2,
-                        xpReward: 130 + (i * 5),
-                        estimatedMinutes: 20 + i,
-                        activities: createStandardActivities("2_\(i)", level: 2)
-                    )
-                }
-            case "level_3_intermediate":
-                generated = (startIndex...15).map { i in
-                    Lesson(
-                        id: "lesson_3_\(i)",
-                        title: getIntermediateTitle(i),
-                        description: getIntermediateDescription(i),
-                        levelId: level.id,
-                        order: i,
-                        difficulty: 3,
-                        xpReward: 180 + (i * 5),
-                        estimatedMinutes: 25 + i,
-                        activities: createStandardActivities("3_\(i)", level: 3)
-                    )
-                }
-            case "level_4_advanced":
-                generated = (startIndex...15).map { i in
-                    Lesson(
-                        id: "lesson_4_\(i)",
-                        title: getAdvancedTitle(i),
-                        description: getAdvancedDescription(i),
-                        levelId: level.id,
-                        order: i,
-                        difficulty: 4,
-                        xpReward: 230 + (i * 5),
-                        estimatedMinutes: 30 + i,
-                        activities: createStandardActivities("4_\(i)", level: 4)
-                    )
-                }
-            default:
-                // If unknown id, pad using the level's difficulty
-                let levelNum = max(min(level.difficulty, 4), 1)
-                generated = (startIndex...15).map { i in
-                    Lesson(
-                        id: "lesson_\(levelNum)_\(i)",
-                        title: "Lesson \(i)",
-                        description: "Additional lesson \(i)",
-                        levelId: level.id,
-                        order: i,
-                        difficulty: level.difficulty,
-                        xpReward: 50 + (i * 5),
-                        estimatedMinutes: 10 + i,
-                        activities: createStandardActivities("4_\(i)", level: levelNum)
-                    )
-                }
-            }
-            let mergedLessons = existing + generated
-            return LearningLevel(id: level.id, title: level.title, description: level.description, difficulty: level.difficulty, lessons: mergedLessons, requiredXP: level.requiredXP, color: level.color)
-        }
+    func markLessonComplete(lessonId: String, levelId: String) {
+        levelProgress[levelId, default: 0] = max(levelProgress[levelId, default: 0], 1)
     }
     
-    private func createSampleLevels() {
-        print("🔧 Creating sample lesson data as fallback")
-        // BEGINNER LEVEL: 10 lessons progressing from letters → syllables → simple words
-        let beginnerLessons = [
-            // Lesson 1: Basic Vowels అ, ఆ
+    func getCompletedLessonCount(for levelId: String) -> Int {
+        return levelProgress[levelId, default: 0]
+    }
+    
+    func isLessonCompleted(_ lessonId: String) -> Bool {
+        // Simple stub - you can implement proper logic later
+        return false
+    }
+    
+    private func createComprehensiveLessons() async -> [LearningLevel] {
+        return [
+            // Level 1: Beginner
+            LearningLevel(
+                id: "level_1_beginner",
+                title: "Level 1: Beginner",
+                description: "Learn vowels and consonants: Master the Telugu alphabet foundation. Learn all 16 vowels (అ, ఆ, ఇ, ఈ, ఉ, ఊ, ఋ, ఎ, ఏ, ఐ, ఒ, ఓ, ఔ, అం, అః) and 36 consonants (క, ఖ, గ, ఘ, ఙ, చ, ఛ, జ, ఝ, ఞ, ట, ఠ, డ, ఢ, ణ, త, థ, ద, ధ, న, ప, ఫ, బ, భ, మ, య, ర, ల, వ, శ, ష, స, హ, ళ, క్ష, ఱ). Build your reading foundation!",
+                difficulty: 1,
+                lessons: createBeginnerLessons(),
+                requiredXP: 0,
+                color: "#4CAF50"
+            )
+        ]
+    }
+    
+    private func createBeginnerLessons() -> [Lesson] {
+        return [
+            // Lesson 1: Vowels Set 1 (అ, ఆ, ఇ, ఈ)
             Lesson(
                 id: "lesson_1_1",
-                title: "Lesson 1",
-                description: "First Telugu vowels: అ, ఆ",
+                title: "Vowels Set 1: అ, ఆ, ఇ, ఈ",
+                description: "Learn your first four Telugu vowels with interactive activities",
                 levelId: "level_1_beginner",
                 order: 1,
                 difficulty: 1,
-                xpReward: 80,
-                estimatedMinutes: 12,
-                activities: [
-                    LessonActivity(
-                        id: "activity_1_1_reading",
-                        type: .reading,
-                        title: "Reading Practice",
-                        instructions: "Identify the Telugu vowels and their sounds",
-                        xpValue: 20,
-                        questions: [
-                            ActivityQuestion(
-                                id: "q1_1_r1",
-                                type: .characterRecognition,
-                                question: "Which Telugu character makes the 'a' sound?",
-                                correctAnswer: "అ",
-                                options: ["అ", "ఆ", "ఇ", "ఈ"],
-                                audioFile: nil,
-                                strokeOrder: nil,
-                                explanation: "అ is the first vowel in Telugu, pronounced as 'a' in 'apple'"
-                            ),
-                            ActivityQuestion(
-                                id: "q1_1_r2",
-                                type: .multipleChoice,
-                                question: "What sound does 'ఆ' make?",
-                                correctAnswer: "aa",
-                                options: ["a", "aa", "i", "ee"],
-                                audioFile: nil,
-                                strokeOrder: nil,
-                                explanation: "ఆ makes the 'aa' sound like in 'father'"
-                            )
-                        ],
-                        canSkip: false
-                    ),
-                    LessonActivity(
-                        id: "activity_1_1_writing",
-                        type: .writing,
-                        title: "Writing Practice",
-                        instructions: "Practice writing Telugu vowels with proper stroke order",
-                        xpValue: 20,
-                        questions: [
-                            ActivityQuestion(
-                                id: "q1_1_w1",
-                                type: .tracing,
-                                question: "Trace the character 'అ'",
-                                correctAnswer: "అ",
-                                options: nil,
-                                audioFile: nil,
-                                strokeOrder: ["Start with vertical line", "Add curved top", "Complete the base"],
-                                explanation: "Practice writing అ with proper stroke order. Start from top to bottom."
-                            )
-                        ],
-                        canSkip: false
-                    ),
-                    LessonActivity(
-                        id: "activity_1_1_listening",
-                        type: .listening,
-                        title: "Listening Practice",
-                        instructions: "Listen and identify the correct vowel",
-                        xpValue: 20,
-                        questions: [
-                            ActivityQuestion(
-                                id: "q1_1_l1",
-                                type: .audioIdentification,
-                                question: "Listen to the audio and select the correct Telugu vowel:",
-                                correctAnswer: "అ",
-                                options: ["అ", "ఆ", "ఇ", "ఈ"],
-                                audioFile: nil,
-                                strokeOrder: nil,
-                                explanation: "This is the sound of the first Telugu vowel 'అ' (a)"
-                            )
-                        ],
-                        canSkip: false
-                    ),
-                    LessonActivity(
-                        id: "activity_1_1_speaking",
-                        type: .speaking,
-                        title: "Speaking Practice",
-                        instructions: "Practice pronunciation of Telugu vowels",
-                        xpValue: 20,
-                        questions: [
-                            ActivityQuestion(
-                                id: "q1_1_s1",
-                                type: .speaking,
-                                question: "Pronounce the Telugu vowel: అ",
-                                correctAnswer: "a",
-                                options: nil,
-                                audioFile: nil,
-                                strokeOrder: nil,
-                                explanation: "Speaking practice - coming soon!"
-                            )
-                        ],
-                        canSkip: true
-                    )
-                ]
+                xpReward: 60,
+                estimatedMinutes: 8,
+                activities: createBeginnerActivities(lessonId: "lesson_1_1", lessonOrder: 1)
             ),
+            
+            // Lesson 2: Vowels Set 2 (ఉ, ఊ, ఋ, ఎ, ఏ)
             Lesson(
                 id: "lesson_1_2",
-                title: "Telugu Consonants Part 1",
-                description: "Learn basic Telugu consonants",
+                title: "Vowels Set 2: ఉ, ఊ, ఋ, ఎ, ఏ",
+                description: "Master five more important Telugu vowels",
                 levelId: "level_1_beginner",
                 order: 2,
                 difficulty: 1,
+                xpReward: 60,
+                estimatedMinutes: 8,
+                activities: createBeginnerActivities(lessonId: "lesson_1_2", lessonOrder: 2)
+            ),
+            
+            // Lesson 3: Vowels Set 3 (ఐ, ఒ, ఓ, ఔ, అం, అః)
+            Lesson(
+                id: "lesson_1_3",
+                title: "Vowels Set 3: ఐ, ఒ, ఓ, ఔ, అం, అః",
+                description: "Complete the vowel system with compound vowels and nasal sounds",
+                levelId: "level_1_beginner",
+                order: 3,
+                difficulty: 1,
+                xpReward: 60,
+                estimatedMinutes: 8,
+                activities: createBeginnerActivities(lessonId: "lesson_1_3", lessonOrder: 3)
+            ),
+            
+            // Lesson 4: Consonants Set 1 (క, ఖ, గ, ఘ, ఙ)
+            Lesson(
+                id: "lesson_1_4",
+                title: "Consonants Set 1: క, ఖ, గ, ఘ, ఙ",
+                description: "Learn the ka-group consonants with interactive exercises",
+                levelId: "level_1_beginner",
+                order: 4,
+                difficulty: 1,
+                xpReward: 60,
+                estimatedMinutes: 8,
+                activities: createBeginnerActivities(lessonId: "lesson_1_4", lessonOrder: 4)
+            ),
+            
+            // Lesson 5: Consonants Set 2 (చ, ఛ, జ, ఝ, ఞ)
+            Lesson(
+                id: "lesson_1_5",
+                title: "Consonants Set 2: చ, ఛ, జ, ఝ, ఞ",
+                description: "Master the cha-group consonants with fun activities",
+                levelId: "level_1_beginner",
+                order: 5,
+                difficulty: 1,
+                xpReward: 60,
+                estimatedMinutes: 8,
+                activities: createBeginnerActivities(lessonId: "lesson_1_5", lessonOrder: 5)
+            ),
+            
+            // Lesson 6: Consonants Set 3 (ట, ఠ, డ, ఢ, ణ)
+            Lesson(
+                id: "lesson_1_6",
+                title: "Consonants Set 3: ట, ఠ, డ, ఢ, ణ",
+                description: "Learn the ta-group (retroflex) consonants",
+                levelId: "level_1_beginner",
+                order: 6,
+                difficulty: 1,
+                xpReward: 60,
+                estimatedMinutes: 8,
+                activities: createBeginnerActivities(lessonId: "lesson_1_6", lessonOrder: 6)
+            ),
+            
+            // Lesson 7: Consonants Set 4 (త, థ, ద, ధ, న)
+            Lesson(
+                id: "lesson_1_7",
+                title: "Consonants Set 4: త, థ, ద, ధ, న",
+                description: "Master the dental consonant group",
+                levelId: "level_1_beginner",
+                order: 7,
+                difficulty: 1,
+                xpReward: 60,
+                estimatedMinutes: 8,
+                activities: createBeginnerActivities(lessonId: "lesson_1_7", lessonOrder: 7)
+            ),
+            
+            // Lesson 8: Consonants Set 5 (ప, ఫ, బ, భ, మ)
+            Lesson(
+                id: "lesson_1_8",
+                title: "Consonants Set 5: ప, ఫ, బ, భ, మ",
+                description: "Learn the pa-group (labial) consonants",
+                levelId: "level_1_beginner",
+                order: 8,
+                difficulty: 1,
+                xpReward: 60,
+                estimatedMinutes: 8,
+                activities: createBeginnerActivities(lessonId: "lesson_1_8", lessonOrder: 8)
+            ),
+            
+            // Lesson 9: Consonants Set 6 (య, ర, ల, వ, శ, ష, స, హ, ళ, క్ష, ఱ)
+            Lesson(
+                id: "lesson_1_9",
+                title: "Consonants Set 6: య, ర, ల, వ, శ, ష, స, హ, ళ, క్ష, ఱ",
+                description: "Complete your consonant knowledge with remaining letters",
+                levelId: "level_1_beginner",
+                order: 9,
+                difficulty: 1,
+                xpReward: 70,
+                estimatedMinutes: 10,
+                activities: createBeginnerActivities(lessonId: "lesson_1_9", lessonOrder: 9)
+            ),
+            
+            // Lesson 10: Review Game & Guninthalu Intro
+            Lesson(
+                id: "lesson_1_10",
+                title: "Review & గుణింతాలు Introduction",
+                description: "Fun review games and introduction to vowel signs (guninthalu)",
+                levelId: "level_1_beginner",
+                order: 10,
+                difficulty: 1,
                 xpReward: 100,
-                estimatedMinutes: 18,
-                activities: [
-                    LessonActivity(
-                        id: "activity_1_2_reading",
-                        type: .reading,
-                        title: "Reading Practice",
-                        instructions: "Identify Telugu consonants and their sounds",
-                        xpValue: 25,
-                        questions: [
-                            ActivityQuestion(
-                                id: "q1_2_r1",
-                                type: .multipleChoice,
-                                question: "Which character is 'ka'?",
-                                correctAnswer: "క",
-                                options: ["క", "ఖ", "గ", "ఘ"],
-                                audioFile: nil,
-                                strokeOrder: nil,
-                                explanation: "క is the 'ka' consonant in Telugu"
-                            )
-                        ],
-                        canSkip: false
-                    ),
-                    LessonActivity(
-                        id: "activity_1_2_writing",
-                        type: .writing,
-                        title: "Writing Practice",
-                        instructions: "Practice writing Telugu consonants",
-                        xpValue: 25,
-                        questions: [
-                            ActivityQuestion(
-                                id: "q1_2_w1",
-                                type: .tracing,
-                                question: "Trace the character 'క'",
-                                correctAnswer: "క",
-                                options: nil,
-                                audioFile: nil,
-                                strokeOrder: ["Start with vertical line", "Add horizontal curves", "Complete the character"],
-                                explanation: "Practice writing క with proper stroke order"
-                            )
-                        ],
-                        canSkip: false
-                    ),
-                    LessonActivity(
-                        id: "activity_1_2_listening",
-                        type: .listening,
-                        title: "Listening Practice",
-                        instructions: "Listen and identify the correct consonant",
-                        xpValue: 25,
-                        questions: [
-                            ActivityQuestion(
-                                id: "q1_2_l1",
-                                type: .audioIdentification,
-                                question: "Listen to the audio and select the correct Telugu consonant:",
-                                correctAnswer: "క",
-                                options: ["క", "ఖ", "గ", "ఘ"],
-                                audioFile: nil,
-                                strokeOrder: nil,
-                                explanation: "This is the sound of the Telugu consonant 'క' (ka)"
-                            )
-                        ],
-                        canSkip: false
-                    ),
-                    LessonActivity(
-                        id: "activity_1_2_speaking",
-                        type: .speaking,
-                        title: "Speaking Practice",
-                        instructions: "Practice pronunciation of Telugu consonants",
-                        xpValue: 25,
-                        questions: [
-                            ActivityQuestion(
-                                id: "q1_2_s1",
-                                type: .speaking,
-                                question: "Pronounce the Telugu consonant: క",
-                                correctAnswer: "ka",
-                                options: nil,
-                                audioFile: nil,
-                                strokeOrder: nil,
-                                explanation: "Speaking practice - coming soon!"
-                            )
-                        ],
-                        canSkip: true
-                    )
-                ]
+                estimatedMinutes: 12,
+                activities: createBeginnerActivities(lessonId: "lesson_1_10", lessonOrder: 10)
             )
         ]
-        
-        let basicLessons = [
-            Lesson(
-                id: "lesson_2_1",
-                title: "Vowel Combinations",
-                description: "Learn how vowels combine with consonants",
-                levelId: "level_2_basic",
-                order: 1,
-                difficulty: 2,
-                xpReward: 120,
-                estimatedMinutes: 20,
-                activities: [
-                    LessonActivity(
-                        id: "activity_2_1_reading",
-                        type: .reading,
-                        title: "Reading Practice",
-                        instructions: "Identify vowel-consonant combinations",
-                        xpValue: 30,
-                        questions: [
-                            ActivityQuestion(
-                                id: "q2_1_r1",
-                                type: .multipleChoice,
-                                question: "What does 'కా' sound like?",
-                                correctAnswer: "kaa",
-                                options: ["ka", "kaa", "ki", "kee"],
-                                audioFile: nil,
-                                strokeOrder: nil,
-                                explanation: "కా combines క (ka) + ఆ (aa) = kaa"
-                            )
-                        ],
-                        canSkip: false
-                    ),
-                    LessonActivity(
-                        id: "activity_2_1_writing",
-                        type: .writing,
-                        title: "Writing Practice",
-                        instructions: "Practice writing vowel-consonant combinations",
-                        xpValue: 30,
-                        questions: [
-                            ActivityQuestion(
-                                id: "q2_1_w1",
-                                type: .tracing,
-                                question: "Trace the combination 'కా'",
-                                correctAnswer: "కా",
-                                options: nil,
-                                audioFile: nil,
-                                strokeOrder: ["Write క first", "Add ఆ vowel mark"],
-                                explanation: "Practice writing కా (ka + aa)"
-                            )
-                        ],
-                        canSkip: false
-                    ),
-                    LessonActivity(
-                        id: "activity_2_1_listening",
-                        type: .listening,
-                        title: "Listening Practice",
-                        instructions: "Listen and identify vowel-consonant combinations",
-                        xpValue: 30,
-                        questions: [
-                            ActivityQuestion(
-                                id: "q2_1_l1",
-                                type: .audioIdentification,
-                                question: "Listen and select the correct combination:",
-                                correctAnswer: "కా",
-                                options: ["కా", "కి", "కు", "కే"],
-                                audioFile: nil,
-                                strokeOrder: nil,
-                                explanation: "This is కా (kaa)"
-                            )
-                        ],
-                        canSkip: false
-                    ),
-                    LessonActivity(
-                        id: "activity_2_1_speaking",
-                        type: .speaking,
-                        title: "Speaking Practice",
-                        instructions: "Practice pronunciation of combinations",
-                        xpValue: 30,
-                        questions: [
-                            ActivityQuestion(
-                                id: "q2_1_s1",
-                                type: .speaking,
-                                question: "Pronounce: కా",
-                                correctAnswer: "kaa",
-                                options: nil,
-                                audioFile: nil,
-                                strokeOrder: nil,
-                                explanation: "Speaking practice - coming soon!"
-                            )
-                        ],
-                        canSkip: true
-                    )
-                ]
-            )
-        ]
-        
-        let intermediateLessons = [
-            Lesson(
-                id: "lesson_3_1",
-                title: "Simple Words",
-                description: "Learn to read and write simple Telugu words",
-                levelId: "level_3_intermediate",
-                order: 1,
-                difficulty: 3,
-                xpReward: 150,
-                estimatedMinutes: 25,
-                activities: [
-                    LessonActivity(
-                        id: "activity_3_1_reading",
-                        type: .reading,
-                        title: "Reading Practice",
-                        instructions: "Read simple Telugu words",
-                        xpValue: 37,
-                        questions: [
-                            ActivityQuestion(
-                                id: "q3_1_r1",
-                                type: .multipleChoice,
-                                question: "What does 'అమ్మ' mean?",
-                                correctAnswer: "Mother",
-                                options: ["Mother", "Father", "Water", "Food"],
-                                audioFile: nil,
-                                strokeOrder: nil,
-                                explanation: "అమ్మ means 'Mother' in Telugu"
-                            )
-                        ],
-                        canSkip: false
-                    ),
-                    LessonActivity(
-                        id: "activity_3_1_writing",
-                        type: .writing,
-                        title: "Writing Practice",
-                        instructions: "Practice writing simple words",
-                        xpValue: 38,
-                        questions: [
-                            ActivityQuestion(
-                                id: "q3_1_w1",
-                                type: .tracing,
-                                question: "Trace the word 'అమ్మ'",
-                                correctAnswer: "అమ్మ",
-                                options: nil,
-                                audioFile: nil,
-                                strokeOrder: ["Write అ", "Write మ్మ"],
-                                explanation: "Practice writing అమ్మ (Mother)"
-                            )
-                        ],
-                        canSkip: false
-                    ),
-                    LessonActivity(
-                        id: "activity_3_1_listening",
-                        type: .listening,
-                        title: "Listening Practice",
-                        instructions: "Listen and identify simple words",
-                        xpValue: 37,
-                        questions: [
-                            ActivityQuestion(
-                                id: "q3_1_l1",
-                                type: .audioIdentification,
-                                question: "Listen and select the correct word:",
-                                correctAnswer: "అమ్మ",
-                                options: ["అమ్మ", "నాన్న", "నీరు", "అన్నం"],
-                                audioFile: nil,
-                                strokeOrder: nil,
-                                explanation: "This is అమ్మ (Mother)"
-                            )
-                        ],
-                        canSkip: false
-                    ),
-                    LessonActivity(
-                        id: "activity_3_1_speaking",
-                        type: .speaking,
-                        title: "Speaking Practice",
-                        instructions: "Practice pronunciation of simple words",
-                        xpValue: 38,
-                        questions: [
-                            ActivityQuestion(
-                                id: "q3_1_s1",
-                                type: .speaking,
-                                question: "Pronounce: అమ్మ",
-                                correctAnswer: "amma",
-                                options: nil,
-                                audioFile: nil,
-                                strokeOrder: nil,
-                                explanation: "Speaking practice - coming soon!"
-                            )
-                        ],
-                        canSkip: true
-                    )
-                ]
-            )
-        ]
-        
-        let advancedLessons = [
-            Lesson(
-                id: "lesson_4_1",
-                title: "Complex Sentences",
-                description: "Learn to construct and read complex Telugu sentences",
-                levelId: "level_4_advanced",
-                order: 1,
-                difficulty: 4,
-                xpReward: 200,
-                estimatedMinutes: 30,
-                activities: [
-                    LessonActivity(
-                        id: "activity_4_1_reading",
-                        type: .reading,
-                        title: "Reading Practice",
-                        instructions: "Read and understand complex sentences",
-                        xpValue: 50,
-                        questions: [
-                            ActivityQuestion(
-                                id: "q4_1_r1",
-                                type: .multipleChoice,
-                                question: "What does 'నేను పుస్తకం చదువుతున్నాను' mean?",
-                                correctAnswer: "I am reading a book",
-                                options: ["I am reading a book", "I am writing a book", "I have a book", "I want a book"],
-                                audioFile: nil,
-                                strokeOrder: nil,
-                                explanation: "This sentence means 'I am reading a book' in Telugu"
-                            )
-                        ],
-                        canSkip: false
-                    ),
-                    LessonActivity(
-                        id: "activity_4_1_writing",
-                        type: .writing,
-                        title: "Writing Practice",
-                        instructions: "Practice writing complex sentences",
-                        xpValue: 50,
-                        questions: [
-                            ActivityQuestion(
-                                id: "q4_1_w1",
-                                type: .tracing,
-                                question: "Trace: 'నేను'",
-                                correctAnswer: "నేను",
-                                options: nil,
-                                audioFile: nil,
-                                strokeOrder: ["Write న", "Write ే", "Write న", "Write ు"],
-                                explanation: "Practice writing నేను (I/me)"
-                            )
-                        ],
-                        canSkip: false
-                    ),
-                    LessonActivity(
-                        id: "activity_4_1_listening",
-                        type: .listening,
-                        title: "Listening Practice",
-                        instructions: "Listen and understand complex sentences",
-                        xpValue: 50,
-                        questions: [
-                            ActivityQuestion(
-                                id: "q4_1_l1",
-                                type: .audioIdentification,
-                                question: "Listen and select the correct sentence:",
-                                correctAnswer: "నేను పుస్తకం చదువుతున్నాను",
-                                options: ["నేను పుస్తకం చదువుతున్నాను", "నేను అన్నం తింటున్నాను", "నేను పాట పాడుతున్నాను", "నేను నడుస్తున్నాను"],
-                                audioFile: nil,
-                                strokeOrder: nil,
-                                explanation: "This is 'I am reading a book'"
-                            )
-                        ],
-                        canSkip: false
-                    ),
-                    LessonActivity(
-                        id: "activity_4_1_speaking",
-                        type: .speaking,
-                        title: "Speaking Practice",
-                        instructions: "Practice pronunciation of complex sentences",
-                        xpValue: 50,
-                        questions: [
-                            ActivityQuestion(
-                                id: "q4_1_s1",
-                                type: .speaking,
-                                question: "Pronounce: నేను పుస్తకం చదువుతున్నాను",
-                                correctAnswer: "nenu pustakam chaduvutunnanu",
-                                options: nil,
-                                audioFile: nil,
-                                strokeOrder: nil,
-                                explanation: "Speaking practice - coming soon!"
-                            )
-                        ],
-                        canSkip: true
-                    )
-                ]
-            )
-        ]
-        
-        // Create comprehensive lesson structure with 10 lessons per level
-        self.levels = createComprehensiveLessons()
-        initializeLevelProgress()
     }
     
-    private func createComprehensiveLessons() -> [LearningLevel] {
-        // BEGINNER: 10 lessons - letters → syllables → simple words
-        let beginnerLessons = (1...10).map { i in
-            Lesson(
-                id: "lesson_1_\(i)",
-                title: "Lesson \(i)",
-                description: getBeginnerDescription(i),
-                levelId: "level_1_beginner",
-                order: i,
-                difficulty: 1,
-                xpReward: 80 + (i * 5),
-                estimatedMinutes: 12 + i,
-                activities: createStandardActivities("1_\(i)", level: 1)
-            )
-        }
-        
-        // BASIC: 10 lessons - combinations → words → phrases  
-        let basicLessons = (1...10).map { i in
+    private func createBasicLessons() -> [Lesson] {
+        return (1...12).map { i in
             Lesson(
                 id: "lesson_2_\(i)",
-                title: "Lesson \(i)",
-                description: getBasicDescription(i),
+                title: "Not Named Yet",
+                description: "This lesson is under development.",
                 levelId: "level_2_basic",
                 order: i,
                 difficulty: 2,
-                xpReward: 130 + (i * 5),
-                estimatedMinutes: 20 + i,
-                activities: createStandardActivities("2_\(i)", level: 2)
+                xpReward: 75,
+                estimatedMinutes: 7,
+                activities: createBasicActivities(for: i)
             )
         }
-        
-        // INTERMEDIATE: 10 lessons - sentences → passages → grammar
-        let intermediateLessons = (1...10).map { i in
+    }
+    
+    private func createIntermediateLessons() -> [Lesson] {
+        return (1...12).map { i in
             Lesson(
                 id: "lesson_3_\(i)",
-                title: "Lesson \(i)",
-                description: getIntermediateDescription(i),
+                title: "Not Named Yet",
+                description: "This lesson is under development.",
                 levelId: "level_3_intermediate",
                 order: i,
                 difficulty: 3,
-                xpReward: 180 + (i * 5),
-                estimatedMinutes: 25 + i,
-                activities: createStandardActivities("3_\(i)", level: 3)
+                xpReward: 100,
+                estimatedMinutes: 10,
+                activities: createIntermediateActivities(for: i)
             )
         }
+    }
+    
+    private func generateBeginnerActivities(lessonId: String, lessonOrder: Int) -> [LessonActivity] {
+        switch lessonOrder {
+        case 1:
+            // Lesson 1: Vowels Set 1 (అ, ఆ, ఇ, ఈ) - Interleaved
+            return [
+                // అ
+                LessonActivity(
+                    id: "activity_\(lessonId)_teaching_a",
+                    type: .reading,
+                    title: "Learn అ (a) 🌟",
+                    instructions: "Learn the first Telugu vowel అ with animation and pronunciation",
+                    xpValue: 10,
+                    questions: [
+                        ActivityQuestion(
+                            id: "q_\(lessonId)_teaching_a",
+                            type: .characterRecognition,
+                            question: "teaching_moment",
+                            correctAnswer: "అ",
+                            options: nil,
+                            audioFile: "అ.mp3",
+                            strokeOrder: [
+                                "Meet అ - your first Telugu vowel! ✨",
+                                "అ sounds like 'a' in 'father' (short a)",
+                                "This is the most basic vowel sound",
+                                "Listen to the pronunciation carefully!"
+                            ],
+                            explanation: "అ is the foundation vowel - you'll use it in many Telugu words!"
+                        )
+                    ],
+                    canSkip: false
+                ),
+                LessonActivity(
+                    id: "activity_\(lessonId)_listen_a",
+                    type: .reading,
+                    title: "Listen to అ 🎵",
+                    instructions: "Listen to the vowel అ and identify it",
+                    xpValue: 20,
+                    questions: [
+                        ActivityQuestion(
+                            id: "q_\(lessonId)_audio_a",
+                            type: .audioIdentification,
+                            question: "Which letter makes this sound?",
+                            correctAnswer: "అ",
+                            options: ["అ", "ఆ", "ఇ", "ఈ"],
+                            audioFile: "అ.mp3",
+                            strokeOrder: nil,
+                            explanation: "Perfect! అ makes the 'a' sound. [Sparkle animation] ✨"
+                        )
+                    ],
+                    canSkip: false
+                ),
+                LessonActivity(
+                    id: "activity_\(lessonId)_trace_a",
+                    type: .writing,
+                    title: "Trace అ ✏️",
+                    instructions: "Practice writing the vowel అ",
+                    xpValue: 20,
+                    questions: [
+                        ActivityQuestion(
+                            id: "q_\(lessonId)_trace_a",
+                            type: .tracing,
+                            question: "Trace the vowel అ",
+                            correctAnswer: "అ",
+                            options: nil,
+                            audioFile: "అ.mp3",
+                            strokeOrder: [
+                                "Start with the curved top",
+                                "Draw the vertical line down",
+                                "Add the horizontal base",
+                                "Complete with the final curve"
+                            ],
+                            explanation: "Beautiful tracing of అ! [Gentle glow effect] ✨",
+                            tolerance: 0.85
+                        )
+                    ],
+                    canSkip: false
+                ),
+                // ఆ
+                LessonActivity(
+                    id: "activity_\(lessonId)_teaching_aa",
+                    type: .reading,
+                    title: "Learn ఆ (aa) 🌟",
+                    instructions: "Learn the second Telugu vowel ఆ with animation and pronunciation",
+                    xpValue: 10,
+                    questions: [
+                        ActivityQuestion(
+                            id: "q_\(lessonId)_teaching_aa",
+                            type: .characterRecognition,
+                            question: "teaching_moment",
+                            correctAnswer: "ఆ",
+                            options: nil,
+                            audioFile: "ఆ.mp3",
+                            strokeOrder: [
+                                "Now meet ఆ - the long version of అ! ✨",
+                                "ఆ sounds like 'aa' in 'car' (long aa)",
+                                "Notice how it's longer than అ",
+                                "This is the long 'a' sound!"
+                            ],
+                            explanation: "ఆ is the long version of అ - same sound, but held longer!"
+                        )
+                    ],
+                    canSkip: false
+                ),
+                LessonActivity(
+                    id: "activity_\(lessonId)_listen_aa",
+                    type: .reading,
+                    title: "Listen to ఆ 🎵",
+                    instructions: "Listen to the vowel ఆ and identify it",
+                    xpValue: 20,
+                    questions: [
+                        ActivityQuestion(
+                            id: "q_\(lessonId)_audio_aa",
+                            type: .audioIdentification,
+                            question: "Which letter makes this sound?",
+                            correctAnswer: "ఆ",
+                            options: ["అ", "ఆ", "ఇ", "ఈ"],
+                            audioFile: "ఆ.mp3",
+                            strokeOrder: nil,
+                            explanation: "Excellent! ఆ makes the long 'aa' sound. [Star burst] 🌟"
+                        )
+                    ],
+                    canSkip: false
+                ),
+                LessonActivity(
+                    id: "activity_\(lessonId)_trace_aa",
+                    type: .writing,
+                    title: "Trace ఆ ✏️",
+                    instructions: "Practice writing the vowel ఆ",
+                    xpValue: 20,
+                    questions: [
+                        ActivityQuestion(
+                            id: "q_\(lessonId)_trace_aa",
+                            type: .tracing,
+                            question: "Trace the vowel ఆ",
+                            correctAnswer: "ఆ",
+                            options: nil,
+                            audioFile: "ఆ.mp3",
+                            strokeOrder: [
+                                "Begin with the left curve",
+                                "Add the central vertical line",
+                                "Draw the horizontal connector",
+                                "Finish with the right curve"
+                            ],
+                            explanation: "Excellent work on ఆ! [Success sparkles] 🌟",
+                            tolerance: 0.85
+                        )
+                    ],
+                    canSkip: false
+                ),
+                // ఇ
+                LessonActivity(
+                    id: "activity_\(lessonId)_teaching_i",
+                    type: .reading,
+                    title: "Learn ఇ (i) 🌟",
+                    instructions: "Learn the third Telugu vowel ఇ with animation and pronunciation",
+                    xpValue: 10,
+                    questions: [
+                        ActivityQuestion(
+                            id: "q_\(lessonId)_teaching_i",
+                            type: .characterRecognition,
+                            question: "teaching_moment",
+                            correctAnswer: "ఇ",
+                            options: nil,
+                            audioFile: "ఇ.mp3",
+                            strokeOrder: [
+                                "Here's ఇ - a new vowel sound! ✨",
+                                "ఇ sounds like 'i' in 'bit' (short i)",
+                                "This is different from the 'a' sounds",
+                                "Listen to the 'i' sound carefully!"
+                            ],
+                            explanation: "ఇ is the short 'i' sound - completely different from అ and ఆ!"
+                        )
+                    ],
+                    canSkip: false
+                ),
+                LessonActivity(
+                    id: "activity_\(lessonId)_listen_i",
+                    type: .reading,
+                    title: "Listen to ఇ 🎵",
+                    instructions: "Listen to the vowel ఇ and identify it",
+                    xpValue: 20,
+                    questions: [
+                        ActivityQuestion(
+                            id: "q_\(lessonId)_audio_i",
+                            type: .audioIdentification,
+                            question: "Which letter makes this sound?",
+                            correctAnswer: "ఇ",
+                            options: ["అ", "ఆ", "ఇ", "ఈ"],
+                            audioFile: "ఇ.mp3",
+                            strokeOrder: nil,
+                            explanation: "Great! ఇ makes the short 'i' sound. [Glow effect] 💫"
+                        )
+                    ],
+                    canSkip: false
+                ),
+                LessonActivity(
+                    id: "activity_\(lessonId)_trace_i",
+                    type: .writing,
+                    title: "Trace ఇ ✏️",
+                    instructions: "Practice writing the vowel ఇ",
+                    xpValue: 20,
+                    questions: [
+                        ActivityQuestion(
+                            id: "q_\(lessonId)_trace_i",
+                            type: .tracing,
+                            question: "Trace the vowel ఇ",
+                            correctAnswer: "ఇ",
+                            options: nil,
+                            audioFile: "ఇ.mp3",
+                            strokeOrder: [
+                                "Start with the small horizontal line",
+                                "Draw the vertical line down",
+                                "Add the curve at the bottom",
+                                "Great job writing ఇ!"
+                            ],
+                            explanation: "Perfect tracing of ఇ! [Success animation] ✨",
+                            tolerance: 0.85
+                        )
+                    ],
+                    canSkip: false
+                ),
+                // ఈ
+                LessonActivity(
+                    id: "activity_\(lessonId)_teaching_ii",
+                    type: .reading,
+                    title: "Learn ఈ (ii) 🌟",
+                    instructions: "Learn the fourth Telugu vowel ఈ with animation and pronunciation",
+                    xpValue: 10,
+                    questions: [
+                        ActivityQuestion(
+                            id: "q_\(lessonId)_teaching_ii",
+                            type: .characterRecognition,
+                            question: "teaching_moment",
+                            correctAnswer: "ఈ",
+                            options: nil,
+                            audioFile: "ఈ.mp3",
+                            strokeOrder: [
+                                "Finally, meet ఈ - the long version of ఇ! ✨",
+                                "ఈ sounds like 'ee' in 'bee' (long ii)",
+                                "Notice how it's longer than ఇ",
+                                "This completes our first vowel set!"
+                            ],
+                            explanation: "ఈ is the long version of ఇ - you now know all four basic vowels!"
+                        )
+                    ],
+                    canSkip: false
+                ),
+                LessonActivity(
+                    id: "activity_\(lessonId)_listen_ii",
+                    type: .reading,
+                    title: "Listen to ఈ 🎵",
+                    instructions: "Listen to the vowel ఈ and identify it",
+                    xpValue: 20,
+                    questions: [
+                        ActivityQuestion(
+                            id: "q_\(lessonId)_audio_ii",
+                            type: .audioIdentification,
+                            question: "Which letter makes this sound?",
+                            correctAnswer: "ఈ",
+                            options: ["అ", "ఆ", "ఇ", "ఈ"],
+                            audioFile: "ఈ.mp3",
+                            strokeOrder: nil,
+                            explanation: "Amazing! ఈ makes the long 'ee' sound. [Confetti] 🎉"
+                        )
+                    ],
+                    canSkip: false
+                ),
+                LessonActivity(
+                    id: "activity_\(lessonId)_trace_ii",
+                    type: .writing,
+                    title: "Trace ఈ ✏️",
+                    instructions: "Practice writing the vowel ఈ",
+                    xpValue: 20,
+                    questions: [
+                        ActivityQuestion(
+                            id: "q_\(lessonId)_trace_ii",
+                            type: .tracing,
+                            question: "Trace the vowel ఈ",
+                            correctAnswer: "ఈ",
+                            options: nil,
+                            audioFile: "ఈ.mp3",
+                            strokeOrder: [
+                                "Start with the longer horizontal line",
+                                "Draw the vertical line down",
+                                "Add the longer curve at bottom",
+                                "Notice how it's longer than ఇ!"
+                            ],
+                            explanation: "Excellent work on ఈ! [Celebration] 🎉",
+                            tolerance: 0.85
+                        )
+                    ],
+                    canSkip: false
+                ),
+                // Review
+                LessonActivity(
+                    id: "activity_\(lessonId)_card_match",
+                    type: .reading,
+                    title: "Vowel Card Match Review 🃏",
+                    instructions: "Match vowel cards as a quick review",
+                    xpValue: 30,
+                    questions: [
+                        ActivityQuestion(
+                            id: "q_\(lessonId)_card_match",
+                            type: .characterRecognition,
+                            question: "Match the vowel cards!",
+                            correctAnswer: "match_all",
+                            options: ["అ", "ఆ", "ఇ", "ఈ"],
+                            audioFile: "card_match.mp3",
+                            strokeOrder: ["Flip the cards", "Match vowels with their sounds", "Complete all pairs!"],
+                            explanation: "Perfect! You matched all the vowel cards! [Card flip animation] 🃏✨"
+                        )
+                    ],
+                    canSkip: false
+                )
+            ]
+            
+        case 2:
+            // Lesson 2: Vowels Set 2 (ఉ, ఊ, ఋ, ఎ, ఏ) - Simplified
+            return [
+                LessonActivity(
+                    id: "activity_\(lessonId)_teaching",
+                    type: .reading,
+                    title: "Discover More Telugu Vowels! 🌟",
+                    instructions: "Learn ఉ, ఊ, ఋ, ఎ, ఏ with animations and sounds",
+                    xpValue: 30,
+                    questions: [
+                        ActivityQuestion(
+                            id: "q_\(lessonId)_teaching_vowels",
+                            type: .characterRecognition,
+                            question: "teaching_moment",
+                            correctAnswer: "ఉ, ఊ, ఋ, ఎ, ఏ",
+                            options: nil,
+                            audioFile: "vowel_set2_intro.mp3",
+                            strokeOrder: [
+                                "Here are five more Telugu vowels! ✨",
+                                "ఉ sounds like 'u' in 'put' (short u)",
+                                "ఊ sounds like 'oo' in 'boot' (long oo)",
+                                "ఋ is a special vowel sound (ri)",
+                                "ఎ sounds like 'e' in 'bed' (short e)",
+                                "ఏ sounds like 'ay' in 'day' (long e)",
+                                "Notice: short vowels (ఉ, ఎ) and long vowels (ఊ, ఏ)",
+                                "ఋ is unique - it's a special Telugu vowel!",
+                                "Let's practice each one individually!"
+                            ],
+                            explanation: "These vowels complete the short and long vowel pairs in Telugu - you'll learn each one step by step!"
+                        )
+                    ],
+                    canSkip: false
+                ),
+                
+                LessonActivity(
+                    id: "activity_\(lessonId)_listen_u",
+                    type: .reading,
+                    title: "Listen to ఉ 🎵",
+                    instructions: "Listen to the vowel ఉ and identify it",
+                    xpValue: 20,
+                    questions: [
+                        ActivityQuestion(
+                            id: "q_\(lessonId)_audio_u",
+                            type: .audioIdentification,
+                            question: "Which vowel makes this sound?",
+                            correctAnswer: "ఉ",
+                            options: ["ఉ", "ఊ", "ఋ", "ఎ"],
+                            audioFile: "ఉ.mp3",
+                            strokeOrder: nil,
+                            explanation: "Perfect! ఉ makes the short 'u' sound. [Sparkle animation] ✨"
+                        )
+                    ],
+                    canSkip: false
+                ),
+                
+                LessonActivity(
+                    id: "activity_\(lessonId)_trace_u",
+                    type: .writing,
+                    title: "Trace ఉ ✏️",
+                    instructions: "Practice writing the vowel ఉ",
+                    xpValue: 20,
+                    questions: [
+                        ActivityQuestion(
+                            id: "q_\(lessonId)_trace_u",
+                            type: .tracing,
+                            question: "Trace the vowel ఉ",
+                            correctAnswer: "ఉ",
+                            options: nil,
+                            audioFile: "ఉ.mp3",
+                            strokeOrder: [
+                                "Start with the top curve",
+                                "Draw the vertical line",
+                                "Add the bottom curve",
+                                "Complete the small hook"
+                            ],
+                            explanation: "Beautiful tracing of ఉ! [Gentle glow] ✨"
+                        )
+                    ],
+                    canSkip: false
+                ),
+                
+                LessonActivity(
+                    id: "activity_\(lessonId)_listen_uu",
+                    type: .reading,
+                    title: "Listen to ఊ 🎵",
+                    instructions: "Listen to the vowel ఊ and identify it",
+                    xpValue: 20,
+                    questions: [
+                        ActivityQuestion(
+                            id: "q_\(lessonId)_audio_uu",
+                            type: .audioIdentification,
+                            question: "Which vowel makes this sound?",
+                            correctAnswer: "ఊ",
+                            options: ["ఉ", "ఊ", "ఋ", "ఎ"],
+                            audioFile: "ఊ.mp3",
+                            strokeOrder: nil,
+                            explanation: "Excellent! ఊ makes the long 'oo' sound. [Star burst] 🌟"
+                        )
+                    ],
+                    canSkip: false
+                ),
+                
+                LessonActivity(
+                    id: "activity_\(lessonId)_trace_uu",
+                    type: .writing,
+                    title: "Trace ఊ ✏️",
+                    instructions: "Practice writing the vowel ఊ",
+                    xpValue: 20,
+                    questions: [
+                        ActivityQuestion(
+                            id: "q_\(lessonId)_trace_uu",
+                            type: .tracing,
+                            question: "Trace the vowel ఊ",
+                            correctAnswer: "ఊ",
+                            options: nil,
+                            audioFile: "ఊ.mp3",
+                            strokeOrder: [
+                                "Start with the longer top curve",
+                                "Draw the vertical line",
+                                "Add the longer bottom curve",
+                                "Notice how it's longer than ఉ!"
+                            ],
+                            explanation: "Excellent work on ఊ! [Success sparkles] 🌟"
+                        )
+                    ],
+                    canSkip: false
+                ),
+                
+                LessonActivity(
+                    id: "activity_\(lessonId)_listen_ru",
+                    type: .reading,
+                    title: "Listen to ఋ 🎵",
+                    instructions: "Listen to the special vowel ఋ and identify it",
+                    xpValue: 20,
+                    questions: [
+                        ActivityQuestion(
+                            id: "q_\(lessonId)_audio_ru",
+                            type: .audioIdentification,
+                            question: "Which vowel makes this special sound?",
+                            correctAnswer: "ఋ",
+                            options: ["ఉ", "ఊ", "ఋ", "ఎ"],
+                            audioFile: "ఋ.mp3",
+                            strokeOrder: nil,
+                            explanation: "Great! ఋ is the special 'ri' vowel. [Glow effect] 💫"
+                        )
+                    ],
+                    canSkip: false
+                ),
+                
+                LessonActivity(
+                    id: "activity_\(lessonId)_trace_ru",
+                    type: .writing,
+                    title: "Trace ఋ ✏️",
+                    instructions: "Practice writing the special vowel ఋ",
+                    xpValue: 20,
+                    questions: [
+                        ActivityQuestion(
+                            id: "q_\(lessonId)_trace_ru",
+                            type: .tracing,
+                            question: "Trace the vowel ఋ",
+                            correctAnswer: "ఋ",
+                            options: nil,
+                            audioFile: "ఋ.mp3",
+                            strokeOrder: [
+                                "Start with the top curve",
+                                "Draw the vertical line down",
+                                "Add the special hook at bottom",
+                                "This is a unique Telugu vowel!"
+                            ],
+                            explanation: "Perfect tracing of ఋ! [Special animation] ✨"
+                        )
+                    ],
+                    canSkip: false
+                ),
+                
+                LessonActivity(
+                    id: "activity_\(lessonId)_listen_e",
+                    type: .reading,
+                    title: "Listen to ఎ 🎵",
+                    instructions: "Listen to the vowel ఎ and identify it",
+                    xpValue: 20,
+                    questions: [
+                        ActivityQuestion(
+                            id: "q_\(lessonId)_audio_e",
+                            type: .audioIdentification,
+                            question: "Which vowel makes this sound?",
+                            correctAnswer: "ఎ",
+                            options: ["ఋ", "ఎ", "ఏ", "ఊ"],
+                            audioFile: "ఎ.mp3",
+                            strokeOrder: nil,
+                            explanation: "Amazing! ఎ makes the short 'e' sound. [Confetti] 🎉"
+                        )
+                    ],
+                    canSkip: false
+                ),
+                
+                LessonActivity(
+                    id: "activity_\(lessonId)_trace_e",
+                    type: .writing,
+                    title: "Trace ఎ ✏️",
+                    instructions: "Practice writing the vowel ఎ",
+                    xpValue: 20,
+                    questions: [
+                        ActivityQuestion(
+                            id: "q_\(lessonId)_trace_e",
+                            type: .tracing,
+                            question: "Trace the vowel ఎ",
+                            correctAnswer: "ఎ",
+                            options: nil,
+                            audioFile: "ఎ.mp3",
+                            strokeOrder: [
+                                "Begin with the left curve",
+                                "Draw the horizontal line",
+                                "Add the vertical connector",
+                                "Finish with the right curve"
+                            ],
+                            explanation: "Excellent work on ఎ! [Success sparkles] 🌟"
+                        )
+                    ],
+                    canSkip: false
+                ),
+                
+                LessonActivity(
+                    id: "activity_\(lessonId)_listen_ee",
+                    type: .reading,
+                    title: "Listen to ఏ 🎵",
+                    instructions: "Listen to the vowel ఏ and identify it",
+                    xpValue: 20,
+                    questions: [
+                        ActivityQuestion(
+                            id: "q_\(lessonId)_audio_ee",
+                            type: .audioIdentification,
+                            question: "Which vowel makes this sound?",
+                            correctAnswer: "ఏ",
+                            options: ["ఋ", "ఎ", "ఏ", "ఊ"],
+                            audioFile: "ఏ.mp3",
+                            strokeOrder: nil,
+                            explanation: "Perfect! ఏ makes the long 'ay' sound. [Rainbow animation] 🌈"
+                        )
+                    ],
+                    canSkip: false
+                ),
+                
+                LessonActivity(
+                    id: "activity_\(lessonId)_trace_ee",
+                    type: .writing,
+                    title: "Trace ఏ ✏️",
+                    instructions: "Practice writing the vowel ఏ",
+                    xpValue: 20,
+                    questions: [
+                        ActivityQuestion(
+                            id: "q_\(lessonId)_trace_ee",
+                            type: .tracing,
+                            question: "Trace the vowel ఏ",
+                            correctAnswer: "ఏ",
+                            options: nil,
+                            audioFile: "ఏ.mp3",
+                            strokeOrder: [
+                                "Begin with the longer left curve",
+                                "Draw the horizontal line",
+                                "Add the vertical connector",
+                                "Finish with the longer right curve"
+                            ],
+                            explanation: "Perfect tracing of ఏ! [Celebration] 🎉"
+                        )
+                    ],
+                    canSkip: false
+                ),
+                
+                LessonActivity(
+                    id: "activity_\(lessonId)_card_match",
+                    type: .reading,
+                    title: "Vowel Card Match Review 🃏",
+                    instructions: "Match vowel cards as a quick review",
+                    xpValue: 30,
+                    questions: [
+                        ActivityQuestion(
+                            id: "q_\(lessonId)_card_match",
+                            type: .characterRecognition,
+                            question: "Match the vowel cards!",
+                            correctAnswer: "match_all",
+                            options: ["ఉ", "ఊ", "ఋ", "ఎ", "ఏ"],
+                            audioFile: "card_match.mp3",
+                            strokeOrder: ["Flip the cards", "Match vowels with their sounds", "Complete all pairs!"],
+                            explanation: "Perfect! You matched all the vowel cards! [Card flip animation] 🃏✨"
+                        )
+                    ],
+                    canSkip: false
+                )
+            ]
+            
+        case 3:
+            // Lesson 3: Vowels Set 3 (ఐ, ఒ, ఓ, ఔ, అం, అః)
+            return [
+                LessonActivity(
+                    id: "activity_\(lessonId)_teaching",
+                    type: .reading,
+                    title: "Complete Your Vowel Knowledge! 🎯",
+                    instructions: "Learn compound vowels and special nasal sounds",
+                    xpValue: 30,
+                    questions: [
+                        ActivityQuestion(
+                            id: "q_\(lessonId)_teaching_vowels",
+                            type: .characterRecognition,
+                            question: "teaching_moment",
+                            correctAnswer: "ఐ",
+                            options: nil,
+                            audioFile: "vowel_set3_intro.mp3",
+                            strokeOrder: [
+                                "These are the final Telugu vowels! 🌟",
+                                "ఐ sounds like 'ai' in 'aisle' (compound vowel)",
+                                "ఒ sounds like 'o' in 'hot' (short o)",
+                                "ఓ sounds like 'o' in 'go' (long o)",
+                                "ఔ sounds like 'au' in 'caught' (compound vowel)",
+                                "అం has a nasal 'm' sound (anusvara)",
+                                "అః has a soft 'h' sound (visarga)",
+                                "These complete the Telugu vowel system!"
+                            ],
+                            explanation: "Nasal sounds (అం, అః) are very important in Telugu pronunciation"
+                        )
+                    ],
+                    canSkip: false
+                ),
+                
+                LessonActivity(
+                    id: "activity_\(lessonId)_compound_vowels",
+                    type: .reading,
+                    title: "Compound Vowel Challenge 🎵",
+                    instructions: "Master the compound vowel sounds",
+                    xpValue: 40,
+                    questions: [
+                        ActivityQuestion(
+                            id: "q_\(lessonId)_audio_ai",
+                            type: .audioIdentification,
+                            question: "Which compound vowel makes this sound?",
+                            correctAnswer: "ఐ",
+                            options: ["ఐ", "ఔ", "ఒ", "ఓ"],
+                            audioFile: "ఐ.mp3",
+                            strokeOrder: nil,
+                            explanation: "Perfect! ఐ makes the 'ai' compound sound. [Sparkle animation] ✨"
+                        ),
+                        ActivityQuestion(
+                            id: "q_\(lessonId)_audio_au",
+                            type: .audioIdentification,
+                            question: "Which compound vowel makes this sound?",
+                            correctAnswer: "ఔ",
+                            options: ["ఐ", "ఔ", "ఒ", "ఓ"],
+                            audioFile: "ఔ.mp3",
+                            strokeOrder: nil,
+                            explanation: "Excellent! ఔ makes the 'au' compound sound. [Star burst] 🌟"
+                        ),
+                        ActivityQuestion(
+                            id: "q_\(lessonId)_audio_o_short",
+                            type: .audioIdentification,
+                            question: "Which vowel makes this short 'o' sound?",
+                            correctAnswer: "ఒ",
+                            options: ["ఐ", "ఔ", "ఒ", "ఓ"],
+                            audioFile: "ఒ.mp3",
+                            strokeOrder: nil,
+                            explanation: "Great! ఒ makes the short 'o' sound. [Glow effect] 💫"
+                        ),
+                        ActivityQuestion(
+                            id: "q_\(lessonId)_audio_o_long",
+                            type: .audioIdentification,
+                            question: "Which vowel makes this long 'o' sound?",
+                            correctAnswer: "ఓ",
+                            options: ["ఐ", "ఔ", "ఒ", "ఓ"],
+                            audioFile: "ఓ.mp3",
+                            strokeOrder: nil,
+                            explanation: "Amazing! ఓ makes the long 'o' sound. [Confetti] 🎉"
+                        )
+                    ],
+                    canSkip: false
+                ),
+                
+                LessonActivity(
+                    id: "activity_\(lessonId)_nasal_sounds",
+                    type: .reading,
+                    title: "Special Nasal Sounds Focus 👂",
+                    instructions: "Learn the important nasal sounds అం and అః",
+                    xpValue: 40,
+                    questions: [
+                        ActivityQuestion(
+                            id: "q_\(lessonId)_nasal_teaching",
+                            type: .characterRecognition,
+                            question: "teaching_moment",
+                            correctAnswer: "అం",
+                            options: nil,
+                            audioFile: "nasal_intro.mp3",
+                            strokeOrder: [
+                                "Nasal sounds are special in Telugu! 🎵",
+                                "అం (anusvara) - close your lips for 'm' sound",
+                                "అః (visarga) - gentle breath sound 'ah'",
+                                "These appear in many Telugu words",
+                                "Listen carefully to the difference!"
+                            ],
+                            explanation: "Nasal sounds help with proper Telugu pronunciation"
+                        ),
+                        ActivityQuestion(
+                            id: "q_\(lessonId)_audio_anusvara",
+                            type: .audioIdentification,
+                            question: "Which nasal sound is this? (Listen for the 'm' sound)",
+                            correctAnswer: "అం",
+                            options: ["అం", "అః", "అ", "ఆ"],
+                            audioFile: "అం.mp3",
+                            strokeOrder: ["Feel your lips close", "Like humming 'mmm'"],
+                            explanation: "Perfect! అం is the nasal 'm' sound (anusvara). [Gentle vibration animation] 🎵"
+                        ),
+                        ActivityQuestion(
+                            id: "q_\(lessonId)_audio_visarga",
+                            type: .audioIdentification,
+                            question: "Which nasal sound is this? (Listen for the soft 'h' sound)",
+                            correctAnswer: "అః",
+                            options: ["అం", "అః", "అ", "ఆ"],
+                            audioFile: "అః.mp3",
+                            strokeOrder: ["Feel the gentle breath", "Like a soft sigh"],
+                            explanation: "Excellent! అః is the soft 'h' sound (visarga). [Breath animation] 💨"
+                        )
+                    ],
+                    canSkip: false
+                ),
+                
+                LessonActivity(
+                    id: "activity_\(lessonId)_tracing",
+                    type: .writing,
+                    title: "Advanced Vowel Tracing ✏️",
+                    instructions: "Practice writing compound and nasal vowels",
+                    xpValue: 30,
+                    questions: [
+                        ActivityQuestion(
+                            id: "q_\(lessonId)_trace_ai",
+                            type: .tracing,
+                            question: "Trace the compound vowel ఐ",
+                            correctAnswer: "ఐ",
+                            options: nil,
+                            audioFile: "ఐ.mp3",
+                            strokeOrder: [
+                                "Start with the left curve",
+                                "Add the vertical line",
+                                "Draw the horizontal connector",
+                                "Complete with the right elements"
+                            ],
+                            explanation: "Beautiful work on the compound vowel ఐ! [Gentle glow] ✨"
+                        ),
+                        ActivityQuestion(
+                            id: "q_\(lessonId)_trace_anusvara",
+                            type: .tracing,
+                            question: "Trace the nasal vowel అం",
+                            correctAnswer: "అం",
+                            options: nil,
+                            audioFile: "అం.mp3",
+                            strokeOrder: [
+                                "Write అ first",
+                                "Add the small circle (bindu) above",
+                                "This circle makes the 'm' sound"
+                            ],
+                            explanation: "Perfect! You've mastered the nasal sound అం! [Success sparkles] 🌟"
+                        )
+                    ],
+                    canSkip: false
+                ),
+                
+                LessonActivity(
+                    id: "activity_\(lessonId)_vowel_master",
+                    type: .reading,
+                    title: "Vowel Master Challenge! 🏆",
+                    instructions: "Test your knowledge of all Telugu vowels",
+                    xpValue: 60,
+                    questions: [
+                        ActivityQuestion(
+                            id: "q_\(lessonId)_master_mix",
+                            type: .characterRecognition,
+                            question: "Identify all the vowels you hear",
+                            correctAnswer: "అ, ఆ, ఇ, ఈ, ఉ, ఊ, ఋ, ఎ, ఏ, ఐ, ఒ, ఓ, ఔ, అం, అః",
+                            options: ["అ", "ఆ", "ఇ", "ఈ", "ఉ", "ఊ", "ఋ", "ఎ", "ఏ", "ఐ", "ఒ", "ఓ", "ఔ", "అం", "అః"],
+                            audioFile: "vowel_master_mix.mp3",
+                            strokeOrder: ["Listen to each sound", "Tap all the vowels you recognize", "You've learned them all!"],
+                            explanation: "Incredible! You're a Telugu vowel master! [Grand celebration with all vowels dancing] 🎉🌈✨"
+                        )
+                    ],
+                    canSkip: false
+                )
+            ]
+            
+        case 4:
+            // Lesson 4: Consonants Set 1 (క, ఖ, గ, ఘ, ఙ) - Ka Group
+            return [
+                LessonActivity(
+                    id: "activity_\(lessonId)_teaching",
+                    type: .reading,
+                    title: "Meet the Ka Group! 🎯",
+                    instructions: "Learn the first consonant family: క, ఖ, గ, ఘ, ఙ",
+                    xpValue: 30,
+                    questions: [
+                        ActivityQuestion(
+                            id: "q_\(lessonId)_teaching_ka_group",
+                            type: .characterRecognition,
+                            question: "teaching_moment",
+                            correctAnswer: "క",
+                            options: nil,
+                            audioFile: "ka_group_intro.mp3",
+                            strokeOrder: [
+                                "Welcome to Telugu consonants! 🌟",
+                                "This is the Ka group - velar consonants",
+                                "క makes 'ka' sound (like 'car')",
+                                "ఖ makes 'kha' sound (aspirated 'ka')",
+                                "గ makes 'ga' sound (like 'go')",
+                                "ఘ makes 'gha' sound (aspirated 'ga')",
+                                "ఙ makes 'nga' sound (nasal)",
+                                "They're all related sounds!"
+                            ],
+                            explanation: "Consonant groups help you learn systematic pronunciation"
+                        )
+                    ],
+                    canSkip: false
+                ),
+                
+                LessonActivity(
+                    id: "activity_\(lessonId)_audio_recognition",
+                    type: .reading,
+                    title: "Sound Recognition Challenge 🎵",
+                    instructions: "Listen and identify each Ka group consonant",
+                    xpValue: 40,
+                    questions: [
+                        ActivityQuestion(
+                            id: "q_\(lessonId)_audio_ka",
+                            type: .audioIdentification,
+                            question: "Which consonant makes this sound?",
+                            correctAnswer: "క",
+                            options: ["క", "ఖ", "గ", "ఘ"],
+                            audioFile: "క.mp3",
+                            strokeOrder: nil,
+                            explanation: "Perfect! క makes the 'ka' sound. [Sparkle animation] ✨"
+                        ),
+                        ActivityQuestion(
+                            id: "q_\(lessonId)_audio_kha",
+                            type: .audioIdentification,
+                            question: "Which consonant makes this sound?",
+                            correctAnswer: "ఖ",
+                            options: ["క", "ఖ", "గ", "ఘ"],
+                            audioFile: "ఖ.mp3",
+                            strokeOrder: nil,
+                            explanation: "Excellent! ఖ makes the 'kha' sound with extra breath. [Star burst] 🌟"
+                        ),
+                        ActivityQuestion(
+                            id: "q_\(lessonId)_audio_ga",
+                            type: .audioIdentification,
+                            question: "Which consonant makes this sound?",
+                            correctAnswer: "గ",
+                            options: ["క", "ఖ", "గ", "ఘ"],
+                            audioFile: "గ.mp3",
+                            strokeOrder: nil,
+                            explanation: "Great! గ makes the 'ga' sound. [Glow effect] 💫"
+                        ),
+                        ActivityQuestion(
+                            id: "q_\(lessonId)_audio_gha",
+                            type: .audioIdentification,
+                            question: "Which consonant makes this sound?",
+                            correctAnswer: "ఘ",
+                            options: ["క", "ఖ", "గ", "ఘ"],
+                            audioFile: "ఘ.mp3",
+                            strokeOrder: nil,
+                            explanation: "Amazing! ఘ makes the 'gha' sound with breath. [Confetti] 🎉"
+                        )
+                    ],
+                    canSkip: false
+                ),
+                
+                LessonActivity(
+                    id: "activity_\(lessonId)_tap_identify",
+                    type: .reading,
+                    title: "Tap-to-Identify Game 👆",
+                    instructions: "Find the correct consonant in the grid",
+                    xpValue: 30,
+                    questions: [
+                        ActivityQuestion(
+                            id: "q_\(lessonId)_tap_ka",
+                            type: .characterRecognition,
+                            question: "Tap క in the grid",
+                            correctAnswer: "క",
+                            options: ["క", "ఖ", "గ", "ఘ", "ఙ", "చ", "జ", "త"],
+                            audioFile: "క.mp3",
+                            strokeOrder: ["Listen to the sound", "Find it in the grid", "Tap to select!"],
+                            explanation: "Excellent spotting! You found క! [Highlight glow] ✨"
+                        ),
+                        ActivityQuestion(
+                            id: "q_\(lessonId)_tap_ga",
+                            type: .characterRecognition,
+                            question: "Tap గ in the grid",
+                            correctAnswer: "గ",
+                            options: ["క", "ఖ", "గ", "ఘ", "ఙ", "చ", "జ", "త"],
+                            audioFile: "గ.mp3",
+                            strokeOrder: ["Listen carefully", "Spot the consonant", "Tap it!"],
+                            explanation: "Great eye! You identified గ perfectly! [Success flash] 🌟"
+                        )
+                    ],
+                    canSkip: false
+                ),
+                
+                LessonActivity(
+                    id: "activity_\(lessonId)_tracing",
+                    type: .writing,
+                    title: "Consonant Tracing Practice ✏️",
+                    instructions: "Practice writing Ka group consonants",
+                    xpValue: 40,
+                    questions: [
+                        ActivityQuestion(
+                            id: "q_\(lessonId)_trace_ka",
+                            type: .tracing,
+                            question: "Trace the consonant క",
+                            correctAnswer: "క",
+                            options: nil,
+                            audioFile: "క.mp3",
+                            strokeOrder: [
+                                "Start with the left vertical line",
+                                "Add the top horizontal curve",
+                                "Draw the middle connecting line",
+                                "Finish with the bottom curve"
+                            ],
+                            explanation: "Beautiful tracing of క! [Gentle glow] ✨"
+                        ),
+                        ActivityQuestion(
+                            id: "q_\(lessonId)_trace_ga",
+                            type: .tracing,
+                            question: "Trace the consonant గ",
+                            correctAnswer: "గ",
+                            options: nil,
+                            audioFile: "గ.mp3",
+                            strokeOrder: [
+                                "Begin with the curved top",
+                                "Draw the vertical line down",
+                                "Add the horizontal base",
+                                "Complete with connecting curves"
+                            ],
+                            explanation: "Excellent work on గ! [Success sparkles] 🌟"
+                        )
+                    ],
+                    canSkip: false
+                ),
+                
+                LessonActivity(
+                    id: "activity_\(lessonId)_family_game",
+                    type: .reading,
+                    title: "Consonant Family Game! 👨‍👩‍👧‍👦",
+                    instructions: "Group consonants by their sound families",
+                    xpValue: 50,
+                    questions: [
+                        ActivityQuestion(
+                            id: "q_\(lessonId)_family_sort",
+                            type: .characterRecognition,
+                            question: "Sort these consonants into the Ka family",
+                            correctAnswer: "ka_family",
+                            options: ["క", "ఖ", "గ", "ఘ", "ఙ", "చ", "జ", "త", "ప"],
+                            audioFile: "family_game.mp3",
+                            strokeOrder: ["Listen to each sound", "Drag Ka family members together", "Leave others outside!"],
+                            explanation: "Perfect family reunion! You understand consonant groups! [Family celebration] 👨‍👩‍👧‍👦✨"
+                        )
+                    ],
+                    canSkip: false
+                )
+            ]
+            
+        case 5:
+            // Lesson 5: Consonants Set 2 (చ, ఛ, జ, ఝ, ఞ) - Cha Group
+            return [
+                LessonActivity(
+                    id: "activity_\(lessonId)_teaching",
+                    type: .reading,
+                    title: "Meet the Cha Group! 🎭",
+                    instructions: "Learn the palatal consonants: చ, ఛ, జ, ఝ, ఞ",
+                    xpValue: 30,
+                    questions: [
+                        ActivityQuestion(
+                            id: "q_\(lessonId)_teaching_cha_group",
+                            type: .characterRecognition,
+                            question: "teaching_moment",
+                            correctAnswer: "చ",
+                            options: nil,
+                            audioFile: "cha_group_intro.mp3",
+                            strokeOrder: [
+                                "Welcome to the Cha group! 🎭",
+                                "These are palatal consonants (tongue touches roof of mouth)",
+                                "చ makes 'cha' sound (like 'chair')",
+                                "ఛ makes 'chha' sound (aspirated 'cha')",
+                                "జ makes 'ja' sound (like 'jar')",
+                                "ఝ makes 'jha' sound (aspirated 'ja')",
+                                "ఞ makes 'nya' sound (nasal)",
+                                "They're all made with your tongue in the same position!"
+                            ],
+                            explanation: "Palatal consonants are made by touching your tongue to the roof of your mouth"
+                        )
+                    ],
+                    canSkip: false
+                ),
+                
+                LessonActivity(
+                    id: "activity_\(lessonId)_audio_recognition",
+                    type: .reading,
+                    title: "Cha Group Sound Challenge 🎵",
+                    instructions: "Listen and identify each palatal consonant",
+                    xpValue: 40,
+                    questions: [
+                        ActivityQuestion(
+                            id: "q_\(lessonId)_audio_cha",
+                            type: .audioIdentification,
+                            question: "Which consonant makes this sound?",
+                            correctAnswer: "చ",
+                            options: ["చ", "ఛ", "జ", "ఝ"],
+                            audioFile: "చ.mp3",
+                            strokeOrder: nil,
+                            explanation: "Perfect! చ makes the 'cha' sound. [Sparkle animation] ✨"
+                        ),
+                        ActivityQuestion(
+                            id: "q_\(lessonId)_audio_chha",
+                            type: .audioIdentification,
+                            question: "Which consonant makes this sound?",
+                            correctAnswer: "ఛ",
+                            options: ["చ", "ఛ", "జ", "ఝ"],
+                            audioFile: "ఛ.mp3",
+                            strokeOrder: nil,
+                            explanation: "Excellent! ఛ makes the 'chha' sound with extra breath. [Star burst] 🌟"
+                        ),
+                        ActivityQuestion(
+                            id: "q_\(lessonId)_audio_ja",
+                            type: .audioIdentification,
+                            question: "Which consonant makes this sound?",
+                            correctAnswer: "జ",
+                            options: ["చ", "ఛ", "జ", "ఝ"],
+                            audioFile: "జ.mp3",
+                            strokeOrder: nil,
+                            explanation: "Great! జ makes the 'ja' sound. [Glow effect] 💫"
+                        ),
+                        ActivityQuestion(
+                            id: "q_\(lessonId)_audio_jha",
+                            type: .audioIdentification,
+                            question: "Which consonant makes this sound?",
+                            correctAnswer: "ఝ",
+                            options: ["చ", "ఛ", "జ", "ఝ"],
+                            audioFile: "ఝ.mp3",
+                            strokeOrder: nil,
+                            explanation: "Amazing! ఝ makes the 'jha' sound with breath. [Confetti] 🎉"
+                        )
+                    ],
+                    canSkip: false
+                ),
+                
+                LessonActivity(
+                    id: "activity_\(lessonId)_tap_identify",
+                    type: .reading,
+                    title: "Palatal Hunt Game 👆",
+                    instructions: "Find the Cha group consonants in the grid",
+                    xpValue: 30,
+                    questions: [
+                        ActivityQuestion(
+                            id: "q_\(lessonId)_tap_cha",
+                            type: .characterRecognition,
+                            question: "Tap చ in the grid",
+                            correctAnswer: "చ",
+                            options: ["చ", "ఛ", "జ", "ఝ", "ఞ", "క", "గ", "త"],
+                            audioFile: "చ.mp3",
+                            strokeOrder: ["Listen to the sound", "Find it in the grid", "Tap to select!"],
+                            explanation: "Excellent spotting! You found చ! [Highlight glow] ✨"
+                        ),
+                        ActivityQuestion(
+                            id: "q_\(lessonId)_tap_ja",
+                            type: .characterRecognition,
+                            question: "Tap జ in the grid",
+                            correctAnswer: "జ",
+                            options: ["చ", "ఛ", "జ", "ఝ", "ఞ", "క", "గ", "త"],
+                            audioFile: "జ.mp3",
+                            strokeOrder: ["Listen carefully", "Spot the consonant", "Tap it!"],
+                            explanation: "Great eye! You identified జ perfectly! [Success flash] 🌟"
+                        )
+                    ],
+                    canSkip: false
+                ),
+                
+                LessonActivity(
+                    id: "activity_\(lessonId)_tracing",
+                    type: .writing,
+                    title: "Palatal Tracing Practice ✏️",
+                    instructions: "Practice writing Cha group consonants",
+                    xpValue: 40,
+                    questions: [
+                        ActivityQuestion(
+                            id: "q_\(lessonId)_trace_cha",
+                            type: .tracing,
+                            question: "Trace the consonant చ",
+                            correctAnswer: "చ",
+                            options: nil,
+                            audioFile: "చ.mp3",
+                            strokeOrder: [
+                                "Start with the curved top",
+                                "Draw the vertical line down",
+                                "Add the horizontal connector",
+                                "Complete with the bottom curve"
+                            ],
+                            explanation: "Beautiful tracing of చ! [Gentle glow] ✨"
+                        ),
+                        ActivityQuestion(
+                            id: "q_\(lessonId)_trace_ja",
+                            type: .tracing,
+                            question: "Trace the consonant జ",
+                            correctAnswer: "జ",
+                            options: nil,
+                            audioFile: "జ.mp3",
+                            strokeOrder: [
+                                "Begin with the left curve",
+                                "Add the central vertical line",
+                                "Draw the horizontal base",
+                                "Finish with connecting elements"
+                            ],
+                            explanation: "Excellent work on జ! [Success sparkles] 🌟"
+                        )
+                    ],
+                    canSkip: false
+                ),
+                
+                LessonActivity(
+                    id: "activity_\(lessonId)_tongue_position",
+                    type: .reading,
+                    title: "Tongue Position Game! 👅",
+                    instructions: "Learn how tongue position creates different consonant families",
+                    xpValue: 50,
+                    questions: [
+                        ActivityQuestion(
+                            id: "q_\(lessonId)_position_game",
+                            type: .characterRecognition,
+                            question: "Which consonants are made with tongue touching the roof of mouth?",
+                            correctAnswer: "palatal_family",
+                            options: ["చ", "ఛ", "జ", "ఝ", "ఞ", "క", "త", "ప"],
+                            audioFile: "tongue_position.mp3",
+                            strokeOrder: ["Feel your tongue position", "Select palatal consonants", "Cha group uses roof of mouth!"],
+                            explanation: "Perfect understanding! You know how consonants are made! [Anatomy diagram animation] 🧠✨"
+                        )
+                    ],
+                    canSkip: false
+                )
+            ]
+            
+        case 6:
+            // Lesson 6: Consonants Set 3 (ట, ఠ, డ, ఢ, ణ) - Ta Group (Retroflex)
+            return createRetroflexConsonantLesson(lessonId: lessonId)
+            
+        case 7:
+            // Lesson 7: Consonants Set 4 (త, థ, ద, ధ, న) - Dental Group
+            return createDentalConsonantLesson(lessonId: lessonId)
+            
+        case 8:
+            // Lesson 8: Consonants Set 5 (ప, ఫ, బ, భ, మ) - Pa Group (Labial)
+            return createLabialConsonantLesson(lessonId: lessonId)
+            
+        case 9:
+            // Lesson 9: Consonants Set 6 (య, ర, ల, వ, శ, ష, స, హ, ళ, క్ష, ఱ) - Remaining Consonants
+            return createFinalConsonantLesson(lessonId: lessonId)
+            
+        case 10:
+            // Lesson 10: Review Game & Guninthalu Introduction
+            return createReviewAndGuninthaluLesson(lessonId: lessonId)
+            
+
+            
+        default:
+            return []
+        }
+    }
+    
+    private func createBeginnerActivities(lessonId: String, lessonOrder: Int) -> [LessonActivity] {
+        return generateBeginnerActivities(lessonId: lessonId, lessonOrder: lessonOrder)
+    }
+    
+    private func createVowelLessonActivities(lessonId: String, vowel: String, romanization: String, explanation: String) -> [LessonActivity] {
+        return [
+            LessonActivity(
+                id: "activity_\(lessonId)_learn",
+                type: .reading,
+                title: "Learn \(vowel)",
+                instructions: "Learn to recognize and write the Telugu vowel \(vowel)",
+                xpValue: 50,
+                questions: [
+                    // Teaching moment
+                    ActivityQuestion(
+                        id: "q_\(lessonId)_teach",
+                        type: .characterRecognition,
+                        question: "teaching_moment",
+                        correctAnswer: vowel,
+                        options: nil,
+                        audioFile: "\(vowel).mp3",
+                        strokeOrder: [
+                            "This is the Telugu vowel \(vowel)",
+                            "It sounds like '\(romanization)'",
+                            "Listen carefully to the pronunciation"
+                        ],
+                        explanation: explanation
+                    ),
+                    
+                    // Recognition question
+                    ActivityQuestion(
+                        id: "q_\(lessonId)_recognize",
+                        type: .characterRecognition,
+                        question: "Which letter makes the '\(romanization)' sound?",
+                        correctAnswer: vowel,
+                        options: [vowel, "అ", "ఆ", "ఇ"],
+                        audioFile: "\(vowel).mp3",
+                        strokeOrder: nil,
+                        explanation: "Correct! \(vowel) makes the '\(romanization)' sound."
+                    ),
+                    
+                    // Audio recognition
+                    ActivityQuestion(
+                        id: "q_\(lessonId)_audio",
+                        type: .audioIdentification,
+                        question: "Listen and select the correct vowel",
+                        correctAnswer: vowel,
+                        options: [vowel, "అ", "ఆ", "ఇ"],
+                        audioFile: "\(vowel).mp3",
+                        strokeOrder: nil,
+                        explanation: "Great! You recognized the sound of \(vowel)."
+                    )
+                ],
+                canSkip: false
+            )
+        ]
+    }
+    
+    private func createVowelReviewActivities(lessonId: String, vowels: [String]) -> [LessonActivity] {
+        return [
+            LessonActivity(
+                id: "activity_\(lessonId)_review",
+                type: .reading,
+                title: "Review Vowels",
+                instructions: "Practice the vowels you've learned so far",
+                xpValue: 75,
+                questions: vowels.map { vowel in
+                    ActivityQuestion(
+                        id: "q_\(lessonId)_review_\(vowel)",
+                        type: .characterRecognition,
+                        question: "What sound does this make?",
+                        correctAnswer: vowel,
+                        options: Array(vowels.shuffled().prefix(4)),
+                        audioFile: "\(vowel).mp3",
+                        strokeOrder: nil,
+                        explanation: "Excellent! This is \(vowel)."
+                    )
+                },
+                canSkip: false
+            )
+        ]
+    }
+    
+    private func createDoubleVowelActivities(lessonId: String, vowel1: String, vowel2: String, explanation: String) -> [LessonActivity] {
+        return [
+            LessonActivity(
+                id: "activity_\(lessonId)_double",
+                type: .reading,
+                title: "Learn \(vowel1) and \(vowel2)",
+                instructions: explanation,
+                xpValue: 50,
+                questions: [
+                    ActivityQuestion(
+                        id: "q_\(lessonId)_\(vowel1)",
+                        type: .characterRecognition,
+                        question: "Select the correct vowel",
+                        correctAnswer: vowel1,
+                        options: [vowel1, vowel2, "అ", "ఆ"],
+                        audioFile: "\(vowel1).mp3",
+                        strokeOrder: nil,
+                        explanation: "This is \(vowel1)"
+                    ),
+                    ActivityQuestion(
+                        id: "q_\(lessonId)_\(vowel2)",
+                        type: .characterRecognition,
+                        question: "Select the correct vowel",
+                        correctAnswer: vowel2,
+                        options: [vowel1, vowel2, "ఇ", "ఈ"],
+                        audioFile: "\(vowel2).mp3",
+                        strokeOrder: nil,
+                        explanation: "This is \(vowel2)"
+                    )
+                ],
+                canSkip: false
+            )
+        ]
+    }
+    
+    private func createTripleVowelActivities(lessonId: String, vowels: [String], explanation: String) -> [LessonActivity] {
+        return [
+            LessonActivity(
+                id: "activity_\(lessonId)_triple",
+                type: .reading,
+                title: "Learn Multiple Vowels",
+                instructions: explanation,
+                xpValue: 50,
+                questions: vowels.map { vowel in
+                    ActivityQuestion(
+                        id: "q_\(lessonId)_\(vowel)",
+                        type: .characterRecognition,
+                        question: "What is this vowel?",
+                        correctAnswer: vowel,
+                        options: vowels + ["అ"],
+                        audioFile: "\(vowel).mp3",
+                        strokeOrder: nil,
+                        explanation: "This is the vowel \(vowel)"
+                    )
+                },
+                canSkip: false
+            )
+        ]
+    }
+    
+    private func createCompleteVowelReview(lessonId: String) -> [LessonActivity] {
+        let allVowels = ["అ", "ఆ", "ఇ", "ఈ", "ఉ", "ఊ", "ఎ", "ఏ", "ఐ", "ఒ", "ఓ", "ఔ"]
+        return [
+            LessonActivity(
+                id: "activity_\(lessonId)_master",
+                type: .reading,
+                title: "Master All Vowels",
+                instructions: "Final test of all Telugu vowels",
+                xpValue: 100,
+                questions: allVowels.shuffled().prefix(8).map { vowel in
+                    ActivityQuestion(
+                        id: "q_\(lessonId)_master_\(vowel)",
+                        type: .characterRecognition,
+                        question: "Identify this vowel",
+                        correctAnswer: vowel,
+                        options: Array(allVowels.shuffled().prefix(4)),
+                        audioFile: "\(vowel).mp3",
+                        strokeOrder: nil,
+                        explanation: "Perfect! You've mastered \(vowel)."
+                    )
+                },
+                canSkip: false
+            )
+        ]
+    }
+    
+    private func createBasicActivities(for lesson: Int) -> [LessonActivity] {
+        let consonants = ["క", "గ", "చ", "జ", "ట", "డ", "త", "ద", "న", "ప", "బ", "మ"]
+        let currentConsonant = consonants[min(lesson - 1, consonants.count - 1)]
         
-        // ADVANCED: 10 lessons - complex sentences → idioms → texts
-        let advancedLessons = (1...10).map { i in
-            Lesson(
-                id: "lesson_4_\(i)",
-                title: "Lesson \(i)",
-                description: getAdvancedDescription(i),
-                levelId: "level_4_advanced",
-                order: i,
-                difficulty: 4,
-                xpReward: 230 + (i * 5),
-                estimatedMinutes: 30 + i,
-                activities: createStandardActivities("4_\(i)", level: 4)
+        return [
+            LessonActivity(
+                id: "activity_2_\(lesson)_intro",
+                type: .reading,
+                title: "Learn \(currentConsonant)",
+                instructions: "Learn to recognize and pronounce this Telugu consonant",
+                xpValue: 75,
+                questions: [
+                    ActivityQuestion(
+                        id: "q_2_\(lesson)_1",
+                        type: .characterRecognition,
+                        question: "What sound does this letter make?",
+                        correctAnswer: currentConsonant,
+                        options: [currentConsonant, "క", "గ", "చ"],
+                        audioFile: "\(currentConsonant).mp3",
+                        strokeOrder: ["Draw the main shape", "Add connecting lines", "Complete the consonant"],
+                        explanation: "This is the consonant \(currentConsonant)"
+                    )
+                ],
+                canSkip: false
             )
-        }
+        ]
+    }
+    
+    private func createIntermediateActivities(for lesson: Int) -> [LessonActivity] {
+        let combinations = ["కా", "గా", "చా", "జా", "టా", "డా", "తా", "దా", "నా", "పా", "బా", "మా"]
+        let currentCombination = combinations[min(lesson - 1, combinations.count - 1)]
         
-        return assignTopicTitles(to: [
-            LearningLevel(id: "level_1_beginner", title: "Level 1: Beginner", description: "New to Telugu - Learn vowels, basic consonants, and simple words", difficulty: 1, lessons: beginnerLessons, requiredXP: 0, color: "#4CAF50"),
-            LearningLevel(id: "level_2_basic", title: "Level 2: Basic", description: "Build on basics - Learn vowel combinations and simple syllables", difficulty: 2, lessons: basicLessons, requiredXP: 0, color: "#2196F3"),
-            LearningLevel(id: "level_3_intermediate", title: "Level 3: Intermediate", description: "Expand vocabulary - Learn common words and phrases", difficulty: 3, lessons: intermediateLessons, requiredXP: 0, color: "#FF9800"),
-            LearningLevel(id: "level_4_advanced", title: "Level 4: Advanced", description: "Master Telugu - Learn complex sentences and grammar", difficulty: 4, lessons: advancedLessons, requiredXP: 0, color: "#9C27B0")
-        ])
-    }
-    
-    private func getBeginnerTitle(_ lesson: Int) -> String {
-        let titles = [
-            "Vowels – Part 1", "Vowels – Part 2", "Vowels – Part 3", "Vowels – Part 4",
-            "Consonants – Part 1", "Consonants – Part 2", "Consonants – Part 3", "Consonants – Part 4",
-            "Syllable Formation – Part 1", "Syllable Formation – Part 2", "Syllable Formation – Part 3",
-            "Basic Words", "Simple Sentences", "Numbers and Counting", "Family and Relations"
-        ]
-        return titles[min(lesson - 1, titles.count - 1)]
-    }
-    
-    private func getBasicTitle(_ lesson: Int) -> String {
-        let titles = [
-            "Basic Phrases and Q&A", "Action Verbs – Conjugation", "Possessives in Phrases", "Conversation Starters",
-            "Directions and Movement", "Talking About Time", "Short Story Comprehension", "Complex Sentence Structures",
-            "Advanced Grammar Concepts", "Literature and Poetry", "Cultural Context and Traditions", "Business and Professional",
-            "Technology and Modern Life", "Travel and Transportation", "Health and Medical"
-        ]
-        return titles[min(lesson - 1, titles.count - 1)]
-    }
-    
-    private func getIntermediateTitle(_ lesson: Int) -> String {
-        let titles = [
-            "Present Tense Practice", "Past Tense Formation", "Future Tense Usage", "Question Formation",
-            "Directions and Navigation", "Time Expressions", "Story Reading", "Adjective Usage",
-            "Comparative Sentences", "Complex Sentences", "Conditional Sentences", "Passive Voice",
-            "Reported Speech", "Advanced Grammar", "Formal Speech"
-        ]
-        return titles[min(lesson - 1, titles.count - 1)]
-    }
-    
-    private func getAdvancedTitle(_ lesson: Int) -> String {
-        let titles = [
-            "Conditional Sentences", "Passive Voice", "Idioms", "Formal Speech",
-            "Poetry Reading", "News Articles", "Letter Writing", "Cultural Traditions",
-            "Grammar Rules", "Assessment", "Literary Telugu", "Business Communication",
-            "Technical Vocabulary", "Cultural Nuances", "Mastery Test"
-        ]
-        return titles[min(lesson - 1, titles.count - 1)]
-    }
-    
-    private func getBeginnerDescription(_ lesson: Int) -> String {
-        let descriptions = [
-            // Vowels - Lessons 1-4
-            "First Telugu vowels: అ, ఆ, ఇ, ఈ — Learn basic vowel sounds and recognition",
-            "Telugu vowels: ఉ, ఊ, ఋ, ౠ — Practice vowel pronunciation and writing", 
-            "Telugu vowels: ఎ, ఏ, ఐ, ఒ — Complete vowel sound practice",
-            "Final vowels: ఓ, ఔ, అం, అః — Master all Telugu vowel sounds",
-            // Consonants - Lessons 5-10
-            "First consonants: క, ఖ, గ, ఘ — Learn ka-varga consonant group",
-            "Consonants: చ, ఛ, జ, ఝ — Practice cha-varga consonant sounds",
-            "Consonants: ట, ఠ, డ, ఢ — Master ta-varga (retroflex) sounds",
-            "Consonants: త, థ, ద, ధ — Learn tha-varga (dental) consonants",
-            "Consonants: ప, ఫ, బ, భ — Practice pa-varga consonant group",
-            "Consonants: మ, య, ర, ల — Learn semivowels and nasals",
-            // Additional consonants - Lessons 11-12
-            "More consonants: వ, శ, ష, స — Complete consonant learning",
-            "Final consonants: హ, ళ, క్ష, జ్ఞ — Master all Telugu consonants",
-            // Syllables - Lessons 13-15 (only after consonants complete)
-            "First syllables: కా, కి, కీ, కు — Combine consonants with vowels",
-            "More syllables: కూ, కె, కే, కై — Practice syllable formation",
-            "Complete syllables: కో, కౌ, కం, కః — Master all syllable combinations"
-        ]
-        return descriptions[min(lesson - 1, descriptions.count - 1)]
-    }
-    
-    private func getBasicDescription(_ lesson: Int) -> String {
-        let descriptions = [
-            "Complex syllables with all vowels — Combine: కా, కి, కు, కె, కో",
-            "Double consonants: క్క, ప్ప — Words: పప్పు, ముక్క",
-            "Body parts: తల, కన్ను, చేయి — Sentences: నాకు కన్ను నొప్పి",
-            "Colors: ఎరుపు, నీలం, పసుపు — Match colors to objects",
-            "Numbers: ఒకటి, రెండు, మూడు — Count items and answer",
-            "Animals: కుక్క, పిల్లి, పక్షి — Identify sounds and names",
-            "First phrases: ఇది ఏమిటి? — Short Q&A practice",
-            "Basic actions: తిను, త్రాగు, నడవు — Conjugation practice",
-            "Possessives: నా, నీ — Build phrases: నా పుస్తకం",
-            "Simple conversation starters — Greetings and introductions",
-            "Family relationships: అమ్మ, నాన్న, అన్న — Family member names",
-            "Daily activities: తిను, త్రాగు, నిద్రపోవు — Daily routine verbs",
-            "Common objects: పుస్తకం, కలం, బ్యాగ్ — School and home items",
-            "Simple sentences: నేను విద్యార్థిని — Basic sentence formation",
-            "Basic conversations: నమస్కారం, ధన్యవాదాలు — Polite expressions"
-        ]
-        return descriptions[min(lesson - 1, descriptions.count - 1)]
-    }
-    
-    private func getIntermediateDescription(_ lesson: Int) -> String {
-        let descriptions = [
-            "Present tense: నేను చేస్తున్నాను — Build present continuous sentences",
-            "Past tense: నేను చేశాను — Convert present to past",
-            "Future tense: నేను చేస్తాను — Express plans and intentions",
-            "Questions: ఎక్కడ? ఎప్పుడు? — Form WH-questions",
-            "Directions: ఎడమ, కుడి, ముందు — Give and follow directions",
-            "Time: ఇప్పుడు, రేపు, నిన్న — Talk about time",
-            "Short story reading — Comprehension questions",
-            "Adjectives: పెద్ద, చిన్న, మంచి — Modify nouns",
-            "Comparisons: కంటే, చాలా — Comparative sentences",
-            "Complex sentences with అయితే, కానీ — Contrast and condition",
-            "Conditional sentences: అయితే, అంటే — If-then constructions",
-            "Passive voice: చేయబడింది — Passive constructions",
-            "Reported speech: అన్నాడు, చెప్పాడు — Indirect speech",
-            "Advanced grammar: కారణంగా, వల్ల — Cause and effect",
-            "Formal language: మర్యాదపూర్వకంగా — Respectful expressions"
-        ]
-        return descriptions[min(lesson - 1, descriptions.count - 1)]
-    }
-    
-    private func getAdvancedDescription(_ lesson: Int) -> String {
-        let descriptions = [
-            "Conditional sentences: అయితే, అయినా — If-then nuances",
-            "Passive voice constructions — Transform active to passive",
-            "Telugu idioms and phrases — Meanings in context",
-            "Formal speech: మీరు, తమరు — Polite forms and usage",
-            "Simple Telugu poetry — Meter and meaning",
-            "Reading news articles — Summarize key points",
-            "Formal letter structure — Openings and closings",
-            "Telugu culture and traditions — Short notes",
-            "Complex grammar rules — Exceptions and edge cases",
-            "Comprehensive assessment — Mixed practice",
-            "Literary Telugu: Classical expressions and vocabulary",
-            "Business communication: Professional Telugu writing",
-            "Technical vocabulary: Modern terms and usage",
-            "Cultural nuances: Regional variations and customs",
-            "Mastery assessment: Complete language proficiency test"
-        ]
-        return descriptions[min(lesson - 1, descriptions.count - 1)]
-    }
-    
-    private func createStandardActivities(_ lessonId: String, level: Int) -> [LessonActivity] {
-        let baseXP = level * 20
-        // Target distribution: 3 reading, 3 writing, 2 listening, 2 speaking = 10
-        let readingQuestions: [ActivityQuestion] = (1...3).map { idx in
-            ActivityQuestion(
-                id: "q\(lessonId)_r\(idx)",
-                type: .multipleChoice,
-                question: "Choose the correct option (Reading) #\(idx)",
-                correctAnswer: "అ",
-                options: ["అ", "ఆ", "ఇ", "ఈ"],
-                audioFile: nil,
-                strokeOrder: nil,
-                explanation: "Practice recognizing characters"
+        return [
+            LessonActivity(
+                id: "activity_3_\(lesson)_combo",
+                type: .reading,
+                title: "Learn \(currentCombination)",
+                instructions: "Learn consonant-vowel combinations (guninthalu)",
+                xpValue: 100,
+                questions: [
+                    ActivityQuestion(
+                        id: "q_3_\(lesson)_1",
+                        type: .characterRecognition,
+                        question: "What does this combination sound like?",
+                        correctAnswer: currentCombination,
+                        options: [currentCombination, "కా", "గా", "చా"],
+                        audioFile: "\(currentCombination).mp3",
+                        strokeOrder: ["Start with the consonant", "Add the vowel sign", "Complete the combination"],
+                        explanation: "This is \(currentCombination) - a consonant-vowel combination"
+                    )
+                ],
+                canSkip: false
             )
-        }
-        let writingQuestions: [ActivityQuestion] = (1...3).map { idx in
-            ActivityQuestion(
-                id: "q\(lessonId)_w\(idx)",
-                type: idx == 1 ? .tracing : .textInput,
-                question: idx == 1 ? "Trace the character:" : "Type the shown character:",
-                correctAnswer: "అ",
-                options: nil,
-                audioFile: nil,
-                strokeOrder: idx == 1 ? ["Start with main stroke", "Add details"] : nil,
-                explanation: "Writing practice"
+        ]
+    }
+    
+    // Additional helper functions for the new beginner structure
+    private func createConsonantLessonActivities(lessonId: String, consonant: String, romanization: String, explanation: String) -> [LessonActivity] {
+        return [
+            LessonActivity(
+                id: "activity_\(lessonId)_learn",
+                type: .reading,
+                title: "Learn \(consonant)",
+                instructions: "Learn to recognize and write the Telugu consonant \(consonant)",
+                xpValue: 50,
+                questions: [
+                    ActivityQuestion(
+                        id: "q_\(lessonId)_teach",
+                        type: .characterRecognition,
+                        question: "teaching_moment",
+                        correctAnswer: consonant,
+                        options: nil,
+                        audioFile: "\(consonant).mp3",
+                        strokeOrder: [
+                            "This is the Telugu consonant \(consonant)",
+                            "It sounds like '\(romanization)'",
+                            explanation
+                        ],
+                        explanation: explanation
+                    )
+                ],
+                canSkip: false
             )
-        }
-        let listeningQuestions: [ActivityQuestion] = (1...2).map { idx in
-            ActivityQuestion(
-                id: "q\(lessonId)_l\(idx)",
-                type: .audioIdentification,
-                question: "Listen and select (Listening) #\(idx)",
-                correctAnswer: "అ",
-                options: ["అ", "ఆ", "ఇ", "ఈ"],
-                audioFile: nil,
-                strokeOrder: nil,
-                explanation: "Listening practice"
+        ]
+    }
+    
+    private func createCombinationActivities(lessonId: String, consonant: String, combinations: [String], explanation: String) -> [LessonActivity] {
+        return [
+            LessonActivity(
+                id: "activity_\(lessonId)_combinations",
+                type: .reading,
+                title: "Letter Combinations",
+                instructions: "Learn how to combine \(consonant) with vowel signs",
+                xpValue: 50,
+                questions: combinations.map { combo in
+                    ActivityQuestion(
+                        id: "q_\(lessonId)_\(combo)",
+                        type: .characterRecognition,
+                        question: "What does this say?",
+                        correctAnswer: combo,
+                        options: nil,
+                        audioFile: "\(combo).mp3",
+                        strokeOrder: nil,
+                        explanation: "This combination makes the sound '\(combo)'"
+                    )
+                },
+                canSkip: false
             )
-        }
-        let speakingQuestions: [ActivityQuestion] = (1...2).map { idx in
-            ActivityQuestion(
-                id: "q\(lessonId)_s\(idx)",
-                type: .speaking,
-                question: "Pronounce clearly (Speaking) #\(idx)",
-                correctAnswer: "అ",
-                options: nil,
-                audioFile: nil,
-                strokeOrder: nil,
-                explanation: "Speaking practice"
+        ]
+    }
+    
+    private func createWordLessonActivities(lessonId: String, words: [String], meanings: [String], explanation: String) -> [LessonActivity] {
+        return [
+            LessonActivity(
+                id: "activity_\(lessonId)_words",
+                type: .reading,
+                title: "First Words",
+                instructions: "Learn your first Telugu words",
+                xpValue: 75,
+                questions: zip(words, meanings).map { word, meaning in
+                    ActivityQuestion(
+                        id: "q_\(lessonId)_\(word)",
+                        type: .wordTranslation,
+                        question: "What does \(word) mean?",
+                        correctAnswer: meaning,
+                        options: nil,
+                        audioFile: "\(word).mp3",
+                        strokeOrder: nil,
+                        explanation: "\(word) means '\(meaning)' in English"
+                    )
+                },
+                canSkip: false
             )
-        }
+        ]
+    }
+    
+    private func createDoubleConsonantActivities(lessonId: String, consonant1: String, consonant2: String, explanation: String) -> [LessonActivity] {
+        return [
+            LessonActivity(
+                id: "activity_\(lessonId)_consonants",
+                type: .reading,
+                title: "Two New Letters",
+                instructions: "Learn two new Telugu consonants",
+                xpValue: 50,
+                questions: [consonant1, consonant2].map { consonant in
+                    ActivityQuestion(
+                        id: "q_\(lessonId)_\(consonant)",
+                        type: .characterRecognition,
+                        question: "What letter is this?",
+                        correctAnswer: consonant,
+                        options: nil,
+                        audioFile: "\(consonant).mp3",
+                        strokeOrder: nil,
+                        explanation: "This is the Telugu letter \(consonant)"
+                    )
+                },
+                canSkip: false
+            )
+        ]
+    }
+    
+    private func createMixedReviewActivities(lessonId: String, vowels: [String], consonants: [String]) -> [LessonActivity] {
+        return [
+            LessonActivity(
+                id: "activity_\(lessonId)_review",
+                type: .reading,
+                title: "Review All Letters",
+                instructions: "Practice all the vowels and consonants you've learned",
+                xpValue: 75,
+                questions: (vowels + consonants).map { letter in
+                    ActivityQuestion(
+                        id: "q_\(lessonId)_\(letter)",
+                        type: .characterRecognition,
+                        question: "What letter is this?",
+                        correctAnswer: letter,
+                        options: nil,
+                        audioFile: "\(letter).mp3",
+                        strokeOrder: nil,
+                        explanation: "This is the Telugu letter \(letter)"
+                    )
+                },
+                canSkip: false
+            )
+        ]
+    }
+    
+    private func createReadingPracticeActivities(lessonId: String, words: [String]) -> [LessonActivity] {
         return [
             LessonActivity(
                 id: "activity_\(lessonId)_reading",
                 type: .reading,
                 title: "Reading Practice",
-                instructions: "Practice reading Telugu text",
-                xpValue: baseXP,
-                questions: readingQuestions,
+                instructions: "Practice reading the words you've learned",
+                xpValue: 75,
+                questions: words.map { word in
+                    ActivityQuestion(
+                        id: "q_\(lessonId)_read_\(word)",
+                        type: .wordTranslation,
+                        question: "Read this word aloud",
+                        correctAnswer: word,
+                        options: nil,
+                        audioFile: "\(word).mp3",
+                        strokeOrder: nil,
+                        explanation: "Practice reading \(word)"
+                    )
+                },
                 canSkip: false
-            ),
-            LessonActivity(
-                id: "activity_\(lessonId)_writing",
-                type: .writing,
-                title: "Writing Practice",
-                instructions: "Practice writing Telugu characters",
-                xpValue: baseXP,
-                questions: writingQuestions,
-                canSkip: false
-            ),
-            LessonActivity(
-                id: "activity_\(lessonId)_listening",
-                type: .listening,
-                title: "Listening Practice",
-                instructions: "Listen and identify sounds",
-                xpValue: baseXP,
-                questions: listeningQuestions,
-                canSkip: false
-            ),
-            LessonActivity(
-                id: "activity_\(lessonId)_speaking",
-                type: .speaking,
-                title: "Speaking Practice",
-                instructions: "Practice pronunciation",
-                xpValue: baseXP,
-                questions: speakingQuestions,
-                canSkip: true
             )
         ]
     }
-
-    // Ensure minimum of 15 practice questions per lesson (top-up if JSON provides fewer)
-    private func ensureFifteenQuestionsPerLesson(_ lesson: Lesson) -> Lesson {
-        let totalExisting = lesson.activities.reduce(0) { $0 + $1.questions.count }
-        guard totalExisting < 15 else { return lesson }
-        var activities = lesson.activities
-        var remaining = 15 - totalExisting
-        func appendQuestions(to type: ActivityType, count: Int) {
-            guard remaining > 0, let idx = activities.firstIndex(where: { $0.type == type }) else { return }
-            let addCount = min(count, remaining)
-            let start = activities[idx].questions.count
-            let newQuestions: [ActivityQuestion] = (0..<addCount).map { j in
-                let qIndex = start + j + 1
-                switch type {
-                case .reading:
-                    return ActivityQuestion(id: "q_\(lesson.id)_r_extra_\(qIndex)", type: .multipleChoice, question: "Choose the correct option (Reading) #\(qIndex)", correctAnswer: "అ", options: ["అ", "ఆ", "ఇ", "ఈ"], audioFile: nil, strokeOrder: nil, explanation: "Auto-generated reading practice")
-                case .writing:
-                    return ActivityQuestion(id: "q_\(lesson.id)_w_extra_\(qIndex)", type: .textInput, question: "Type the answer (Writing) #\(qIndex)", correctAnswer: "అ", options: nil, audioFile: nil, strokeOrder: nil, explanation: "Auto-generated writing practice")
-                case .listening:
-                    return ActivityQuestion(id: "q_\(lesson.id)_l_extra_\(qIndex)", type: .audioIdentification, question: "Listen and select (Listening) #\(qIndex)", correctAnswer: "అ", options: ["అ", "ఆ", "ఇ", "ఈ"], audioFile: nil, strokeOrder: nil, explanation: "Auto-generated listening practice")
-                case .speaking:
-                    return ActivityQuestion(id: "q_\(lesson.id)_s_extra_\(qIndex)", type: .speaking, question: "Pronounce clearly (Speaking) #\(qIndex)", correctAnswer: "అ", options: nil, audioFile: nil, strokeOrder: nil, explanation: "Auto-generated speaking practice")
-                }
-            }
-            var act = activities[idx]
-            act = LessonActivity(id: act.id, type: act.type, title: act.title, instructions: act.instructions, xpValue: act.xpValue, questions: act.questions + newQuestions, canSkip: act.canSkip)
-            activities[idx] = act
-            remaining -= addCount
-        }
-        // Top-up order
-        appendQuestions(to: .reading, count: remaining)
-        appendQuestions(to: .writing, count: remaining)
-        appendQuestions(to: .listening, count: remaining)
-        appendQuestions(to: .speaking, count: remaining)
-        return Lesson(id: lesson.id, title: lesson.title, description: lesson.description, levelId: lesson.levelId, order: lesson.order, difficulty: lesson.difficulty, xpReward: lesson.xpReward, estimatedMinutes: lesson.estimatedMinutes, activities: activities)
+    
+    private func createBeginnerMasterReview(lessonId: String) -> [LessonActivity] {
+        return [
+            LessonActivity(
+                id: "activity_\(lessonId)_master",
+                type: .reading,
+                title: "Master Review",
+                instructions: "Show mastery of all beginner concepts",
+                xpValue: 100,
+                questions: [
+                    ActivityQuestion(
+                        id: "q_\(lessonId)_mastery",
+                        type: .characterRecognition,
+                        question: "Congratulations! You've completed Beginner Level!",
+                        correctAnswer: "అమ్మ",
+                        options: nil,
+                        audioFile: "అమ్మ.mp3",
+                        strokeOrder: nil,
+                        explanation: "You now know basic Telugu vowels, consonants, and family words!"
+                    )
+                ],
+                canSkip: false
+            )
+        ]
     }
     
-    private func loadProgress() {
-        if let data = userDefaults.data(forKey: progressKey),
-           let progress = try? JSONDecoder().decode([String: LessonProgress].self, from: data) {
-            self.lessonProgress = progress
-        }
-        
-        if let data = userDefaults.data(forKey: levelProgressKey),
-           let progress = try? JSONDecoder().decode([String: LevelProgress].self, from: data) {
-            self.levelProgress = progress
-        }
-    }
+    // MARK: - Helper Functions for New Lesson Structure
     
-    private func initializeLevelProgress() {
-        for level in levels {
-            if levelProgress[level.id] == nil {
-                levelProgress[level.id] = LevelProgress(
-                    id: UUID().uuidString,
-                    levelId: level.id,
-                    userId: "current_user",
-                    completedLessons: 0,
-                    totalLessons: level.lessons.count,
-                    isCompleted: false,
-                    completionDate: nil,
-                    totalXPEarned: 0
-                )
-            }
-        }
-        saveLevelProgress()
-    }
-    
-    // MARK: - Progress Management
-    func completeLesson(_ lesson: Lesson, xpEarned: Int, correctAnswers: Int, totalQuestions: Int, timeSpent: TimeInterval, responses: [ActivityResponse]) {
-        let progressId = UUID().uuidString
-        let progress = LessonProgress(
-            id: progressId,
-            lessonId: lesson.id,
-            userId: "current_user",
-            isCompleted: true,
-            completionDate: Date(),
-            xpEarned: xpEarned,
-            correctAnswers: correctAnswers,
-            totalQuestions: totalQuestions,
-            timeSpent: timeSpent,
-            attempts: 1,
-            activityResponses: responses
-        )
-        
-        lessonProgress[lesson.id] = progress
-        updateLevelProgress(for: lesson.levelId, xpEarned: xpEarned)
-        saveProgress()
-    }
-    
-    private func updateLevelProgress(for levelId: String, xpEarned: Int) {
-        guard var progress = levelProgress[levelId] else { return }
-        
-        let completedCount = levels.first(where: { $0.id == levelId })?.lessons.compactMap { lesson in
-            lessonProgress[lesson.id]?.isCompleted == true ? lesson : nil
-        }.count ?? 0
-        
-        progress.completedLessons = completedCount
-        progress.totalXPEarned += xpEarned
-        
-        if completedCount == progress.totalLessons && !progress.isCompleted {
-            progress.isCompleted = true
-            progress.completionDate = Date()
-        }
-        
-        levelProgress[levelId] = progress
-        saveLevelProgress()
-    }
-    
-    private func saveProgress() {
-        if let data = try? JSONEncoder().encode(lessonProgress) {
-            userDefaults.set(data, forKey: progressKey)
-        }
-    }
-    
-    private func saveLevelProgress() {
-        if let data = try? JSONEncoder().encode(levelProgress) {
-            userDefaults.set(data, forKey: levelProgressKey)
-        }
-    }
-    
-    // MARK: - Helper Methods
-    func isLessonCompleted(_ lessonId: String) -> Bool {
-        return lessonProgress[lessonId]?.isCompleted ?? false
-    }
-    
-    func getLessonProgress(_ lessonId: String) -> LessonProgress? {
-        return lessonProgress[lessonId]
-    }
-    
-    func getLevelProgress(_ levelId: String) -> LevelProgress? {
-        return levelProgress[levelId]
-    }
-    
-    func isLevelUnlocked(_ level: LearningLevel, userXP: Int) -> Bool {
-        return true // All levels are now accessible regardless of XP
-    }
-    
-    func getNextLevel(after levelId: String) -> LearningLevel? {
-        guard let currentIndex = levels.firstIndex(where: { $0.id == levelId }),
-              currentIndex + 1 < levels.count else { return nil }
-        return levels[currentIndex + 1]
-    }
-
-    // MARK: - Data Structure for JSON
-    private struct LessonsData: Codable {
-        let levels: [LearningLevel]
-    }
-
-    private func assignTopicTitles(to levels: [LearningLevel]) -> [LearningLevel] {
-        return levels.map { level in
-            let topics = topicTitles(for: level.id)
-            let sorted = level.lessons.sorted { $0.order < $1.order }
-            let renamed = sorted.enumerated().map { (idx, lesson) in
-                let newTitle = idx < topics.count ? topics[idx] : lesson.title
-                return Lesson(id: lesson.id, title: newTitle, description: lesson.description, levelId: lesson.levelId, order: lesson.order, difficulty: lesson.difficulty, xpReward: lesson.xpReward, estimatedMinutes: lesson.estimatedMinutes, activities: lesson.activities)
-            }
-            return LearningLevel(id: level.id, title: level.title, description: level.description, difficulty: level.difficulty, lessons: renamed, requiredXP: level.requiredXP, color: level.color)
-        }
-    }
-
-    private func topicTitles(for levelId: String) -> [String] {
-        switch levelId {
-        case "level_1_beginner":
-            return [
-                "Vowels – Part 1 (అ, ఆ, ఇ, ఈ)",
-                "Vowels – Part 2 (ఉ, ఊ, ఎ, ఏ)",
-                "Velar Consonants (క ఖ గ ఘ ఙ)",
-                "Palatal Consonants (చ ఛ జ ఝ ఞ)",
-                "Forming Syllables (క + vowels)",
-                "Numbers 1–10",
-                "Greetings and Politeness",
-                "Family and People Words",
-                "Daily Activities – Common Verbs",
-                "Simple Present-Tense Sentences"
-            ]
-        case "level_2_basic":
-            return [
-                "Complex Syllables – All Vowels",
-                "Double Consonants (క్క, ప్ప, etc.)",
-                "Body Parts Vocabulary",
-                "Colors and Objects",
-                "Numbers 11–20",
-                "Animals and Sounds",
-                "Basic Phrases and Q&A",
-                "Action Verbs – Conjugation",
-                "Possessives (నా, నీ) in Phrases",
-                "Conversation Starters"
-            ]
-        case "level_3_intermediate":
-            return [
-                "Present Tense – Continuous",
-                "Past Tense – Simple",
-                "Future Tense – Intentions",
-                "Forming Questions (ఎక్కడ? ఎప్పుడు?)",
-                "Directions and Movement",
-                "Talking About Time",
-                "Short Story – Comprehension",
-                "Adjectives in Sentences",
-                "Comparisons (కంటే, చాలా)",
-                "Complex Sentences (అయితే, కానీ)"
-            ]
-        case "level_4_advanced":
-            return [
-                "Conditionals (అయితే, అయినా)",
-                "Passive Voice Transformations",
-                "Idioms and Phrases in Context",
-                "Formal Speech (మీరు, తమరు)",
-                "Simple Telugu Poetry",
-                "Reading News – Summaries",
-                "Formal Letter Writing",
-                "Culture and Traditions",
-                "Complex Grammar – Exceptions",
-                "Comprehensive Mixed Practice"
-            ]
-        default:
-            return (1...10).map { "Lesson \($0)" }
-        }
-    }
-
-    private func customizeContentForTopics(_ levels: [LearningLevel]) -> [LearningLevel] {
-        return levels.map { level in
-            let updatedLessons = level.lessons.map { lesson in
-                let newDescription = topicDescriptionFor(levelId: level.id, title: lesson.title, fallback: lesson.description)
-                let newActivities = topicActivitiesFor(levelId: level.id, title: lesson.title, lessonId: lesson.id, difficulty: level.difficulty)
-                print("🔍 Customizing lesson '\(lesson.title)' - Generated \(newActivities.count) activities")
-                return Lesson(id: lesson.id, title: lesson.title, description: newDescription, levelId: lesson.levelId, order: lesson.order, difficulty: lesson.difficulty, xpReward: lesson.xpReward, estimatedMinutes: lesson.estimatedMinutes, activities: newActivities.isEmpty ? lesson.activities : newActivities)
-            }
-            return LearningLevel(id: level.id, title: level.title, description: level.description, difficulty: level.difficulty, lessons: updatedLessons, requiredXP: level.requiredXP, color: level.color)
-        }
-    }
-
-    private func topicDescriptionFor(levelId: String, title: String, fallback: String) -> String {
-        // Basic keyword matching to produce tailored descriptions
-        if title.contains("Vowels – Part 1") { return "Topic: Vowels అ, ఆ, ఇ, ఈ — Short vs long vowels. Examples: అ (అన్నం), ఆ (ఆకు), ఇ (ఇల్లు), ఈ (ఈగ)." }
-        if title.contains("Vowels – Part 2") { return "Topic: Vowels ఉ, ఊ, ఎ, ఏ — Mid/back vowels. Examples: ఉ (ఉల్లి), ఊ (ఊరు), ఎ (ఎలుక), ఏ (ఏనుగు)." }
-        if title.contains("Velar Consonants") { return "Topic: Velars క ఖ గ ఘ ఙ — Back-of-mouth sounds. Examples: కుక్క, ఖడ్గం, గాలి, ఘంటా." }
-        if title.contains("Palatal Consonants") { return "Topic: Palatals చ ఛ జ ఝ ఞ — Hard palate sounds. Examples: చలి, జేబు, ఝంకారం, ఞానం (in conjuncts)." }
-        if title.contains("Forming Syllables") { return "Topic: Combining క with vowels — క, కా, కి, కీ, కు, కూ, కె, కేసి. How signs change sound and meaning." }
-        if title.contains("Numbers 1–10") { return "Topic: Numbers 1–10 — ఒకటి…పది. Use in counting items and basic sentences." }
-        if title.contains("Greetings and Politeness") { return "Topic: Greetings — నమస్కారం, ఎలా ఉన్నారు?, బాగున్నాను, ధన్యవాదాలు, దయచేసి, క్షమించండి." }
-        if title.contains("Family and People Words") { return "Topic: Family words — అమ్మ, నాన్న, అక్క, అన్న, తమ్ముడు, చెల్లి. Simple introductions." }
-        if title.contains("Daily Activities") { return "Topic: Daily verbs — తిను, త్రాగు, నడువు, చదువు, రాయు. Form present sentences." }
-        if title.contains("Simple Present-Tense") { return "Topic: SOV present sentences — నేను నీరు త్రాగుతాను, నేను పుస్తకం చదువుతాను. Word order practice." }
-        // BASIC
-        if title.contains("Complex Syllables") { return "Topic: Complex syllables across vowels — build and read multisyllabic patterns." }
-        if title.contains("Double Consonants") { return "Topic: Doubling: క్క, ప్ప, ట్ట — how gemination changes pronunciation. Examples: పప్పు, ముక్క." }
-        if title.contains("Body Parts") { return "Topic: Body parts — తల, కన్ను, చేయి, కాలు. Describe with adjectives." }
-        if title.contains("Colors") { return "Topic: Colors — ఎరుపు, నీలం, పసుపు, ఆకుపచ్చ, నలుపు. Match colors to objects." }
-        if title.contains("Numbers 11–20") { return "Topic: Numbers 11–20 — పదకొండు…ఇరవై. Counting money and items." }
-        if title.contains("Animals") { return "Topic: Animals — కుక్క, పిల్లి, పక్షి, ఆవు, ఏనుగు. Sounds and features." }
-        if title.contains("Basic Phrases") { return "Topic: Basic phrases and Q&A — ఇది ఏమిటి?, ఎక్కడ?, ఎంత?, ఎవరు? Short dialogues." }
-        if title.contains("Action Verbs") { return "Topic: Present conjugations for common verbs — I/you/he-she forms in context." }
-        if title.contains("Possessives") { return "Topic: Possessives నా, నీ — Build noun phrases: నా పుస్తకం, నీ ఇల్లు." }
-        if title.contains("Conversation Starters") { return "Topic: Openings and small talk — introductions, likes, and polite turns." }
-        // INTERMEDIATE
-        if title.contains("Continuous") { return "Topic: Present continuous — చేస్తున్నాను/చేస్తున్నాను patterns in real contexts." }
-        if title.contains("Past Tense Formation") { return "Topic: Simple past — చేశాను/తిన్నాను forms. Tell recent actions." }
-        if title.contains("Future Tense") { return "Topic: Future intentions — చేస్తాను/వెళ్తాను. Plans and promises." }
-        if title.contains("Forming Questions") { return "Topic: WH-questions — ఎక్కడ, ఎప్పుడు, ఎవరు, ఎందుకు. Structure and tone." }
-        if title.contains("Directions and Navigation") { return "Topic: Directions — ఎడమ, కుడి, ముందు, వెనుక. Asking and giving routes." }
-        if title.contains("Time Expressions") { return "Topic: Time — ఇప్పుడు, ఈరోజు, రేపు, నిన్న, గంటలు-నిమిషాలు." }
-        if title.contains("Story Reading") { return "Topic: Short story reading — gist, keywords, and sequencing." }
-        if title.contains("Adjectives") { return "Topic: Adjectives — పెద్ద, చిన్న, మంచి, వేగంగా. Modify nouns correctly." }
-        if title.contains("Comparisons") { return "Topic: Comparatives — కంటే, చాలా, అత్యంత. Compare people and things." }
-        if title.contains("Complex Sentences") { return "Topic: Connectors అయితే, కానీ — Contrast and conditions in multi-clause sentences." }
-        // ADVANCED
-        if title.contains("Conditionals") { return "Topic: If/then nuances — అయితే, అయినా; hypothetical vs real conditions." }
-        if title.contains("Passive Voice") { return "Topic: Passive voice — transform and interpret agentless sentences." }
-        if title.contains("Idioms") { return "Topic: Idioms — meaning in context; avoid literal translations." }
-        if title.contains("Formal Speech") { return "Topic: Formal address — మీరు, తమరు; polite verb forms and honorifics." }
-        if title.contains("Poetry") || title.contains("Literary Telugu") { return "Topic: Simple poetry — meter hints, imagery, and pronunciation." }
-        if title.contains("News Articles") { return "Topic: News reading — headline grammar, summarizing key points." }
-        if title.contains("Letter Writing") { return "Topic: Formal letter — salutations, body, closing with respect markers." }
-        if title.contains("Cultural") { return "Topic: Culture — festivals, customs, and respectful forms in speech." }
-        if title.contains("Grammar Rules") { return "Topic: Complex grammar — exceptions, irregulars, and edge cases." }
-        if title.contains("Assessment") || title.contains("Mastery Test") { return "Topic: Mixed practice — combine grammar, vocab, and reading." }
-        return fallback
-    }
-
-    private func topicActivitiesFor(levelId: String, title: String, lessonId: String, difficulty: Int) -> [LessonActivity] {
-        print("🔍 topicActivitiesFor called with title: '\(title)' for levelId: '\(levelId)'")
-        // Build 10 questions with varied types mapped to the topic. Use deterministic IDs.
-        func mcq(_ id: String, _ q: String, _ ans: String, _ opts: [String]) -> ActivityQuestion {
-            return ActivityQuestion(id: id, type: .multipleChoice, question: q, correctAnswer: ans, options: opts, audioFile: nil, strokeOrder: nil, explanation: nil)
-        }
-        func mcq(_ id: String, _ q: String, _ ans: String) -> ActivityQuestion {
-            return ActivityQuestion(id: id, type: .textInput, question: q, correctAnswer: ans, options: nil, audioFile: nil, strokeOrder: nil, explanation: nil)
-        }
-        func listen(_ id: String, _ q: String, _ ans: String, _ opts: [String]) -> ActivityQuestion {
-            return ActivityQuestion(id: id, type: .audioIdentification, question: q, correctAnswer: ans, options: opts, audioFile: nil, strokeOrder: nil, explanation: nil)
-        }
-        func trace(_ id: String, _ q: String, _ target: String) -> ActivityQuestion {
-            return ActivityQuestion(id: id, type: .tracing, question: q, correctAnswer: target, options: nil, audioFile: nil, strokeOrder: ["Follow the stroke order"], explanation: nil)
-        }
-        func speak(_ id: String, _ q: String, _ ans: String) -> ActivityQuestion {
-            return ActivityQuestion(id: id, type: .speaking, question: q, correctAnswer: ans, options: nil, audioFile: nil, strokeOrder: nil, explanation: nil)
-        }
-
-        let baseXP = max(1, difficulty) * 20
-        // Vowels Part 1
-        if title.contains("Vowels – Part 1") {
-            let reading = [
-                mcq("q_\(lessonId)_r1", "Which is short 'a'?", "అ", ["అ", "ఆ", "ఇ", "ఈ"]),
-                mcq("q_\(lessonId)_r2", "Which is long 'aa'?", "ఆ", ["అ", "ఆ", "ఇ", "ఈ"]),
-                mcq("q_\(lessonId)_r3", "Which makes 'ii'?", "ఈ", ["ఇ", "ఈ", "అ", "ఆ"])
-            ]
-            let writing = [
-                trace("q_\(lessonId)_w1", "Trace 'అ'", "అ"),
-                mcq("q_\(lessonId)_w2", "Type the vowel for 'aa'", "ఆ", ["ఆ", "అ", "ఇ", "ఈ"]),
-                mcq("q_\(lessonId)_w3", "Type the vowel in 'ఇల్లు' (house)", "ఇ", ["ఇ", "ఆ", "ఈ", "ఎ"])
-            ]
-            let listening = [
-                listen("q_\(lessonId)_l1", "Identify the sound (short a)", "అ", ["అ", "ఆ", "ఇ", "ఈ"]),
-                listen("q_\(lessonId)_l2", "Identify the sound (long ii)", "ఈ", ["ఇ", "ఈ", "అ", "ఆ"])
-            ]
-            let speaking = [
-                speak("q_\(lessonId)_s1", "Pronounce 'అ' clearly", "అ"),
-                speak("q_\(lessonId)_s2", "Pronounce 'ఈ' clearly", "ఈ")
-            ]
-            return [
-                LessonActivity(id: "activity_\(lessonId)_reading", type: .reading, title: "Reading Practice", instructions: "Recognize vowels", xpValue: baseXP, questions: reading, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_writing", type: .writing, title: "Writing Practice", instructions: "Trace/type vowels", xpValue: baseXP, questions: writing, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_listening", type: .listening, title: "Listening Practice", instructions: "Identify by sound", xpValue: baseXP, questions: listening, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_speaking", type: .speaking, title: "Speaking Practice", instructions: "Say vowels", xpValue: baseXP, questions: speaking, canSkip: true)
-            ]
-        }
-        // Vowels Part 2
-        if title.contains("Vowels – Part 2") {
-            let reading = [
-                mcq("q_\(lessonId)_r1", "Which is long 'uu'?", "ఊ", ["ఉ", "ఊ", "ఎ", "ఏ"]),
-                mcq("q_\(lessonId)_r2", "Which is long 'ee' (open)", "ఏ", ["ఎ", "ఏ", "ఉ", "ఊ"]),
-                mcq("q_\(lessonId)_r3", "Pick 'ఎ'", "ఎ", ["ఎ", "ఏ", "ఉ", "ఊ"])
-            ]
-            let writing = [
-                mcq("q_\(lessonId)_w1", "Type the vowel in 'ఏనుగు'", "ఏ", ["ఏ", "ఎ", "ఉ", "ఊ"]),
-                mcq("q_\(lessonId)_w2", "Type the vowel in 'ఉల్లి'", "ఉ", ["ఉ", "ఊ", "ఎ", "ఏ"]),
-                trace("q_\(lessonId)_w3", "Trace 'ఊ'", "ఊ")
-            ]
-            let listening = [
-                listen("q_\(lessonId)_l1", "Identify long 'uu'", "ఊ", ["ఉ", "ఊ", "ఎ", "ఏ"]),
-                listen("q_\(lessonId)_l2", "Identify 'ఎ' vs 'ఏ'", "ఏ", ["ఎ", "ఏ", "ఉ", "ఊ"])
-            ]
-            let speaking = [
-                speak("q_\(lessonId)_s1", "Pronounce 'ఉ' clearly", "ఉ"),
-                speak("q_\(lessonId)_s2", "Pronounce 'ఏ' clearly", "ఏ")
-            ]
-            return [
-                LessonActivity(id: "activity_\(lessonId)_reading", type: .reading, title: "Reading Practice", instructions: "Recognize vowels", xpValue: baseXP, questions: reading, canSkip: false), 
-                LessonActivity(id: "activity_\(lessonId)_writing", type: .writing, title: "Writing Practice", instructions: "Trace/type vowels", xpValue: baseXP, questions: writing, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_listening", type: .listening, title: "Listening Practice", instructions: "Identify by sound", xpValue: baseXP, questions: listening, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_speaking", type: .speaking, title: "Speaking Practice", instructions: "Say vowels", xpValue: baseXP, questions: speaking, canSkip: true)
-            ]
-        }
-        // Velar Consonants (క ఖ గ ఘ ఙ)
-        if title.contains("Velar Consonants") {
-            let reading = [
-                mcq("q_\(lessonId)_r1", "Pick 'క' (ka)", "క", ["క", "గ", "ఙ", "ఛ"]),
-                mcq("q_\(lessonId)_r2", "Which is aspirated 'ఖ' (kha)?", "ఖ", ["క", "ఖ", "గ", "ఘ"]),
-                mcq("q_\(lessonId)_r3", "Back nasal letter?", "ఙ", ["ఙ", "ణ", "న", "ఞ"])
-            ]
-            let writing = [
-                trace("q_\(lessonId)_w1", "Trace 'క'", "క"),
-                mcq("q_\(lessonId)_w2", "Write the letter for 'ga'", "గ", ["గ", "క", "ఘ", "ఙ"]),
-                mcq("q_\(lessonId)_w3", "Write the aspirated 'gha'", "ఘ", ["ఘ", "గ", "క", "ఖ"])
-            ]
-            let listening = [
-                listen("q_\(lessonId)_l1", "Identify 'ga' sound", "గ", ["క", "ఖ", "గ", "ఘ"]),
-                listen("q_\(lessonId)_l2", "Identify 'kha' sound", "ఖ", ["ఖ", "ఘ", "క", "గ"])
-            ]
-            let speaking = [
-                speak("q_\(lessonId)_s1", "Pronounce 'క' clearly", "క"),
-                speak("q_\(lessonId)_s2", "Pronounce 'ఘ' clearly", "ఘ")
-            ]
-            return [
-                LessonActivity(id: "activity_\(lessonId)_reading", type: .reading, title: "Reading Practice", instructions: "Recognize velars", xpValue: baseXP, questions: reading, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_writing", type: .writing, title: "Writing Practice", instructions: "Write velar letters", xpValue: baseXP, questions: writing, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_listening", type: .listening, title: "Listening Practice", instructions: "Identify velars by sound", xpValue: baseXP, questions: listening, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_speaking", type: .speaking, title: "Speaking Practice", instructions: "Say velar letters", xpValue: baseXP, questions: speaking, canSkip: true)
-            ]
-        }
-        // Palatal Consonants (చ ఛ జ ఝ ఞ)
-        if title.contains("Palatal Consonants") {
-            let reading = [
-                mcq("q_\(lessonId)_r1", "Pick 'చ' (cha)", "చ", ["చ", "జ", "ఛ", "ఝ"]),
-                mcq("q_\(lessonId)_r2", "Which is 'జ' (ja)?", "జ", ["ఝ", "జ", "ఛ", "చ"]),
-                mcq("q_\(lessonId)_r3", "Palatal nasal?", "ఞ", ["ఙ", "ఞ", "ణ", "న"])
-            ]
-            let writing = [
-                trace("q_\(lessonId)_w1", "Trace 'చ'", "చ"),
-                mcq("q_\(lessonId)_w2", "Write aspirated 'ఛ'", "ఛ", ["ఛ", "చ", "జ", "ఝ"]),
-                mcq("q_\(lessonId)_w3", "Write 'జ'", "జ", ["జ", "చ", "ఛ", "ఝ"])
-            ]
-            let listening = [
-                listen("q_\(lessonId)_l1", "Identify 'cha' sound", "చ", ["చ", "ఛ", "జ", "ఝ"]),
-                listen("q_\(lessonId)_l2", "Identify 'ja' sound", "జ", ["ఝ", "జ", "ఛ", "చ"])
-            ]
-            let speaking = [
-                speak("q_\(lessonId)_s1", "Pronounce 'ఛ' clearly", "ఛ"),
-                speak("q_\(lessonId)_s2", "Pronounce 'జ' clearly", "జ")
-            ]
-            return [
-                LessonActivity(id: "activity_\(lessonId)_reading", type: .reading, title: "Reading Practice", instructions: "Recognize palatals", xpValue: baseXP, questions: reading, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_writing", type: .writing, title: "Writing Practice", instructions: "Write palatal letters", xpValue: baseXP, questions: writing, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_listening", type: .listening, title: "Listening Practice", instructions: "Identify palatals by sound", xpValue: baseXP, questions: listening, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_speaking", type: .speaking, title: "Speaking Practice", instructions: "Say palatal letters", xpValue: baseXP, questions: speaking, canSkip: true)
-            ]
-        }
-        // Forming Syllables (క + vowels)
-        if title.contains("Forming Syllables") {
-            let reading = [
-                mcq("q_\(lessonId)_r1", "క + ఆ = ?", "కా", ["క", "కా", "కి", "కీ"]),
-                mcq("q_\(lessonId)_r2", "క + ఇ = ?", "కి", ["కి", "కీ", "క", "కా"]),
-                mcq("q_\(lessonId)_r3", "క + ఈ = ?", "కీ", ["కీ", "కి", "కూ", "కె"])
-            ]
-            let writing = [
-                mcq("q_\(lessonId)_w1", "Form 'కూ' (క + ఊ)", "కూ", ["కూ", "కు", "కా", "కి"]),
-                mcq("q_\(lessonId)_w2", "Form 'కె' (క + ఎ)", "కె", ["కె", "కే", "కా", "కి"]),
-                mcq("q_\(lessonId)_w3", "Form 'కో' (క + ఓ)", "కో", ["కో", "కూ", "కా", "కె"])
-            ]
-            let listening = [
-                listen("q_\(lessonId)_l1", "Identify 'కా' sound", "కా", ["కా", "కి", "కీ", "కె"]),
-                listen("q_\(lessonId)_l2", "Identify 'కీ' sound", "కీ", ["కీ", "కూ", "కె", "కొ"])
-            ]
-            let speaking = [
-                speak("q_\(lessonId)_s1", "Say 'కా' clearly", "కా"),
-                speak("q_\(lessonId)_s2", "Say 'కి' clearly", "కి")
-            ]
-            return [
-                LessonActivity(id: "activity_\(lessonId)_reading", type: .reading, title: "Reading Practice", instructions: "Combine క with vowels", xpValue: baseXP, questions: reading, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_writing", type: .writing, title: "Writing Practice", instructions: "Write syllables", xpValue: baseXP, questions: writing, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_listening", type: .listening, title: "Listening Practice", instructions: "Identify syllable sounds", xpValue: baseXP, questions: listening, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_speaking", type: .speaking, title: "Speaking Practice", instructions: "Pronounce syllables", xpValue: baseXP, questions: speaking, canSkip: true)
-            ]
-        }
-        // Numbers 1–10
-        if title.contains("Numbers 1–10") {
-            let reading = [
-                mcq("q_\(lessonId)_r1", "Pick 'ఒకటి'", "ఒకటి", ["ఒకటి", "రెండు", "మూడు", "నాలుగు"]),
-                mcq("q_\(lessonId)_r2", "Which is 'ఏడు' (7)?", "ఏడు", ["ఆరు", "ఏడు", "ఎనిమిది", "తొమ్మిది"]),
-                mcq("q_\(lessonId)_r3", "Which means '10'?", "పది", ["ఏడు", "మూడు", "పది", "ఐదు"])
-            ]
-            let writing = [
-                mcq("q_\(lessonId)_w1", "Write 'రెండు' (2)", "రెండు", ["రెండు", "మూడు", "నాలుగు", "ఐదు"]),
-                mcq("q_\(lessonId)_w2", "Write 'మూడు' (3)", "మూడు", ["మూడు", "రెండు", "నాలుగు", "ఆరు"]),
-                mcq("q_\(lessonId)_w3", "Write 'ఐదు' (5)", "ఐదు", ["ఐదు", "ఆరు", "ఏడు", "ఎనిమిది"])
-            ]
-            let listening = [
-                listen("q_\(lessonId)_l1", "Identify 'ఆరు' sound", "ఆరు", ["ఆరు", "ఏడు", "ఎనిమిది", "పది"]),
-                listen("q_\(lessonId)_l2", "Identify 'ఒకటి' sound", "ఒకటి", ["ఒకటి", "రెండు", "మూడు", "నాలుగు"])
-            ]
-            let speaking = [
-                speak("q_\(lessonId)_s1", "Say 'ఏడు' clearly", "ఏడు"),
-                speak("q_\(lessonId)_s2", "Say 'పది' clearly", "పది")
-            ]
-            return [
-                LessonActivity(id: "activity_\(lessonId)_reading", type: .reading, title: "Reading Practice", instructions: "Recognize numbers 1–10", xpValue: baseXP, questions: reading, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_writing", type: .writing, title: "Writing Practice", instructions: "Write Telugu numbers", xpValue: baseXP, questions: writing, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_listening", type: .listening, title: "Listening Practice", instructions: "Identify numbers by sound", xpValue: baseXP, questions: listening, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_speaking", type: .speaking, title: "Speaking Practice", instructions: "Say numbers", xpValue: baseXP, questions: speaking, canSkip: true)
-            ]
-        }
-        // Greetings and Politeness
-        if title.contains("Greetings and Politeness") {
-            let reading = [
-                mcq("q_\(lessonId)_r1", "'Hello' (formal) in Telugu", "నమస్కారం", ["నమస్కారం", "హలో", "ధన్యవాదాలు", "శుభోదయం"]),
-                mcq("q_\(lessonId)_r2", "'Thank you' in Telugu", "ధన్యవాదాలు", ["దయచేసి", "క్షమించండి", "ధన్యవాదాలు", "వీడ్కోలు"]),
-                mcq("q_\(lessonId)_r3", "Response to 'ఎలా ఉన్నారు?'", "బాగున్నాను", ["బాగున్నాను", "వీడ్కోలు", "ధన్యవాదాలు", "నమస్కారం"])
-            ]
-            let writing = [
-                mcq("q_\(lessonId)_w1", "Type 'దయచేసి' (please)", "దయచేసి", ["దయచేసి", "క్షమించండి", "ధన్యవాదాలు", "నమస్కారం"]),
-                mcq("q_\(lessonId)_w2", "Type 'క్షమించండి' (sorry)", "క్షమించండి", ["క్షమించండి", "దయచేసి", "వీడ్కోలు", "శుభోదయం"]),
-                mcq("q_\(lessonId)_w3", "Type 'శుభోదయం' (good morning)", "శుభోదయం", ["శుభోదయం", "శుభరాత్రి", "నమస్కారం", "వీడ్కోలు"])
-            ]
-            let listening = [
-                listen("q_\(lessonId)_l1", "Identify 'వీడ్కోలు'", "వీడ్కోలు", ["వీడ్కోలు", "నమస్కారం", "ధన్యవాదాలు", "దయచేసి"]),
-                listen("q_\(lessonId)_l2", "Identify 'నమస్కారం'", "నమస్కారం", ["నమస్కారం", "శుభోదయం", "క్షమించండి", "దయచేసి"])
-            ]
-            let speaking = [
-                speak("q_\(lessonId)_s1", "Say 'నమస్కారం' clearly", "నమస్కారం"),
-                speak("q_\(lessonId)_s2", "Say 'ధన్యవాదాలు' clearly", "ధన్యవాదాలు")
-            ]
-            return [
-                LessonActivity(id: "activity_\(lessonId)_reading", type: .reading, title: "Reading Practice", instructions: "Recognize greetings", xpValue: baseXP, questions: reading, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_writing", type: .writing, title: "Writing Practice", instructions: "Type greetings", xpValue: baseXP, questions: writing, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_listening", type: .listening, title: "Listening Practice", instructions: "Identify greetings by sound", xpValue: baseXP, questions: listening, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_speaking", type: .speaking, title: "Speaking Practice", instructions: "Say greetings", xpValue: baseXP, questions: speaking, canSkip: true)
-            ]
-        }
-        // Family and People Words
-        if title.contains("Family and People Words") {
-            let reading = [
-                mcq("q_\(lessonId)_r1", "Pick 'అమ్మ' (mother)", "అమ్మ", ["అమ్మ", "నాన్న", "అక్క", "అన్న"]),
-                mcq("q_\(lessonId)_r2", "Which is 'నాన్న' (father)?", "నాన్న", ["నాన్న", "అమ్మ", "తమ్ముడు", "చెల్లి"]),
-                mcq("q_\(lessonId)_r3", "Which means 'older sister'?", "అక్క", ["అక్క", "చెల్లి", "అన్న", "తమ్ముడు"])
-            ]
-            let writing = [
-                mcq("q_\(lessonId)_w1", "Type 'అన్న' (older brother)", "అన్న", ["అన్న", "తమ్ముడు", "అక్క", "చెల్లి"]),
-                mcq("q_\(lessonId)_w2", "Type 'చెల్లి' (younger sister)", "చెల్లి", ["చెల్లి", "అక్క", "అన్న", "తమ్ముడు"]),
-                mcq("q_\(lessonId)_w3", "Type 'నానమ్మ' (grandmother)", "నానమ్మ", ["నానమ్మ", "తాతయ్య", "అమ్మ", "నాన్న"])
-            ]
-            let listening = [
-                listen("q_\(lessonId)_l1", "Identify 'అక్క'", "అక్క", ["అక్క", "చెల్లి", "అన్న", "తమ్ముడు"]),
-                listen("q_\(lessonId)_l2", "Identify 'నాన్న'", "నాన్న", ["నాన్న", "అమ్మ", "అన్న", "అక్క"])
-            ]
-            let speaking = [
-                speak("q_\(lessonId)_s1", "Say 'అమ్మ' clearly", "అమ్మ"),
-                speak("q_\(lessonId)_s2", "Say 'తమ్ముడు' clearly", "తమ్ముడు")
-            ]
-            return [
-                LessonActivity(id: "activity_\(lessonId)_reading", type: .reading, title: "Reading Practice", instructions: "Recognize family words", xpValue: baseXP, questions: reading, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_writing", type: .writing, title: "Writing Practice", instructions: "Type family words", xpValue: baseXP, questions: writing, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_listening", type: .listening, title: "Listening Practice", instructions: "Identify by sound", xpValue: baseXP, questions: listening, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_speaking", type: .speaking, title: "Speaking Practice", instructions: "Say family words", xpValue: baseXP, questions: speaking, canSkip: true)
-            ]
-        }
-        // Daily Activities – Common Verbs
-        if title.contains("Daily Activities") {
-            let reading = [
-                mcq("q_\(lessonId)_r1", "'eat' in Telugu", "తిను", ["తిను", "త్రాగు", "నడువు", "రాయు"]),
-                mcq("q_\(lessonId)_r2", "'drink' in Telugu", "త్రాగు", ["రాయు", "తిను", "త్రాగు", "చదువు"]),
-                mcq("q_\(lessonId)_r3", "'walk' in Telugu", "నడువు", ["రాయు", "నడువు", "త్రాగు", "తిను"])
-            ]
-            let writing = [
-                mcq("q_\(lessonId)_w1", "Write 'చదువు' (study)", "చదువు", ["చదువు", "రాయు", "తిను", "నడువు"]),
-                mcq("q_\(lessonId)_w2", "Write 'రాయు' (write)", "రాయు", ["రాయు", "చదువు", "త్రాగు", "నడువు"]),
-                mcq("q_\(lessonId)_w3", "Write 'నడువు' (walk)", "నడువు", ["నడువు", "రాయు", "తిను", "చదువు"])
-            ]
-            let listening = [
-                listen("q_\(lessonId)_l1", "Identify 'తిను'", "తిను", ["తిను", "త్రాగు", "రాయు", "చదువు"]),
-                listen("q_\(lessonId)_l2", "Identify 'త్రాగు'", "త్రాగు", ["తిను", "త్రాగు", "రాయు", "నడువు"])
-            ]
-            let speaking = [
-                speak("q_\(lessonId)_s1", "Say 'చదువు' clearly", "చదువు"),
-                speak("q_\(lessonId)_s2", "Say 'రాయు' clearly", "రాయు")
-            ]
-            return [
-                LessonActivity(id: "activity_\(lessonId)_reading", type: .reading, title: "Reading Practice", instructions: "Recognize daily verbs", xpValue: baseXP, questions: reading, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_writing", type: .writing, title: "Writing Practice", instructions: "Type verbs", xpValue: baseXP, questions: writing, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_listening", type: .listening, title: "Listening Practice", instructions: "Identify verbs by sound", xpValue: baseXP, questions: listening, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_speaking", type: .speaking, title: "Speaking Practice", instructions: "Say verbs", xpValue: baseXP, questions: speaking, canSkip: true)
-            ]
-        }
-        // Simple Present-Tense Sentences
-        if title.contains("Simple Present-Tense") {
-            let reading = [
-                mcq("q_\(lessonId)_r1", "Pick the SOV sentence", "నేను నీరు త్రాగుతాను", ["నేను నీరు త్రాగుతాను", "త్రాగుతాను నేను నీరు", "నీరు త్రాగుతాను నేను", "నేను త్రాగుతాను నీరు"]),
-                mcq("q_\(lessonId)_r2", "Meaning: నేను రాస్తాను", "I write", ["I write", "I ate", "I will write", "I walk"]),
-                mcq("q_\(lessonId)_r3", "Present of 'నడువు' (I walk)", "నేను నడుస్తాను", ["నేను నడిచాను", "నేను నడుస్తాను", "నేను నడుస్తాను (typo)", "నేను నడుస్తాను"])
-            ]
-            let writing = [
-                mcq("q_\(lessonId)_w1", "Complete: నేను పుస్తకం __ తాను (study)", "చదువుతాను", ["చదువుతాను", "చదివాను", "చదువుచున్నాను", "చదువుకుంటాను"]),
-                mcq("q_\(lessonId)_w2", "Complete: నేను నీరు __ తాను (drink)", "త్రాగుతాను", ["త్రాగుతాను", "త్రాగాను", "త్రాగుచున్నాను", "త్రాగుకుంటాను"]),
-                mcq("q_\(lessonId)_w3", "Complete: నేను అన్నం __ తాను (eat)", "తింటాను", ["తింటాను", "తిన్నాను", "తింటున్నాను", "తింటుకుంటాను"])
-            ]
-            let listening = [
-                listen("q_\(lessonId)_l1", "Identify: నేను రాస్తాను", "నేను రాస్తాను", ["నేను రాస్తాను", "నేను రాసాను", "నేను రాశాను", "నేను రాసుకుంటాను"]),
-                listen("q_\(lessonId)_l2", "Identify: నేను నడుస్తాను", "నేను నడుస్తాను", ["నేను నడుస్తాను", "నేను నడుస్తాను (alt)", "నేను నడిచాను", "నేను నడుస్తాను"])
-            ]
-            let speaking = [
-                speak("q_\(lessonId)_s1", "Say: నేను నీరు త్రాగుతాను", "నేను నీరు త్రాగుతాను"),
-                speak("q_\(lessonId)_s2", "Say: నేను పాఠం చదువుతాను", "నేను పాఠం చదువుతాను")
-            ]
-            return [
-                LessonActivity(id: "activity_\(lessonId)_reading", type: .reading, title: "Reading Practice", instructions: "Present tense SOV", xpValue: baseXP, questions: reading, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_writing", type: .writing, title: "Writing Practice", instructions: "Complete sentences", xpValue: baseXP, questions: writing, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_listening", type: .listening, title: "Listening Practice", instructions: "Identify sentences by sound", xpValue: baseXP, questions: listening, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_speaking", type: .speaking, title: "Speaking Practice", instructions: "Say sentences", xpValue: baseXP, questions: speaking, canSkip: true)
-            ]
-        }
-        // BASIC LEVEL TOPICS (Level 2)
-        if title.contains("Complex Syllables") {
-            let reading = [
-                mcq("q_\(lessonId)_r1", "కా + ఇ = ?", "కాయి", ["కాయి", "కాలు", "కాకి", "కాటు"]),
-                mcq("q_\(lessonId)_r2", "మా + మా = ?", "మామా", ["మామా", "మాలా", "మాట", "మాము"]),
-                mcq("q_\(lessonId)_r3", "పా + లు = ?", "పాలు", ["పాలు", "పాట", "పాము", "పాకు"])
-            ]
-            let writing = [
-                mcq("q_\(lessonId)_w1", "Write కా + లు", "కాలు", ["కాలు", "కాట", "కాలి", "కాకు"]),
-                mcq("q_\(lessonId)_w2", "Write మా + ట", "మాట", ["మాట", "మాలు", "మాకు", "మాము"]),
-                mcq("q_\(lessonId)_w3", "Write పా + ట", "పాట", ["పాట", "పాలు", "పాము", "పాకు"])
-            ]
-            let listening = [
-                listen("q_\(lessonId)_l1", "Identify 'కాలు'", "కాలు", ["కాలు", "కాయి", "కాకి", "కాటు"]),
-                listen("q_\(lessonId)_l2", "Identify 'పాలు'", "పాలు", ["పాలు", "పాట", "పాము", "పాకు"])
-            ]
-            let speaking = [
-                speak("q_\(lessonId)_s1", "Say 'మామా' clearly", "మామా"),
-                speak("q_\(lessonId)_s2", "Say 'కాయి' clearly", "కాయి")
-            ]
-            return [
-                LessonActivity(id: "activity_\(lessonId)_reading", type: .reading, title: "Reading Practice", instructions: "Read complex syllables", xpValue: baseXP, questions: reading, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_writing", type: .writing, title: "Writing Practice", instructions: "Form complex syllables", xpValue: baseXP, questions: writing, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_listening", type: .listening, title: "Listening Practice", instructions: "Identify complex sounds", xpValue: baseXP, questions: listening, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_speaking", type: .speaking, title: "Speaking Practice", instructions: "Say complex syllables", xpValue: baseXP, questions: speaking, canSkip: true)
-            ]
-        }
-        if title.contains("Double Consonants") {
-            let reading = [
-                mcq("q_\(lessonId)_r1", "Which has double consonant?", "పప్పు", ["పాలు", "పప్పు", "పాట", "పాము"]),
-                mcq("q_\(lessonId)_r2", "Pick the word with క్క", "ముక్క", ["ముక్క", "మాట", "కాలు", "పాలు"]),
-                mcq("q_\(lessonId)_r3", "Which has ట్ట?", "పట్టు", ["పట్టు", "పాట", "కట్టు", "మట్టి"])
-            ]
-            let writing = [
-                mcq("q_\(lessonId)_w1", "Write 'అక్క' (sister)", "అక్క", ["అక్క", "చెల్లి", "అన్న", "తమ్ముడు"]),
-                mcq("q_\(lessonId)_w2", "Write 'బట్ట' (cloth)", "బట్ట", ["బట్ట", "చెట్టు", "పట్టు", "కట్టు"]),
-                mcq("q_\(lessonId)_w3", "Write 'చెట్టు' (tree)", "చెట్టు", ["చెట్టు", "బట్ట", "పట్టు", "కట్టు"])
-            ]
-            let listening = [
-                listen("q_\(lessonId)_l1", "Identify 'పప్పు'", "పప్పు", ["పప్పు", "పాలు", "పాట", "పాము"]),
-                listen("q_\(lessonId)_l2", "Identify 'ముక్క'", "ముక్క", ["ముక్క", "మాట", "కాలు", "పాలు"])
-            ]
-            let speaking = [
-                speak("q_\(lessonId)_s1", "Say 'పప్పు' clearly", "పప్పు"),
-                speak("q_\(lessonId)_s2", "Say 'చెట్టు' clearly", "చెట్టు")
-            ]
-            return [
-                LessonActivity(id: "activity_\(lessonId)_reading", type: .reading, title: "Reading Practice", instructions: "Recognize double consonants", xpValue: baseXP, questions: reading, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_writing", type: .writing, title: "Writing Practice", instructions: "Write double consonants", xpValue: baseXP, questions: writing, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_listening", type: .listening, title: "Listening Practice", instructions: "Identify double sounds", xpValue: baseXP, questions: listening, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_speaking", type: .speaking, title: "Speaking Practice", instructions: "Say double consonants", xpValue: baseXP, questions: speaking, canSkip: true)
-            ]
-        }
-        if title.contains("Body Parts") {
-            let reading = [
-                mcq("q_\(lessonId)_r1", "'Head' in Telugu", "తల", ["తల", "కన్ను", "చేయి", "కాలు"]),
-                mcq("q_\(lessonId)_r2", "'Eye' in Telugu", "కన్ను", ["కన్ను", "చేయి", "తల", "కాలు"]),
-                mcq("q_\(lessonId)_r3", "'Hand' in Telugu", "చేయి", ["చేయి", "కాలు", "తల", "కన్ను"])
-            ]
-            let writing = [
-                mcq("q_\(lessonId)_w1", "Write 'కాలు' (leg)", "కాలు", ["కాలు", "చేయి", "తల", "కన్ను"]),
-                mcq("q_\(lessonId)_w2", "Write 'నోరు' (mouth)", "నోరు", ["నోరు", "కన్ను", "చెవి", "ముక్కు"]),
-                mcq("q_\(lessonId)_w3", "Write 'చెవి' (ear)", "చెవి", ["చెవి", "కన్ను", "నోరు", "ముక్కు"])
-            ]
-            let listening = [
-                listen("q_\(lessonId)_l1", "Identify 'తల'", "తల", ["తల", "కన్ను", "చేయి", "కాలు"]),
-                listen("q_\(lessonId)_l2", "Identify 'చేయి'", "చేయి", ["చేయి", "కాలు", "తల", "కన్ను"])
-            ]
-            let speaking = [
-                speak("q_\(lessonId)_s1", "Say 'కన్ను' clearly", "కన్ను"),
-                speak("q_\(lessonId)_s2", "Say 'చెవి' clearly", "చెవి")
-            ]
-            return [
-                LessonActivity(id: "activity_\(lessonId)_reading", type: .reading, title: "Reading Practice", instructions: "Recognize body parts", xpValue: baseXP, questions: reading, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_writing", type: .writing, title: "Writing Practice", instructions: "Write body part names", xpValue: baseXP, questions: writing, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_listening", type: .listening, title: "Listening Practice", instructions: "Identify body parts by sound", xpValue: baseXP, questions: listening, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_speaking", type: .speaking, title: "Speaking Practice", instructions: "Say body part names", xpValue: baseXP, questions: speaking, canSkip: true)
-            ]
-        }
-        if title.contains("Colors") {
-            let reading = [
-                mcq("q_\(lessonId)_r1", "'Red' in Telugu", "ఎరుపు", ["ఎరుపు", "నీలం", "పసుపు", "ఆకుపచ్చ"]),
-                mcq("q_\(lessonId)_r2", "'Blue' in Telugu", "నీలం", ["నీలం", "ఎరుపు", "పసుపు", "నలుపు"]),
-                mcq("q_\(lessonId)_r3", "'Green' in Telugu", "ఆకుపచ్చ", ["ఆకుపచ్చ", "పసుపు", "నీలం", "ఎరుపు"])
-            ]
-            let writing = [
-                mcq("q_\(lessonId)_w1", "Write 'పసుపు' (yellow)", "పసుపు", ["పసుపు", "ఎరుపు", "నీలం", "ఆకుపచ్చ"]),
-                mcq("q_\(lessonId)_w2", "Write 'నలుపు' (black)", "నలుపు", ["నలుపు", "తెలుపు", "ఎరుపు", "నీలం"]),
-                mcq("q_\(lessonId)_w3", "Write 'తెలుపు' (white)", "తెలుపు", ["తెలుపు", "నలుపు", "పసుపు", "ఎరుపు"])
-            ]
-            let listening = [
-                listen("q_\(lessonId)_l1", "Identify 'ఎరుపు'", "ఎరుపు", ["ఎరుపు", "నీలం", "పసుపు", "ఆకుపచ్చ"]),
-                listen("q_\(lessonId)_l2", "Identify 'ఆకుపచ్చ'", "ఆకుపచ్చ", ["ఆకుపచ్చ", "పసుపు", "నీలం", "ఎరుపు"])
-            ]
-            let speaking = [
-                speak("q_\(lessonId)_s1", "Say 'నీలం' clearly", "నీలం"),
-                speak("q_\(lessonId)_s2", "Say 'తెలుపు' clearly", "తెలుపు")
-            ]
-            return [
-                LessonActivity(id: "activity_\(lessonId)_reading", type: .reading, title: "Reading Practice", instructions: "Recognize colors", xpValue: baseXP, questions: reading, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_writing", type: .writing, title: "Writing Practice", instructions: "Write color names", xpValue: baseXP, questions: writing, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_listening", type: .listening, title: "Listening Practice", instructions: "Identify colors by sound", xpValue: baseXP, questions: listening, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_speaking", type: .speaking, title: "Speaking Practice", instructions: "Say color names", xpValue: baseXP, questions: speaking, canSkip: true)
-            ]
-        }
-        if title.contains("Numbers 11–20") {
-            let reading = [
-                mcq("q_\(lessonId)_r1", "Pick 'పదకొండు' (11)", "పదకొండు", ["పదకొండు", "పన్నెండు", "పదమూడు", "పద్నాలుగు"]),
-                mcq("q_\(lessonId)_r2", "Which is '15'?", "పదిహేను", ["పదిహేను", "పదిఆరు", "పదిఏడు", "పదిఎనిమిది"]),
-                mcq("q_\(lessonId)_r3", "Which means '20'?", "ఇరవై", ["పందొమ్మిది", "ఇరవై", "పదిఎనిమిది", "పదిఏడు"])
-            ]
-            let writing = [
-                mcq("q_\(lessonId)_w1", "Write 'పన్నెండు' (12)", "పన్నెండు", ["పన్నెండు", "పదమూడు", "పద్నాలుగు", "పదిహేను"]),
-                mcq("q_\(lessonId)_w2", "Write 'పదిఆరు' (16)", "పదిఆరు", ["పదిఆరు", "పదిహేను", "పదిఏడు", "పదిఎనిమిది"]),
-                mcq("q_\(lessonId)_w3", "Write 'పందొమ్మిది' (19)", "పందొమ్మిది", ["పందొమ్మిది", "పదిఎనిమిది", "ఇరవై", "పదిఏడు"])
-            ]
-            let listening = [
-                listen("q_\(lessonId)_l1", "Identify 'పదమూడు'", "పదమూడు", ["పదమూడు", "పద్నాలుగు", "పదిహేను", "పదిఆరు"]),
-                listen("q_\(lessonId)_l2", "Identify 'ఇరవై'", "ఇరవై", ["ఇరవై", "పందొమ్మిది", "పదిఎనిమిది", "పదిఏడు"])
-            ]
-            let speaking = [
-                speak("q_\(lessonId)_s1", "Say 'పద్నాలుగు' clearly", "పద్నాలుగు"),
-                speak("q_\(lessonId)_s2", "Say 'పదిఎనిమిది' clearly", "పదిఎనిమిది")
-            ]
-            return [
-                LessonActivity(id: "activity_\(lessonId)_reading", type: .reading, title: "Reading Practice", instructions: "Recognize numbers 11-20", xpValue: baseXP, questions: reading, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_writing", type: .writing, title: "Writing Practice", instructions: "Write teen numbers", xpValue: baseXP, questions: writing, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_listening", type: .listening, title: "Listening Practice", instructions: "Identify teen numbers", xpValue: baseXP, questions: listening, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_speaking", type: .speaking, title: "Speaking Practice", instructions: "Say teen numbers", xpValue: baseXP, questions: speaking, canSkip: true)
-            ]
-        }
-        if title.contains("Animals") {
-            let reading = [
-                mcq("q_\(lessonId)_r1", "'Dog' in Telugu", "కుక్క", ["కుక్క", "పిల్లి", "పక్షి", "ఆవు"]),
-                mcq("q_\(lessonId)_r2", "'Cat' in Telugu", "పిల్లి", ["పిల్లి", "కుక్క", "ఏనుగు", "గుర్రం"]),
-                mcq("q_\(lessonId)_r3", "'Elephant' in Telugu", "ఏనుగు", ["ఏనుగు", "సింహం", "పులి", "ఎలుగుబంటి"])
-            ]
-            let writing = [
-                mcq("q_\(lessonId)_w1", "Write 'పక్షి' (bird)", "పక్షి", ["పక్షి", "కుక్క", "పిల్లి", "ఆవు"]),
-                mcq("q_\(lessonId)_w2", "Write 'ఆవు' (cow)", "ఆవు", ["ఆవు", "గుర్రం", "ఏనుగు", "సింహం"]),
-                mcq("q_\(lessonId)_w3", "Write 'గుర్రం' (horse)", "గుర్రం", ["గుర్రం", "ఆవు", "ఏనుగు", "పక్షి"])
-            ]
-            let listening = [
-                listen("q_\(lessonId)_l1", "Identify 'కుక్క'", "కుక్క", ["కుక్క", "పిల్లి", "పక్షి", "ఆవు"]),
-                listen("q_\(lessonId)_l2", "Identify 'ఏనుగు'", "ఏనుగు", ["ఏనుగు", "సింహం", "పులి", "ఎలుగుబంటి"])
-            ]
-            let speaking = [
-                speak("q_\(lessonId)_s1", "Say 'పిల్లి' clearly", "పిల్లి"),
-                speak("q_\(lessonId)_s2", "Say 'గుర్రం' clearly", "గుర్రం")
-            ]
-            return [
-                LessonActivity(id: "activity_\(lessonId)_reading", type: .reading, title: "Reading Practice", instructions: "Recognize animal names", xpValue: baseXP, questions: reading, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_writing", type: .writing, title: "Writing Practice", instructions: "Write animal names", xpValue: baseXP, questions: writing, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_listening", type: .listening, title: "Listening Practice", instructions: "Identify animals by sound", xpValue: baseXP, questions: listening, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_speaking", type: .speaking, title: "Speaking Practice", instructions: "Say animal names", xpValue: baseXP, questions: speaking, canSkip: true)
-            ]
-        }
-        
-        // INTERMEDIATE LEVEL TOPICS (Level 3)
-        if title.contains("Present Tense – Continuous") {
-            let reading = [
-                mcq("q_\(lessonId)_r1", "Present continuous of 'చేయు'", "చేస్తున్నాను", ["చేస్తున్నాను", "చేశాను", "చేస్తాను", "చేసాను"]),
-                mcq("q_\(lessonId)_r2", "'I am eating' in Telugu", "నేను తింటున్నాను", ["నేను తింటున్నాను", "నేను తిన్నాను", "నేను తింటాను", "నేను తిన్నాను"]),
-                mcq("q_\(lessonId)_r3", "'He is reading'", "అతను చదువుతున్నాడు", ["అతను చదువుతున్నాడు", "అతను చదివాడు", "అతను చదువుతాడు", "అతను చదివాడు"])
-            ]
-            let writing = [
-                mcq("q_\(lessonId)_w1", "Complete: నేను పుస్తకం __ తున్నాను", "చదువు", ["చదువు", "Option2", "Option3", "Option4"]),
-                mcq("q_\(lessonId)_w2", "Complete: అమ్మ వంట __ తుంది", "చేస్", ["చేస్", "Option2", "Option3", "Option4"]),
-                mcq("q_\(lessonId)_w3", "Complete: పిల్లలు ఆట __ తున్నారు", "ఆడు", ["ఆడు", "Option2", "Option3", "Option4"])
-            ]
-            let listening = [
-                listen("q_\(lessonId)_l1", "Identify continuous form", "చేస్తున్నాను", ["చేస్తున్నాను", "చేశాను", "చేస్తాను", "చేసాను"]),
-                listen("q_\(lessonId)_l2", "Identify 'తింటున్నాను'", "తింటున్నాను", ["తింటున్నాను", "తిన్నాను", "తింటాను", "తిన్నాను"])
-            ]
-            let speaking = [
-                speak("q_\(lessonId)_s1", "Say: నేను చదువుతున్నాను", "నేను చదువుతున్నాను"),
-                speak("q_\(lessonId)_s2", "Say: అతను రాస్తున్నాడు", "అతను రాస్తున్నాడు")
-            ]
-            return [
-                LessonActivity(id: "activity_\(lessonId)_reading", type: .reading, title: "Reading Practice", instructions: "Present continuous tense", xpValue: baseXP, questions: reading, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_writing", type: .writing, title: "Writing Practice", instructions: "Complete continuous sentences", xpValue: baseXP, questions: writing, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_listening", type: .listening, title: "Listening Practice", instructions: "Identify continuous forms", xpValue: baseXP, questions: listening, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_speaking", type: .speaking, title: "Speaking Practice", instructions: "Say continuous sentences", xpValue: baseXP, questions: speaking, canSkip: true)
-            ]
-        }
-        
-        // Past Tense Formation
-        if title.contains("Past Tense Formation") {
-            let reading = [
-                mcq("q_\(lessonId)_r1", "'I ate' in Telugu", "నేను తిన్నాను", ["నేను తిన్నాను", "నేను తింటాను", "నేను తింటున్నాను", "నేను తింటాను"]),
-                mcq("q_\(lessonId)_r2", "'You went' in Telugu", "నువ్వు వెళ్లావు", ["నువ్వు వెళ్లావు", "నువ్వు వెళ్తావు", "నువ్వు వెళ్తున్నావు", "నువ్వు వెళ్లాలి"]),
-                mcq("q_\(lessonId)_r3", "'He came' in Telugu", "అతను వచ్చాడు", ["అతను వచ్చాడు", "అతను వస్తాడు", "అతను వస్తున్నాడు", "అతను రావాలి"])
-            ]
-            let writing = [
-                mcq("q_\(lessonId)_w1", "Write 'నేను చదివాను' (I read)", "నేను చదివాను", ["నేను చదివాను", "Option2", "Option3", "Option4"]),
-                mcq("q_\(lessonId)_w2", "Write 'ఆమె రాసింది' (she wrote)", "ఆమె రాసింది", ["ఆమె రాసింది", "Option2", "Option3", "Option4"]),
-                mcq("q_\(lessonId)_w3", "Write 'మేము చూశాము' (we saw)", "మేము చూశాము", ["మేము చూశాము", "Option2", "Option3", "Option4"])
-            ]
-            let listening = [
-                listen("q_\(lessonId)_l1", "Identify 'నేను తిన్నాను'", "నేను తిన్నాను", ["నేను తిన్నాను", "నేను తింటాను", "నేను తింటున్నాను", "నేను తింటాను"]),
-                listen("q_\(lessonId)_l2", "Identify 'అతను వచ్చాడు'", "అతను వచ్చాడు", ["అతను వచ్చాడు", "అతను వస్తాడు", "అతను వస్తున్నాడు", "అతను రావాలి"])
-            ]
-            let speaking = [
-                speak("q_\(lessonId)_s1", "Say 'నేను తిన్నాను'", "నేను తిన్నాను"),
-                speak("q_\(lessonId)_s2", "Say 'అతను వచ్చాడు'", "అతను వచ్చాడు")
-            ]
-            return [
-                LessonActivity(id: "activity_\(lessonId)_reading", type: .reading, title: "Reading Practice", instructions: "Read past tense", xpValue: baseXP, questions: reading, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_writing", type: .writing, title: "Writing Practice", instructions: "Write past forms", xpValue: baseXP, questions: writing, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_listening", type: .listening, title: "Listening Practice", instructions: "Identify past tense", xpValue: baseXP, questions: listening, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_speaking", type: .speaking, title: "Speaking Practice", instructions: "Say past forms", xpValue: baseXP, questions: speaking, canSkip: true)
-            ]
-        }
-        if title.contains("Future Tense Usage") {
-            let reading = [
-                mcq("q_\(lessonId)_r1", "'I will eat' in Telugu", "నేను తింటాను", ["నేను తింటాను", "నేను తిన్నాను", "నేను తింటున్నాను", "నేను తిన్నాను"]),
-                mcq("q_\(lessonId)_r2", "'You will go' in Telugu", "నువ్వు వెళ్తావు", ["నువ్వు వెళ్తావు", "నువ్వు వెళ్లావు", "నువ్వు వెళ్తున్నావు", "నువ్వు వెళ్లాలి"]),
-                mcq("q_\(lessonId)_r3", "'She will come' in Telugu", "ఆమె వస్తుంది", ["ఆమె వస్తుంది", "ఆమె వచ్చింది", "ఆమె వస్తుంది", "ఆమె వచ్చింది"])
-            ]
-            let writing = [
-                mcq("q_\(lessonId)_w1", "Write 'నేను చదువుతాను' (I will read)", "నేను చదువుతాను", ["నేను చదువుతాను", "Option2", "Option3", "Option4"]),
-                mcq("q_\(lessonId)_w2", "Write 'అతను రాస్తాడు' (he will write)", "అతను రాస్తాడు", ["అతను రాస్తాడు", "Option2", "Option3", "Option4"]),
-                mcq("q_\(lessonId)_w3", "Write 'మేము చూస్తాము' (we will see)", "మేము చూస్తాము", ["మేము చూస్తాము", "Option2", "Option3", "Option4"])
-            ]
-            let listening = [
-                listen("q_\(lessonId)_l1", "Identify 'నేను తిన్నాను'", "నేను తిన్నాను", ["నేను తిన్నాను", "నేను తింటాను", "నేను తింటున్నాను", "నేను తింటాను"]),
-                listen("q_\(lessonId)_l2", "Identify 'అతను వచ్చాడు'", "అతను వచ్చాడు", ["అతను వచ్చాడు", "అతను వస్తాడు", "అతను వస్తున్నాడు", "అతను రావాలి"])
-            ]
-            let speaking = [
-                speak("q_\(lessonId)_s1", "Say 'నేను తిన్నాను'", "నేను తిన్నాను"),
-                speak("q_\(lessonId)_s2", "Say 'అతను వచ్చాడు'", "అతను వచ్చాడు")
-            ]
-            return [
-                LessonActivity(id: "activity_\(lessonId)_reading", type: .reading, title: "Reading Practice", instructions: "Read past tense", xpValue: baseXP, questions: reading, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_writing", type: .writing, title: "Writing Practice", instructions: "Write past forms", xpValue: baseXP, questions: writing, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_listening", type: .listening, title: "Listening Practice", instructions: "Identify past tense", xpValue: baseXP, questions: listening, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_speaking", type: .speaking, title: "Speaking Practice", instructions: "Say past forms", xpValue: baseXP, questions: speaking, canSkip: true)
-            ]
-        }
-        if title.contains("Future Tense Usage") {
-            let reading = [
-                mcq("q_\(lessonId)_r1", "'I will eat' in Telugu", "నేను తింటాను", ["నేను తింటాను", "నేను తిన్నాను", "నేను తింటున్నాను", "నేను తిన్నాను"]),
-                mcq("q_\(lessonId)_r2", "'You will go' in Telugu", "నువ్వు వెళ్తావు", ["నువ్వు వెళ్తావు", "నువ్వు వెళ్లావు", "నువ్వు వెళ్తున్నావు", "నువ్వు వెళ్లావు"]),
-                mcq("q_\(lessonId)_r3", "'She will come' in Telugu", "ఆమె వస్తుంది", ["ఆమె వస్తుంది", "ఆమె వచ్చింది", "ఆమె వస్తుంది", "ఆమె వచ్చింది"])
-            ]
-            let writing = [
-                mcq("q_\(lessonId)_w1", "Write 'నేను చదువుతాను' (I will read)", "నేను చదువుతాను", ["నేను చదువుతాను", "Option2", "Option3", "Option4"]),
-                mcq("q_\(lessonId)_w2", "Write 'అతను రాస్తాడు' (he will write)", "అతను రాస్తాడు", ["అతను రాస్తాడు", "Option2", "Option3", "Option4"]),
-                mcq("q_\(lessonId)_w3", "Write 'మేము చూస్తాము' (we will see)", "మేము చూస్తాము", ["మేము చూస్తాము", "Option2", "Option3", "Option4"])
-            ]
-            let listening = [
-                listen("q_\(lessonId)_l1", "Identify 'నేను తింటాను'", "నేను తింటాను", ["నేను తింటాను", "నేను తిన్నాను", "నేను తింటున్నాను", "నేను తిన్నాను"]),
-                listen("q_\(lessonId)_l2", "Identify 'ఆమె వస్తుంది'", "ఆమె వస్తుంది", ["ఆమె వస్తుంది", "ఆమె వచ్చింది", "ఆమె వస్తుంది", "ఆమె వచ్చింది"])
-            ]
-            let speaking = [
-                speak("q_\(lessonId)_s1", "Say 'నేను తింటాను'", "నేను తింటాను"),
-                speak("q_\(lessonId)_s2", "Say 'ఆమె వస్తుంది'", "ఆమె వస్తుంది")
-            ]
-            return [
-                LessonActivity(id: "activity_\(lessonId)_reading", type: .reading, title: "Reading Practice", instructions: "Read future tense", xpValue: baseXP, questions: reading, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_writing", type: .writing, title: "Writing Practice", instructions: "Write future forms", xpValue: baseXP, questions: writing, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_listening", type: .listening, title: "Listening Practice", instructions: "Identify future tense", xpValue: baseXP, questions: listening, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_speaking", type: .speaking, title: "Speaking Practice", instructions: "Say future forms", xpValue: baseXP, questions: speaking, canSkip: true)
-            ]
-        }
-        if title.contains("Question Formation") {
-            let reading = [
-                mcq("q_\(lessonId)_r1", "'Where?' in Telugu", "ఎక్కడ?", ["ఎక్కడ?", "ఎప్పుడు?", "ఎవరు?", "ఎందుకు?"]),
-                mcq("q_\(lessonId)_r2", "'When?' in Telugu", "ఎప్పుడు?", ["ఎప్పుడు?", "ఎక్కడ?", "ఎవరు?", "ఎలా?"]),
-                mcq("q_\(lessonId)_r3", "'Why?' in Telugu", "ఎందుకు?", ["ఎందుకు?", "ఎలా?", "ఎంత?", "ఎవరు?"])
-            ]
-            let writing = [
-                mcq("q_\(lessonId)_w1", "Write 'ఎవరు?' (who)", "ఎవరు?", ["ఎవరు?", "Option2", "Option3", "Option4"]),
-                mcq("q_\(lessonId)_w2", "Write 'ఎలా?' (how)", "ఎలా?", ["ఎలా?", "Option2", "Option3", "Option4"]),
-                mcq("q_\(lessonId)_w3", "Write 'ఎంత?' (how much)", "ఎంత?", ["ఎంత?", "Option2", "Option3", "Option4"])
-            ]
-            let listening = [
-                listen("q_\(lessonId)_l1", "Identify 'ఎక్కడ?'", "ఎక్కడ?", ["ఎక్కడ?", "ఎప్పుడు?", "ఎవరు?", "ఎందుకు?"]),
-                listen("q_\(lessonId)_l2", "Identify 'ఎందుకు?'", "ఎందుకు?", ["ఎందుకు?", "ఎలా?", "ఎంత?", "ఎవరు?"])
-            ]
-            let speaking = [
-                speak("q_\(lessonId)_s1", "Ask 'ఎక్కడ?'", "ఎక్కడ?"),
-                speak("q_\(lessonId)_s2", "Ask 'ఎప్పుడు?'", "ఎప్పుడు?")
-            ]
-            return [
-                LessonActivity(id: "activity_\(lessonId)_reading", type: .reading, title: "Reading Practice", instructions: "Read question words", xpValue: baseXP, questions: reading, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_writing", type: .writing, title: "Writing Practice", instructions: "Write question words", xpValue: baseXP, questions: writing, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_listening", type: .listening, title: "Listening Practice", instructions: "Listen to question words", xpValue: baseXP, questions: listening, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_speaking", type: .speaking, title: "Speaking Practice", instructions: "Practice question words", xpValue: baseXP, questions: speaking, canSkip: true)
-            ]
-        }
-        if title.contains("Vowels – Part 4") {
-            let reading = [
-                mcq("q_\(lessonId)_r1", "Which is 'అం' (am)?", "అం", ["అం", "అః", "అ", "ఆ"]),
-                mcq("q_\(lessonId)_r2", "Which is visarga 'అః'?", "అః", ["అః", "అం", "అ", "ఆ"]),
-                mcq("q_\(lessonId)_r3", "Anusvara symbol", "అం", ["అం", "అః", "అ", "ఆ"])
-            ]
-            let writing = [
-                trace("q_\(lessonId)_w1", "Trace 'అం'", "అం"),
-                mcq("q_\(lessonId)_w2", "Write visarga", "అః", ["అః", "అం", "అ", "ఆ"]),
-                mcq("q_\(lessonId)_w3", "Write anusvara", "అం", ["అం", "అః", "అ", "ఆ"])
-            ]
-            let listening = [
-                listen("q_\(lessonId)_l1", "Identify 'అం' sound", "అం", ["అం", "అః", "అ", "ఆ"]),
-                listen("q_\(lessonId)_l2", "Identify 'అః' sound", "అః", ["అః", "అం", "అ", "ఆ"])
-            ]
-            let speaking = [
-                speak("q_\(lessonId)_s1", "Say 'అం' clearly", "అం"),
-                speak("q_\(lessonId)_s2", "Say 'అః' clearly", "అః")
-            ]
-            return [
-                LessonActivity(id: "activity_\(lessonId)_reading", type: .reading, title: "Reading Practice", instructions: "Special vowel marks", xpValue: baseXP, questions: reading, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_writing", type: .writing, title: "Writing Practice", instructions: "Write special marks", xpValue: baseXP, questions: writing, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_listening", type: .listening, title: "Listening Practice", instructions: "Identify special sounds", xpValue: baseXP, questions: listening, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_speaking", type: .speaking, title: "Speaking Practice", instructions: "Say special sounds", xpValue: baseXP, questions: speaking, canSkip: true)
-            ]
-        }
-        
-        // Add missing consonant topics
-        if title.contains("Retroflex Consonants") {
-            let reading = [
-                mcq("q_\(lessonId)_r1", "Pick 'ట' (ṭa)", "ట", ["ట", "ఠ", "డ", "ఢ"]),
-                mcq("q_\(lessonId)_r2", "Which is aspirated 'ఠ'?", "ఠ", ["ఠ", "ట", "డ", "ఢ"]),
-                mcq("q_\(lessonId)_r3", "Retroflex nasal", "ణ", ["ణ", "న", "ఙ", "ఞ"])
-            ]
-            let writing = [
-                trace("q_\(lessonId)_w1", "Trace 'ట'", "ట"),
-                mcq("q_\(lessonId)_w2", "Write 'డ' (ḍa)", "డ", ["డ", "ట", "ఠ", "ఢ"]),
-                mcq("q_\(lessonId)_w3", "Write aspirated 'ఢ'", "ఢ", ["ఢ", "డ", "ట", "ఠ"])
-            ]
-            let listening = [
-                listen("q_\(lessonId)_l1", "Identify 'ట' sound", "ట", ["ట", "త", "ద", "థ"]),
-                listen("q_\(lessonId)_l2", "Identify 'డ' sound", "డ", ["డ", "ద", "ట", "త"])
-            ]
-            let speaking = [
-                speak("q_\(lessonId)_s1", "Say 'ట' clearly", "ట"),
-                speak("q_\(lessonId)_s2", "Say 'ణ' clearly", "ణ")
-            ]
-            return [
-                LessonActivity(id: "activity_\(lessonId)_reading", type: .reading, title: "Reading Practice", instructions: "Recognize retroflexes", xpValue: baseXP, questions: reading, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_writing", type: .writing, title: "Writing Practice", instructions: "Write retroflex letters", xpValue: baseXP, questions: writing, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_listening", type: .listening, title: "Listening Practice", instructions: "Identify retroflexes", xpValue: baseXP, questions: listening, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_speaking", type: .speaking, title: "Speaking Practice", instructions: "Say retroflex letters", xpValue: baseXP, questions: speaking, canSkip: true)
-            ]
-        }
-        if title.contains("Dental Consonants") {
-            let reading = [
-                mcq("q_\(lessonId)_r1", "Pick 'త' (ta)", "త", ["త", "థ", "ద", "ధ"]),
-                mcq("q_\(lessonId)_r2", "Which is aspirated 'థ'?", "థ", ["థ", "త", "ద", "ధ"]),
-                mcq("q_\(lessonId)_r3", "Dental nasal", "న", ["న", "ణ", "ఙ", "ఞ"])
-            ]
-            let writing = [
-                trace("q_\(lessonId)_w1", "Trace 'త'", "త"),
-                mcq("q_\(lessonId)_w2", "Write 'ద' (da)", "ద", ["ద", "త", "థ", "ధ"]),
-                mcq("q_\(lessonId)_w3", "Write aspirated 'ధ'", "ధ", ["ధ", "ద", "త", "థ"])
-            ]
-            let listening = [
-                listen("q_\(lessonId)_l1", "Identify 'త' sound", "త", ["త", "ట", "ద", "డ"]),
-                listen("q_\(lessonId)_l2", "Identify 'న' sound", "న", ["న", "ణ", "మ", "ల"])
-            ]
-            let speaking = [
-                speak("q_\(lessonId)_s1", "Say 'త' clearly", "త"),
-                speak("q_\(lessonId)_s2", "Say 'న' clearly", "న")
-            ]
-            return [
-                LessonActivity(id: "activity_\(lessonId)_reading", type: .reading, title: "Reading Practice", instructions: "Recognize dentals", xpValue: baseXP, questions: reading, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_writing", type: .writing, title: "Writing Practice", instructions: "Write dental letters", xpValue: baseXP, questions: writing, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_listening", type: .listening, title: "Listening Practice", instructions: "Identify dentals", xpValue: baseXP, questions: listening, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_speaking", type: .speaking, title: "Speaking Practice", instructions: "Say dental letters", xpValue: baseXP, questions: speaking, canSkip: true)
-            ]
-        }
-        if title.contains("Labial Consonants") {
-            let reading = [
-                mcq("q_\(lessonId)_r1", "Pick 'ప' (pa)", "ప", ["ప", "ఫ", "బ", "భ"]),
-                mcq("q_\(lessonId)_r2", "Which is aspirated 'ఫ'?", "ఫ", ["ఫ", "ప", "బ", "భ"]),
-                mcq("q_\(lessonId)_r3", "Labial nasal", "మ", ["మ", "న", "ణ", "ఙ"])
-            ]
-            let writing = [
-                trace("q_\(lessonId)_w1", "Trace 'ప'", "ప"),
-                mcq("q_\(lessonId)_w2", "Write 'బ' (ba)", "బ", ["బ", "ప", "ఫ", "భ"]),
-                mcq("q_\(lessonId)_w3", "Write aspirated 'భ'", "భ", ["భ", "బ", "ప", "ఫ"])
-            ]
-            let listening = [
-                listen("q_\(lessonId)_l1", "Identify 'ప' sound", "ప", ["ప", "బ", "మ", "వ"]),
-                listen("q_\(lessonId)_l2", "Identify 'మ' sound", "మ", ["మ", "న", "ల", "వ"])
-            ]
-            let speaking = [
-                speak("q_\(lessonId)_s1", "Say 'ప' clearly", "ప"),
-                speak("q_\(lessonId)_s2", "Say 'మ' clearly", "మ")
-            ]
-            return [
-                LessonActivity(id: "activity_\(lessonId)_reading", type: .reading, title: "Reading Practice", instructions: "Recognize labials", xpValue: baseXP, questions: reading, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_writing", type: .writing, title: "Writing Practice", instructions: "Write labial letters", xpValue: baseXP, questions: writing, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_listening", type: .listening, title: "Listening Practice", instructions: "Identify labials", xpValue: baseXP, questions: listening, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_speaking", type: .speaking, title: "Speaking Practice", instructions: "Say labial letters", xpValue: baseXP, questions: speaking, canSkip: true)
-            ]
-        }
-        if title.contains("Semivowels and Sibilants") {
-            let reading = [
-                mcq("q_\(lessonId)_r1", "Pick 'య' (ya)", "య", ["య", "ర", "ల", "వ"]),
-                mcq("q_\(lessonId)_r2", "Which is 'వ' (va)?", "వ", ["వ", "య", "ర", "ల"]),
-                mcq("q_\(lessonId)_r3", "Palatal sibilant", "శ", ["శ", "ష", "స", "హ"])
-            ]
-            let writing = [
-                trace("q_\(lessonId)_w1", "Trace 'య'", "య"),
-                mcq("q_\(lessonId)_w2", "Write 'ర' (ra)", "ర", ["ర", "య", "ల", "వ"]),
-                mcq("q_\(lessonId)_w3", "Write 'ష' (ṣa)", "ష", ["ష", "శ", "స", "హ"])
-            ]
-            let listening = [
-                listen("q_\(lessonId)_l1", "Identify 'య' sound", "య", ["య", "ర", "ల", "వ"]),
-                listen("q_\(lessonId)_l2", "Identify 'శ' sound", "శ", ["శ", "ష", "స", "హ"])
-            ]
-            let speaking = [
-                speak("q_\(lessonId)_s1", "Say 'య' clearly", "య"),
-                speak("q_\(lessonId)_s2", "Say 'వ' clearly", "వ")
-            ]
-            return [
-                LessonActivity(id: "activity_\(lessonId)_reading", type: .reading, title: "Reading Practice", instructions: "Recognize semivowels", xpValue: baseXP, questions: reading, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_writing", type: .writing, title: "Writing Practice", instructions: "Write semivowels", xpValue: baseXP, questions: writing, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_listening", type: .listening, title: "Listening Practice", instructions: "Identify semivowels", xpValue: baseXP, questions: listening, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_speaking", type: .speaking, title: "Speaking Practice", instructions: "Say semivowels", xpValue: baseXP, questions: speaking, canSkip: true)
-            ]
-        }
-        if title.contains("Special Consonants") {
-            let reading = [
-                mcq("q_\(lessonId)_r1", "Pick 'హ' (ha)", "హ", ["హ", "ళ", "క్ష", "జ్ఞ"]),
-                mcq("q_\(lessonId)_r2", "Which is retroflex 'ళ'?", "ళ", ["ళ", "ల", "హ", "స"]),
-                mcq("q_\(lessonId)_r3", "Conjunct 'క్ష'", "క్ష", ["క్ష", "జ్ఞ", "హ", "ళ"])
-            ]
-            let writing = [
-                trace("q_\(lessonId)_w1", "Trace 'హ'", "హ"),
-                mcq("q_\(lessonId)_w2", "Write 'ళ' (ḷa)", "ళ", ["ళ", "ల", "హ", "స"]),
-                mcq("q_\(lessonId)_w3", "Write 'జ్ఞ'", "జ్ఞ", ["జ్ఞ", "క్ష", "హ", "ళ"])
-            ]
-            let listening = [
-                listen("q_\(lessonId)_l1", "Identify 'హ' sound", "హ", ["హ", "ళ", "స", "శ"]),
-                listen("q_\(lessonId)_l2", "Identify 'క్ష' sound", "క్ష", ["క్ష", "జ్ఞ", "హ", "ళ"])
-            ]
-            let speaking = [
-                speak("q_\(lessonId)_s1", "Say 'హ' clearly", "హ"),
-                speak("q_\(lessonId)_s2", "Say 'ళ' clearly", "ళ")
-            ]
-            return [
-                LessonActivity(id: "activity_\(lessonId)_reading", type: .reading, title: "Reading Practice", instructions: "Special consonants", xpValue: baseXP, questions: reading, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_writing", type: .writing, title: "Writing Practice", instructions: "Write special letters", xpValue: baseXP, questions: writing, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_listening", type: .listening, title: "Listening Practice", instructions: "Identify special sounds", xpValue: baseXP, questions: listening, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_speaking", type: .speaking, title: "Speaking Practice", instructions: "Say special letters", xpValue: baseXP, questions: speaking, canSkip: true)
-            ]
-        }
-        
-        // Add syllable formation topics
-        if title.contains("Syllable Formation – Part 2") {
-            let reading = [
-                mcq("q_\(lessonId)_r1", "క + ూ = ?", "కూ", ["కూ", "కు", "కా", "కి"]),
-                mcq("q_\(lessonId)_r2", "క + ె = ?", "కె", ["కె", "కే", "కా", "కి"]),
-                mcq("q_\(lessonId)_r3", "క + ే = ?", "కే", ["కే", "కె", "కా", "కి"])
-            ]
-            let writing = [
-                mcq("q_\(lessonId)_w1", "Form 'కై' (క + ై)", "కై", ["కై", "కె", "కే", "కా"]),
-                mcq("q_\(lessonId)_w2", "Form 'కొ' (క + ొ)", "కొ", ["కొ", "కో", "కా", "కు"]),
-                mcq("q_\(lessonId)_w3", "Form 'కౌ' (క + ౌ)", "కౌ", ["కౌ", "కై", "కొ", "కో"])
-            ]
-            let listening = [
-                listen("q_\(lessonId)_l1", "Identify 'కూ' sound", "కూ", ["కూ", "కు", "కా", "కి"]),
-                listen("q_\(lessonId)_l2", "Identify 'కె' sound", "కె", ["కె", "కే", "కా", "కి"])
-            ]
-            let speaking = [
-                speak("q_\(lessonId)_s1", "Say 'కూ' clearly", "కూ"),
-                speak("q_\(lessonId)_s2", "Say 'కై' clearly", "కై")
-            ]
-            return [
-                LessonActivity(id: "activity_\(lessonId)_reading", type: .reading, title: "Reading Practice", instructions: "Advanced syllables", xpValue: baseXP, questions: reading, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_writing", type: .writing, title: "Writing Practice", instructions: "Form complex syllables", xpValue: baseXP, questions: writing, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_listening", type: .listening, title: "Listening Practice", instructions: "Identify syllable sounds", xpValue: baseXP, questions: listening, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_speaking", type: .speaking, title: "Speaking Practice", instructions: "Say syllables", xpValue: baseXP, questions: speaking, canSkip: true)
-            ]
-        }
-        if title.contains("Syllable Formation – Part 3") {
-            let reading = [
-                mcq("q_\(lessonId)_r1", "క + ం = ?", "కం", ["కం", "కః", "కా", "కి"]),
-                mcq("q_\(lessonId)_r2", "క + ః = ?", "కః", ["కః", "కం", "కా", "కి"]),
-                mcq("q_\(lessonId)_r3", "Final consonant cluster", "క్", ["క్", "కం", "కః", "కా"])
-            ]
-            let writing = [
-                mcq("q_\(lessonId)_w1", "Add anusvara to 'క'", "కం", ["కం", "కః", "కా", "కి"]),
-                mcq("q_\(lessonId)_w2", "Add visarga to 'క'", "కః", ["కః", "కం", "కా", "కి"]),
-                mcq("q_\(lessonId)_w3", "Write halant form", "క్", ["క్", "కం", "కః", "కా"])
-            ]
-            let listening = [
-                listen("q_\(lessonId)_l1", "Identify 'కం' sound", "కం", ["కం", "కః", "కా", "కి"]),
-                listen("q_\(lessonId)_l2", "Identify 'కః' sound", "కః", ["కః", "కం", "కా", "కి"])
-            ]
-            let speaking = [
-                speak("q_\(lessonId)_s1", "Say 'కం' clearly", "కం"),
-                speak("q_\(lessonId)_s2", "Say 'కః' clearly", "కః")
-            ]
-            return [
-                LessonActivity(id: "activity_\(lessonId)_reading", type: .reading, title: "Reading Practice", instructions: "Special syllable marks", xpValue: baseXP, questions: reading, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_writing", type: .writing, title: "Writing Practice", instructions: "Add special marks", xpValue: baseXP, questions: writing, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_listening", type: .listening, title: "Listening Practice", instructions: "Identify marked syllables", xpValue: baseXP, questions: listening, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_speaking", type: .speaking, title: "Speaking Practice", instructions: "Say marked syllables", xpValue: baseXP, questions: speaking, canSkip: true)
-            ]
-        }
-        
-        // ADVANCED LEVEL TOPICS (Level 4)
-        if title.contains("Conditionals") {
-            let reading = [
-                mcq("q_\(lessonId)_r1", "'If it rains' in Telugu", "వర్షం పడితే", ["వర్షం పడితే", "వర్షం పడుతుంది", "వర్షం పడింది", "వర్షం పడాలి"]),
-                mcq("q_\(lessonId)_r2", "'If you come' in Telugu", "నువ్వు వస్తే", ["నువ్వు వస్తే", "నువ్వు వచ్చావు", "నువ్వు వస్తావు", "నువ్వు రావాలి"]),
-                mcq("q_\(lessonId)_r3", "Complete: 'అయితే...' means", "If/But", ["If/But", "When", "Because", "Although"])
-            ]
-            let writing = [
-                mcq("q_\(lessonId)_w1", "Write 'నేను వస్తే' (if I come)", "నేను వస్తే", ["నేను వస్తే", "Option2", "Option3", "Option4"]),
-                mcq("q_\(lessonId)_w2", "Write 'అయితే మంచిది' (then it's good)", "అయితే మంచిది", ["అయితే మంచిది", "Option2", "Option3", "Option4"]),
-                mcq("q_\(lessonId)_w3", "Write 'కానీ సమస్య లేదు' (but no problem)", "కానీ సమస్య లేదు", ["కానీ సమస్య లేదు", "Option2", "Option3", "Option4"])
-            ]
-            let listening = [
-                listen("q_\(lessonId)_l1", "Identify 'వర్షం పడితే'", "వర్షం పడితే", ["వర్షం పడితే", "వర్షం పడుతుంది", "వర్షం పడింది", "వర్షం పడాలి"]),
-                listen("q_\(lessonId)_l2", "Identify 'నువ్వు వస్తే'", "నువ్వు వస్తే", ["నువ్వు వస్తే", "నువ్వు వచ్చావు", "నువ్వు వస్తావు", "నువ్వు రావాలి"])
-            ]
-            let speaking = [
-                speak("q_\(lessonId)_s1", "Say 'వర్షం పడితే'", "వర్షం పడితే"),
-                speak("q_\(lessonId)_s2", "Say 'అయితే మంచిది'", "అయితే మంచిది")
-            ]
-            return [
-                LessonActivity(id: "activity_\(lessonId)_reading", type: .reading, title: "Reading Practice", instructions: "Read conditional sentences", xpValue: baseXP, questions: reading, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_writing", type: .writing, title: "Writing Practice", instructions: "Write conditional forms", xpValue: baseXP, questions: writing, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_listening", type: .listening, title: "Listening Practice", instructions: "Identify conditionals", xpValue: baseXP, questions: listening, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_speaking", type: .speaking, title: "Speaking Practice", instructions: "Say conditional sentences", xpValue: baseXP, questions: speaking, canSkip: true)
-            ]
-        }
-        if title.contains("Passive Voice") {
-            let reading = [
-                mcq("q_\(lessonId)_r1", "'The book was read' in Telugu", "పుస్తకం చదవబడింది", ["పుస్తకం చదవబడింది", "పుస్తకం చదివాను", "పుస్తకం చదువుతాను", "పుస్తకం చదవాలి"]),
-                mcq("q_\(lessonId)_r2", "'Food is being cooked' in Telugu", "భోజనం వండబడుతోంది", ["భోజనం వండబడుతోంది", "భోజనం వండాను", "భోజనం వండుతాను", "భోజనం వండాలి"]),
-                mcq("q_\(lessonId)_r3", "'Letter will be written' in Telugu", "లేఖ రాయబడుతుంది", ["లేఖ రాయబడుతుంది", "లేఖ రాశాను", "లేఖ రాస్తాను", "లేఖ రాయాలి"])
-            ]
-            let writing = [
-                mcq("q_\(lessonId)_w1", "Write 'కథ చెప్పబడింది' (story was told)", "కథ చెప్పబడింది", ["కథ చెప్పబడింది", "Option2", "Option3", "Option4"]),
-                mcq("q_\(lessonId)_w2", "Write 'పని చేయబడుతోంది' (work is being done)", "పని చేయబడుతోంది", ["పని చేయబడుతోంది", "Option2", "Option3", "Option4"]),
-                mcq("q_\(lessonId)_w3", "Write 'ఇల్లు కట్టబడుతుంది' (house will be built)", "ఇల్లు కట్టబడుతుంది", ["ఇల్లు కట్టబడుతుంది", "Option2", "Option3", "Option4"])
-            ]
-            let listening = [
-                listen("q_\(lessonId)_l1", "Identify 'పుస్తకం చదవబడింది'", "పుస్తకం చదవబడింది", ["పుస్తకం చదవబడింది", "పుస్తకం చదివాను", "పుస్తకం చదువుతాను", "పుస్తకం చదవాలి"]),
-                listen("q_\(lessonId)_l2", "Identify 'భోజనం వండబడుతోంది'", "భోజనం వండబడుతోంది", ["భోజనం వండబడుతోంది", "భోజనం వండాను", "భోజనం వండుతాను", "భోజనం వండాలి"])
-            ]
-            let speaking = [
-                speak("q_\(lessonId)_s1", "Say 'పుస్తకం చదవబడింది'", "పుస్తకం చదవబడింది"),
-                speak("q_\(lessonId)_s2", "Say 'భోజనం వండబడుతోంది'", "భోజనం వండబడుతోంది")
-            ]
-            return [
-                LessonActivity(id: "activity_\(lessonId)_reading", type: .reading, title: "Reading Practice", instructions: "Read passive voice", xpValue: baseXP, questions: reading, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_writing", type: .writing, title: "Writing Practice", instructions: "Write passive forms", xpValue: baseXP, questions: writing, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_listening", type: .listening, title: "Listening Practice", instructions: "Identify passive voice", xpValue: baseXP, questions: listening, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_speaking", type: .speaking, title: "Speaking Practice", instructions: "Say passive forms", xpValue: baseXP, questions: speaking, canSkip: true)
-            ]
-        }
-        if title.contains("Idioms") {
-            let reading = [
-                mcq("q_\(lessonId)_r1", "'చేతిలో ఉంది' means", "It's in hand/control", ["It's in hand/control", "It's expensive", "It's far away", "It's broken"]),
-                mcq("q_\(lessonId)_r2", "'కన్నుమూసి' means", "Blindly/without thinking", ["Blindly/without thinking", "Very carefully", "With eyes closed", "Very slowly"]),
-                mcq("q_\(lessonId)_r3", "'గాలికి వదిలేయడం' means", "To abandon/let go", ["To abandon/let go", "To fly a kite", "To open windows", "To run fast"])
-            ]
-            let writing = [
-                mcq("q_\(lessonId)_w1", "Write 'మనసులో పెట్టుకో' (keep in mind)", "మనసులో పెట్టుకో", ["మనసులో పెట్టుకో", "Option2", "Option3", "Option4"]),
-                mcq("q_\(lessonId)_w2", "Write 'చేతులు కట్టుకుని' (hands tied/helpless)", "చేతులు కట్టుకుని", ["చేతులు కట్టుకుని", "Option2", "Option3", "Option4"]),
-                mcq("q_\(lessonId)_w3", "Write 'కాలం చెల్లిపోయింది' (time has passed)", "కాలం చెల్లిపోయింది", ["కాలం చెల్లిపోయింది", "Option2", "Option3", "Option4"])
-            ]
-            let listening = [
-                listen("q_\(lessonId)_l1", "Identify 'చేతిలో ఉంది'", "చేతిలో ఉంది", ["చేతిలో ఉంది", "చేతిలో లేదు", "చేతితో పట్టు", "చేతిని కడుక్కో"]),
-                listen("q_\(lessonId)_l2", "Identify 'కన్నుమూసి'", "కన్నుమూసి", ["కన్నుమూసి", "కన్నుతెరువు", "కన్నులు కడుక్కో", "కన్నుల్లో నీళ్లు"])
-            ]
-            let speaking = [
-                speak("q_\(lessonId)_s1", "Say 'చేతిలో ఉంది'", "చేతిలో ఉంది"),
-                speak("q_\(lessonId)_s2", "Say 'మనసులో పెట్టుకో'", "మనసులో పెట్టుకో")
-            ]
-            return [
-                LessonActivity(id: "activity_\(lessonId)_reading", type: .reading, title: "Reading Practice", instructions: "Read Telugu idioms", xpValue: baseXP, questions: reading, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_writing", type: .writing, title: "Writing Practice", instructions: "Write idiomatic expressions", xpValue: baseXP, questions: writing, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_listening", type: .listening, title: "Listening Practice", instructions: "Identify idioms", xpValue: baseXP, questions: listening, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_speaking", type: .speaking, title: "Speaking Practice", instructions: "Say idiomatic expressions", xpValue: baseXP, questions: speaking, canSkip: true)
-            ]
-        }
-        if title.contains("Formal Speech") {
-            let reading = [
-                mcq("q_\(lessonId)_r1", "Formal 'you' in Telugu", "మీరు", ["మీరు", "నువ్వు", "నీవు", "తాము"]),
-                mcq("q_\(lessonId)_r2", "'Please come' (formal) in Telugu", "దయచేసి రండి", ["దయచేసి రండి", "దయచేసి రా", "వచ్చేయ్", "రావు"]),
-                mcq("q_\(lessonId)_r3", "'Thank you' (very formal) in Telugu", "ధన్యవాదములు", ["ధన్యవాదములు", "ధన్యవాదాలు", "థాంక్స్", "మెర్సీ"])
-            ]
-            let writing = [
-                mcq("q_\(lessonId)_w1", "Write 'మీరు ఎలా ఉన్నారు?' (how are you - formal)", "మీరు ఎలా ఉన్నారు?", ["మీరు ఎలా ఉన్నారు?", "Option2", "Option3", "Option4"]),
-                mcq("q_\(lessonId)_w2", "Write 'క్షమించండి' (excuse me - formal)", "క్షమించండి", ["క్షమించండి", "Option2", "Option3", "Option4"]),
-                mcq("q_\(lessonId)_w3", "Write 'తమరి అభిప్రాయం?' (your opinion - very formal)", "తమరి అభిప్రాయం?", ["తమరి అభిప్రాయం?", "Option2", "Option3", "Option4"])
-            ]
-            let listening = [
-                listen("q_\(lessonId)_l1", "Identify 'మీరు'", "మీరు", ["మీరు", "నువ్వు", "నీవు", "తాము"]),
-                listen("q_\(lessonId)_l2", "Identify 'దయచేసి రండి'", "దయచేసి రండి", ["దయచేసి రండి", "దయచేసి రా", "వచ్చేయ్", "రావు"])
-            ]
-            let speaking = [
-                speak("q_\(lessonId)_s1", "Say 'మీరు ఎలా ఉన్నారు?'", "మీరు ఎలా ఉన్నారు?"),
-                speak("q_\(lessonId)_s2", "Say 'ధన్యవాదములు'", "ధన్యవాదములు")
-            ]
-            return [
-                LessonActivity(id: "activity_\(lessonId)_reading", type: .reading, title: "Reading Practice", instructions: "Read formal speech", xpValue: baseXP, questions: reading, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_writing", type: .writing, title: "Writing Practice", instructions: "Write formal expressions", xpValue: baseXP, questions: writing, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_listening", type: .listening, title: "Listening Practice", instructions: "Identify formal speech", xpValue: baseXP, questions: listening, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_speaking", type: .speaking, title: "Speaking Practice", instructions: "Practice formal speech", xpValue: baseXP, questions: speaking, canSkip: true)
-            ]
-        }
-        
-        // Basic Phrases and Q&A
-        if title.contains("Basic Phrases") {
-            let reading = [
-                mcq("q_\(lessonId)_r1", "'What is this?' in Telugu", "ఇది ఏమిటి?", ["ఇది ఏమిటి?", "అది ఏమిటి?", "ఎక్కడ ఉంది?", "ఎవరిది?"]),
-                mcq("q_\(lessonId)_r2", "'Where is it?' in Telugu", "ఎక్కడ ఉంది?", ["ఎక్కడ ఉంది?", "ఇది ఏమిటి?", "ఎవరిది?", "ఎంత ధర?"]),
-                mcq("q_\(lessonId)_r3", "'How much?' in Telugu", "ఎంత?", ["ఎంత?", "ఎక్కడ?", "ఎప్పుడు?", "ఎలా?"])
-            ]
-            let writing = [
-                mcq("q_\(lessonId)_w1", "Write 'ఎవరు?' (who)", "ఎవరు?", ["ఎవరు?", "ఎక్కడ?", "ఎప్పుడు?", "ఎంత?"]),
-                mcq("q_\(lessonId)_w2", "Write 'ఎలా?' (how)", "ఎలా?", ["ఎలా?", "ఎంత?", "ఎక్కడ?", "ఎవరు?"]),
-                mcq("q_\(lessonId)_w3", "Write 'అది ఏమిటి?' (what is that)", "అది ఏమిటి?", ["అది ఏమిటి?", "ఇది ఏమిటి?", "ఎక్కడ ఉంది?", "ఎవరిది?"])
-            ]
-            let listening = [
-                listen("q_\(lessonId)_l1", "Identify 'ఇది ఏమిటి?'", "ఇది ఏమిటి?", ["ఇది ఏమిటి?", "అది ఏమిటి?", "ఎక్కడ ఉంది?", "ఎవరిది?"]),
-                listen("q_\(lessonId)_l2", "Identify 'ఎంత?'", "ఎంత?", ["ఎంత?", "ఎక్కడ?", "ఎప్పుడు?", "ఎలా?"])
-            ]
-            let speaking = [
-                speak("q_\(lessonId)_s1", "Ask 'ఇది ఏమిటి?'", "ఇది ఏమిటి?"),
-                speak("q_\(lessonId)_s2", "Ask 'ఎక్కడ ఉంది?'", "ఎక్కడ ఉంది?")
-            ]
-            return [
-                LessonActivity(id: "activity_\(lessonId)_reading", type: .reading, title: "Reading Practice", instructions: "Read basic questions", xpValue: baseXP, questions: reading, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_writing", type: .writing, title: "Writing Practice", instructions: "Write question words", xpValue: baseXP, questions: writing, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_listening", type: .listening, title: "Listening Practice", instructions: "Identify questions", xpValue: baseXP, questions: listening, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_speaking", type: .speaking, title: "Speaking Practice", instructions: "Ask questions", xpValue: baseXP, questions: speaking, canSkip: true)
-            ]
-        }
-        
-        // Action Verbs – Conjugation
-        if title.contains("Action Verbs") {
-            let reading = [
-                mcq("q_\(lessonId)_r1", "'I eat' in Telugu", "నేను తింటాను", ["నేను తింటాను", "నువ్వు తింటావు", "అతను తింటాడు", "మేము తింటాము"]),
-                mcq("q_\(lessonId)_r2", "'You write' in Telugu", "నువ్వు రాస్తావు", ["నువ్వు రాస్తావు", "నేను రాస్తాను", "అతను రాస్తాడు", "మేము రాస్తాము"]),
-                mcq("q_\(lessonId)_r3", "'We walk' in Telugu", "మేము నడుస్తాము", ["మేము నడుస్తాము", "నేను నడుస్తాను", "నువ్వు నడుస్తావు", "అతను నడుస్తాడు"])
-            ]
-            let writing = [
-                mcq("q_\(lessonId)_w1", "Write 'అతను చదువుతాడు' (he reads)", "అతను చదువుతాడు", ["అతను చదువుతాడు", "ఆమె చదువుతుంది", "మేము చదువుతాము", "వారు చదువుతారు"]),
-                mcq("q_\(lessonId)_w2", "Write 'ఆమె వంట చేస్తుంది' (she cooks)", "ఆమె వంట చేస్తుంది", ["ఆమె వంట చేస్తుంది", "అతను వంట చేస్తాడు", "నేను వంట చేస్తాను", "మేము వంట చేస్తాము"]),
-                mcq("q_\(lessonId)_w3", "Write 'వారు ఆడుతారు' (they play)", "వారు ఆడుతారు", ["వారు ఆడుతారు", "మేము ఆడుతాము", "నేను ఆడుతాను", "నువ్వు ఆడుతావు"])
-            ]
-            let listening = [
-                listen("q_\(lessonId)_l1", "Identify 'నేను తింటాను'", "నేను తింటాను", ["నేను తింటాను", "నువ్వు తింటావు", "అతను తింటాడు", "మేము తింటాము"]),
-                listen("q_\(lessonId)_l2", "Identify 'వారు ఆడుతారు'", "వారు ఆడుతారు", ["వారు ఆడుతారు", "మేము ఆడుతాము", "నేను ఆడుతాను", "నువ్వు ఆడుతావు"])
-            ]
-            let speaking = [
-                speak("q_\(lessonId)_s1", "Say 'నేను చదువుతాను'", "నేను చదువుతాను"),
-                speak("q_\(lessonId)_s2", "Say 'ఆమె వంట చేస్తుంది'", "ఆమె వంట చేస్తుంది")
-            ]
-            return [
-                LessonActivity(id: "activity_\(lessonId)_reading", type: .reading, title: "Reading Practice", instructions: "Read verb conjugations", xpValue: baseXP, questions: reading, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_writing", type: .writing, title: "Writing Practice", instructions: "Write conjugated verbs", xpValue: baseXP, questions: writing, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_listening", type: .listening, title: "Listening Practice", instructions: "Identify verb forms", xpValue: baseXP, questions: listening, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_speaking", type: .speaking, title: "Speaking Practice", instructions: "Say verb conjugations", xpValue: baseXP, questions: speaking, canSkip: true)
-            ]
-        }
-        
-        // Possessives (నా, నీ) in Phrases
-        if title.contains("Possessives") {
-            let reading = [
-                mcq("q_\(lessonId)_r1", "'My book' in Telugu", "నా పుస్తకం", ["నా పుస్తకం", "నీ పుస్తకం", "అతని పుస్తకం", "ఆమె పుస్తకం"]),
-                mcq("q_\(lessonId)_r2", "'Your house' in Telugu", "నీ ఇల్లు", ["నీ ఇల్లు", "నా ఇల్లు", "అతని ఇల్లు", "ఆమె ఇల్లు"]),
-                mcq("q_\(lessonId)_r3", "'His car' in Telugu", "అతని కారు", ["అతని కారు", "ఆమె కారు", "నా కారు", "నీ కారు"])
-            ]
-            let writing = [
-                mcq("q_\(lessonId)_w1", "Write 'నా పేరు' (my name)", "నా పేరు", ["నా పేరు", "నీ పేరు", "అతని పేరు", "ఆమె పేరు"]),
-                mcq("q_\(lessonId)_w2", "Write 'నీ అమ్మ' (your mother)", "నీ అమ్మ", ["నీ అమ్మ", "నా అమ్మ", "అతని అమ్మ", "ఆమె అమ్మ"]),
-                mcq("q_\(lessonId)_w3", "Write 'మా ఇల్లు' (our house)", "మా ఇల్లు", ["మా ఇల్లు", "మీ ఇల్లు", "వారి ఇల్లు", "నా ఇల్లు"])
-            ]
-            let listening = [
-                listen("q_\(lessonId)_l1", "Identify 'నా పుస్తకం'", "నా పుస్తకం", ["నా పుస్తకం", "నీ పుస్తకం", "అతని పుస్తకం", "ఆమె పుస్తకం"]),
-                listen("q_\(lessonId)_l2", "Identify 'మా ఇల్లు'", "మా ఇల్లు", ["మా ఇల్లు", "మీ ఇల్లు", "వారి ఇల్లు", "నా ఇల్లు"])
-            ]
-            let speaking = [
-                speak("q_\(lessonId)_s1", "Say 'నా పేరు రాము'", "నా పేరు రాము"),
-                speak("q_\(lessonId)_s2", "Say 'నీ ఇల్లు ఎక్కడ?'", "నీ ఇల్లు ఎక్కడ?")
-            ]
-            return [
-                LessonActivity(id: "activity_\(lessonId)_reading", type: .reading, title: "Reading Practice", instructions: "Read possessive phrases", xpValue: baseXP, questions: reading, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_writing", type: .writing, title: "Writing Practice", instructions: "Write possessive forms", xpValue: baseXP, questions: writing, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_listening", type: .listening, title: "Listening Practice", instructions: "Identify possessives", xpValue: baseXP, questions: listening, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_speaking", type: .speaking, title: "Speaking Practice", instructions: "Say possessive phrases", xpValue: baseXP, questions: speaking, canSkip: true)
-            ]
-        }
-        
-        // Conversation Starters
-        if title.contains("Conversation Starters") {
-            let reading = [
-                mcq("q_\(lessonId)_r1", "'What is your name?' in Telugu", "మీ పేరు ఏమిటి?", ["మీ పేరు ఏమిటి?", "మీరు ఎక్కడ నుండి?", "మీకు ఎంత వయస్సు?", "మీరు ఏం చేస్తారు?"]),
-                mcq("q_\(lessonId)_r2", "'I like Telugu' in Telugu", "నాకు తెలుగు అంటే ఇష్టం", ["నాకు తెలుగు అంటే ఇష్టం", "నేను తెలుగు నేర్చుకుంటున్నాను", "తెలుగు కష్టం", "తెలుగు సులభం"]),
-                mcq("q_\(lessonId)_r3", "'Nice to meet you' in Telugu", "మిమ్మల్ని కలవడం సంతోషం", ["మిమ్మల్ని కలవడం సంతోషం", "మీరు ఎలా ఉన్నారు?", "మళ్లీ కలుద్దాం", "వీడ్కోలు"])
-            ]
-            let writing = [
-                mcq("q_\(lessonId)_w1", "Write 'నేను రాము' (I am Ramu)", "నేను రాము", ["నేను రాము", "నా పేరు రాము", "రాము నేను", "నేను రాము అని"]),
-                mcq("q_\(lessonId)_w2", "Write 'మీరు ఎక్కడ నుండి?' (where are you from)", "మీరు ఎక్కడ నుండి?", ["మీరు ఎక్కడ నుండి?", "మీరు ఎక్కడ ఉంటారు?", "మీ ఇల్లు ఎక్కడ?", "మీరు ఎవరు?"]),
-                mcq("q_\(lessonId)_w3", "Write 'మళ్లీ కలుద్దాం' (let's meet again)", "మళ్లీ కలుద్దాం", ["మళ్లీ కలుద్దాం", "మళ్లీ రండి", "మళ్లీ చూద్దాం", "మళ్లీ మాట్లాడుదాం"])
-            ]
-            let listening = [
-                listen("q_\(lessonId)_l1", "Identify 'మీ పేరు ఏమిటి?'", "మీ పేరు ఏమిటి?", ["మీ పేరు ఏమిటి?", "మీరు ఎక్కడ నుండి?", "మీకు ఎంత వయస్సు?", "మీరు ఏం చేస్తారు?"]),
-                listen("q_\(lessonId)_l2", "Identify 'నాకు తెలుగు అంటే ఇష్టం'", "నాకు తెలుగు అంటే ఇష్టం", ["నాకు తెలుగు అంటే ఇష్టం", "నేను తెలుగు నేర్చుకుంటున్నాను", "తెలుగు కష్టం", "తెలుగు సులభం"])
-            ]
-            let speaking = [
-                speak("q_\(lessonId)_s1", "Say 'నా పేరు రాము'", "నా పేరు రాము"),
-                speak("q_\(lessonId)_s2", "Say 'మిమ్మల్ని కలవడం సంతోషం'", "మిమ్మల్ని కలవడం సంతోషం")
-            ]
-            return [
-                LessonActivity(id: "activity_\(lessonId)_reading", type: .reading, title: "Reading Practice", instructions: "Read conversation starters", xpValue: baseXP, questions: reading, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_writing", type: .writing, title: "Writing Practice", instructions: "Write introductions", xpValue: baseXP, questions: writing, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_listening", type: .listening, title: "Listening Practice", instructions: "Identify conversation phrases", xpValue: baseXP, questions: listening, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_speaking", type: .speaking, title: "Speaking Practice", instructions: "Practice introductions", xpValue: baseXP, questions: speaking, canSkip: true)
-            ]
-        }
-        
-        // Directions and Movement
-        if title.contains("Directions and Navigation") {
-            let reading = [
-                mcq("q_\(lessonId)_r1", "'Left' in Telugu", "ఎడమ", ["ఎడమ", "కుడి", "ముందు", "వెనుక"]),
-                mcq("q_\(lessonId)_r2", "'Go straight' in Telugu", "నేరుగా వెళ్లు", ["నేరుగా వెళ్లు", "ఎడమకు తిరుగు", "కుడికి తిరుగు", "వెనుకకు రా"]),
-                mcq("q_\(lessonId)_r3", "'Turn right' in Telugu", "కుడికి తిరుగు", ["కుడికి తిరుగు", "ఎడమకు తిరుగు", "నేరుగా వెళ్లు", "ఆగు"])
-            ]
-            let writing = [
-                mcq("q_\(lessonId)_w1", "Write 'ముందు' (front/ahead)", "ముందు", ["ముందు", "వెనుక", "ఎడమ", "కుడి"]),
-                mcq("q_\(lessonId)_w2", "Write 'వెనుక' (back/behind)", "వెనుక", ["వెనుక", "ముందు", "పక్కన", "దగ్గర"]),
-                mcq("q_\(lessonId)_w3", "Write 'దూరం' (far)", "దూరం", ["దూరం", "దగ్గర", "పక్కన", "మధ్యలో"])
-            ]
-            let listening = [
-                listen("q_\(lessonId)_l1", "Identify 'ఎడమకు తిరుగు'", "ఎడమకు తిరుగు", ["ఎడమకు తిరుగు", "కుడికి తిరుగు", "నేరుగా వెళ్లు", "ఆగు"]),
-                listen("q_\(lessonId)_l2", "Identify 'దగ్గర'", "దగ్గర", ["దగ్గర", "దూరం", "పక్కన", "మధ్యలో"])
-            ]
-            let speaking = [
-                speak("q_\(lessonId)_s1", "Say 'నేరుగా వెళ్లు'", "నేరుగా వెళ్లు"),
-                speak("q_\(lessonId)_s2", "Say 'కుడికి తిరుగు'", "కుడికి తిరుగు")
-            ]
-            return [
-                LessonActivity(id: "activity_\(lessonId)_reading", type: .reading, title: "Reading Practice", instructions: "Read directions", xpValue: baseXP, questions: reading, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_writing", type: .writing, title: "Writing Practice", instructions: "Write direction words", xpValue: baseXP, questions: writing, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_listening", type: .listening, title: "Listening Practice", instructions: "Identify directions", xpValue: baseXP, questions: listening, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_speaking", type: .speaking, title: "Speaking Practice", instructions: "Give directions", xpValue: baseXP, questions: speaking, canSkip: true)
-            ]
-        }
-        
-        // Talking About Time
-        if title.contains("Time Expressions") {
-            let reading = [
-                mcq("q_\(lessonId)_r1", "'Today' in Telugu", "ఈరోజు", ["ఈరోజు", "రేపు", "నిన్న", "ఇప్పుడు"]),
-                mcq("q_\(lessonId)_r2", "'Yesterday' in Telugu", "నిన్న", ["నిన్న", "ఈరోజు", "రేపు", "మొన్న"]),
-                mcq("q_\(lessonId)_r3", "'What time?' in Telugu", "ఎంత సమయం?", ["ఎంత సమయం?", "ఎప్పుడు?", "ఎక్కడ?", "ఎలా?"])
-            ]
-            let writing = [
-                mcq("q_\(lessonId)_w1", "Write 'రేపు' (tomorrow)", "రేపు", ["రేపు", "ఈరోజు", "నిన్న", "మొన్న"]),
-                mcq("q_\(lessonId)_w2", "Write 'ఇప్పుడు' (now)", "ఇప్పుడు", ["ఇప్పుడు", "తర్వాత", "ముందు", "అప్పుడు"]),
-                mcq("q_\(lessonId)_w3", "Write 'ఉదయం' (morning)", "ఉదయం", ["ఉదయం", "మధ్యాహ్నం", "సాయంత్రం", "రాత్రి"])
-            ]
-            let listening = [
-                listen("q_\(lessonId)_l1", "Identify 'ఈరోజు'", "ఈరోజు", ["ఈరోజు", "రేపు", "నిన్న", "ఇప్పుడు"]),
-                listen("q_\(lessonId)_l2", "Identify 'సాయంత్రం'", "సాయంత్రం", ["సాయంత్రం", "ఉదయం", "మధ్యాహ్నం", "రాత్రి"])
-            ]
-            let speaking = [
-                speak("q_\(lessonId)_s1", "Say 'ఈరోజు ఉదయం'", "ఈరోజు ఉదయం"),
-                speak("q_\(lessonId)_s2", "Say 'రేపు సాయంత్రం'", "రేపు సాయంత్రం")
-            ]
-            return [
-                LessonActivity(id: "activity_\(lessonId)_reading", type: .reading, title: "Reading Practice", instructions: "Read time expressions", xpValue: baseXP, questions: reading, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_writing", type: .writing, title: "Writing Practice", instructions: "Write time words", xpValue: baseXP, questions: writing, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_listening", type: .listening, title: "Listening Practice", instructions: "Identify time expressions", xpValue: baseXP, questions: listening, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_speaking", type: .speaking, title: "Speaking Practice", instructions: "Talk about time", xpValue: baseXP, questions: speaking, canSkip: true)
-            ]
-        }
-        
-        // Short Story Comprehension
-        if title.contains("Story Reading") {
-            let reading = [
-                mcq("q_\(lessonId)_r1", "In the story, what did రాము do?", "రాము పుస్తకం చదివాడు", ["రాము పుస్తకం చదివాడు", "రాము ఆట ఆడాడు", "రాము తిన్నాడు", "రాము నిద్రపోయాడు"]),
-                mcq("q_\(lessonId)_r2", "Where did సీత go?", "సీత పాఠశాలకు వెళ్లింది", ["సీత పాఠశాలకు వెళ్లింది", "సీత ఇంటికి వెళ్లింది", "సీత దుకాణానికి వెళ్లింది", "సీత పార్కుకు వెళ్లింది"]),
-                mcq("q_\(lessonId)_r3", "What happened at the end?", "అందరూ సంతోషంగా ఉన్నారు", ["అందరూ సంతోషంగా ఉన్నారు", "అందరూ ఇంటికి వెళ్లారు", "అందరూ తిన్నారు", "అందరూ నిద్రపోయారు"])
-            ]
-            let writing = [
-                mcq("q_\(lessonId)_w1", "Write 'కథ' (story)", "కథ", ["కథ", "పుస్తకం", "పాట", "సినిమా"]),
-                mcq("q_\(lessonId)_w2", "Write 'హీరో' (hero)", "హీరో", ["హీరో", "విలన్", "రాజు", "రాణి"]),
-                mcq("q_\(lessonId)_w3", "Write 'ముగింపు' (ending)", "ముగింపు", ["ముగింపు", "మొదలు", "మధ్య", "చివర"])
-            ]
-            let listening = [
-                listen("q_\(lessonId)_l1", "Identify 'కథ చెప్పు'", "కథ చెప్పు", ["కథ చెప్పు", "పాట పాడు", "నృత్యం చేయి", "ఆట ఆడు"]),
-                listen("q_\(lessonId)_l2", "Identify 'చాలా బాగుంది'", "చాలా బాగుంది", ["చాలా బాగుంది", "బాలేదు", "సరిపోలేదు", "అర్థం కాలేదు"])
-            ]
-            let speaking = [
-                speak("q_\(lessonId)_s1", "Say 'కథ చాలా బాగుంది'", "కథ చాలా బాగుంది"),
-                speak("q_\(lessonId)_s2", "Say 'మరో కథ చెప్పు'", "మరో కథ చెప్పు")
-            ]
-            return [
-                LessonActivity(id: "activity_\(lessonId)_reading", type: .reading, title: "Reading Practice", instructions: "Read story comprehension", xpValue: baseXP, questions: reading, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_writing", type: .writing, title: "Writing Practice", instructions: "Write story elements", xpValue: baseXP, questions: writing, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_listening", type: .listening, title: "Listening Practice", instructions: "Identify story phrases", xpValue: baseXP, questions: listening, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_speaking", type: .speaking, title: "Speaking Practice", instructions: "Discuss stories", xpValue: baseXP, questions: speaking, canSkip: true)
-            ]
-        }
-        
-        // Complex Sentence Structures
-        if title.contains("Complex Sentences") || title.contains("Comparative Sentences") || title.contains("Adjective Usage") {
-            let reading = [
-                mcq("q_\(lessonId)_r1", "Complex sentence with 'because'", "నేను వెళ్లలేదు ఎందుకంటే వర్షం వస్తోంది", ["నేను వెళ్లలేదు ఎందుకంటే వర్షం వస్తోంది", "నేను వెళ్లాను కానీ ఆలస్యం అయింది", "అతను వచ్చాడు మరియు మాట్లాడాడు", "ఆమె పాడింది లేదా నృత్యం చేసింది"]),
-                mcq("q_\(lessonId)_r2", "Sentence with 'although'", "వర్షం వచ్చినప్పటికీ నేను వెళ్లాను", ["వర్షం వచ్చినప్పటికీ నేను వెళ్లాను", "వర్షం వస్తే నేను వెళ్లను", "వర్షం లేకపోతే వెళ్లతాను", "వర్షం వచ్చాక వెళ్లాను"]),
-                mcq("q_\(lessonId)_r3", "Conditional sentence", "మీరు వస్తే నేను వంట చేస్తాను", ["మీరు వస్తే నేను వంట చేస్తాను", "మీరు వచ్చాక నేను వంట చేసాను", "మీరు రాకపోతే వంట చేయను", "మీరు వచ్చినప్పుడు వంట చేస్తున్నాను"])
-            ]
-            let writing = [
-                mcq("q_\(lessonId)_w1", "Write 'ఎందుకంటే' (because)", "ఎందుకంటే", ["ఎందుకంటే", "అయినప్పటికీ", "కానీ", "మరియు"]),
-                mcq("q_\(lessonId)_w2", "Write 'అయినప్పటికీ' (although)", "అయినప్పటికీ", ["అయినప్పటికీ", "ఎందుకంటే", "కానీ", "లేదా"]),
-                mcq("q_\(lessonId)_w3", "Write 'అయితే' (if/then)", "అయితే", ["అయితే", "అప్పుడు", "ఇప్పుడు", "తర్వాత"])
-            ]
-            let listening = [
-                listen("q_\(lessonId)_l1", "Identify complex sentence", "నేను వెళ్లలేదు ఎందుకంటే వర్షం వస్తోంది", ["నేను వెళ్లలేదు ఎందుకంటే వర్షం వస్తోంది", "నేను వెళ్లాను కానీ ఆలస్యం అయింది", "వర్షం వస్తే వెళ్లను", "వర్షం లేకపోతే వెళ్లతాను"]),
-                listen("q_\(lessonId)_l2", "Identify 'అయినప్పటికీ'", "అయినప్పటికీ", ["అయినప్పటికీ", "ఎందుకంటే", "కానీ", "మరియు"])
-            ]
-            let speaking = [
-                speak("q_\(lessonId)_s1", "Say 'నేను వెళ్లలేదు ఎందుకంటే అనారోగ్యం'", "నేను వెళ్లలేదు ఎందుకంటే అనారోగ్యం"),
-                speak("q_\(lessonId)_s2", "Say 'వర్షం వచ్చినప్పటికీ నేను వెళ్లాను'", "వర్షం వచ్చినప్పటికీ నేను వెళ్లాను")
-            ]
-            return [
-                LessonActivity(id: "activity_\(lessonId)_reading", type: .reading, title: "Reading Practice", instructions: "Read complex sentences", xpValue: baseXP, questions: reading, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_writing", type: .writing, title: "Writing Practice", instructions: "Write connectors", xpValue: baseXP, questions: writing, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_listening", type: .listening, title: "Listening Practice", instructions: "Identify complex structures", xpValue: baseXP, questions: listening, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_speaking", type: .speaking, title: "Speaking Practice", instructions: "Form complex sentences", xpValue: baseXP, questions: speaking, canSkip: true)
-            ]
-        }
-        
-        // Advanced Grammar Concepts
-        if title.contains("Advanced Grammar") {
-            let reading = [
-                mcq("q_\(lessonId)_r1", "Passive voice: 'The book was read'", "పుస్తకం చదవబడింది", ["పుస్తకం చదవబడింది", "పుస్తకం చదివాను", "పుస్తకం చదువుతున్నాను", "పుస్తకం చదవాలి"]),
-                mcq("q_\(lessonId)_r2", "Causative: 'Made him eat'", "అతనిని తినిపించాడు", ["అతనిని తినిపించాడు", "అతను తిన్నాడు", "అతనికి తినిపించాడు", "అతను తినిపించుకున్నాడు"]),
-                mcq("q_\(lessonId)_r3", "Reported speech marker", "అని అన్నాడు", ["అని అన్నాడు", "అని అడిగాడు", "అని చెప్పాడు", "అని వినిపించింది"])
-            ]
-            let writing = [
-                mcq("q_\(lessonId)_w1", "Write passive form of 'write'", "రాయబడింది", ["రాయబడింది", "రాశాడు", "రాస్తున్నాడు", "రాయాలి"]),
-                mcq("q_\(lessonId)_w2", "Write 'అని' (quotative)", "అని", ["అని", "అని అన్నాడు", "అని చెప్పాడు", "అని అడిగాడు"]),
-                mcq("q_\(lessonId)_w3", "Write causative 'made to go'", "వెళ్లిపించాడు", ["వెళ్లిపించాడు", "వెళ్లాడు", "వెళ్లుతున్నాడు", "వెళ్లాలి"])
-            ]
-            let listening = [
-                listen("q_\(lessonId)_l1", "Identify passive construction", "పుస్తకం చదవబడింది", ["పుస్తకం చదవబడింది", "పుస్తకం చదివాను", "పుస్తకం చదువుతున్నాను", "పుస్తకం చదవాలి"]),
-                listen("q_\(lessonId)_l2", "Identify 'అని అన్నాడు'", "అని అన్నాడు", ["అని అన్నాడు", "అని అడిగాడు", "అని చెప్పాడు", "అని వినిపించింది"])
-            ]
-            let speaking = [
-                speak("q_\(lessonId)_s1", "Say 'అతను రాము అని అన్నాడు'", "అతను రాము అని అన్నాడు"),
-                speak("q_\(lessonId)_s2", "Say 'పని చేయించాడు'", "పని చేయించాడు")
-            ]
-            return [
-                LessonActivity(id: "activity_\(lessonId)_reading", type: .reading, title: "Reading Practice", instructions: "Read advanced grammar", xpValue: baseXP, questions: reading, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_writing", type: .writing, title: "Writing Practice", instructions: "Write complex forms", xpValue: baseXP, questions: writing, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_listening", type: .listening, title: "Listening Practice", instructions: "Identify grammar patterns", xpValue: baseXP, questions: listening, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_speaking", type: .speaking, title: "Speaking Practice", instructions: "Use advanced grammar", xpValue: baseXP, questions: speaking, canSkip: true)
-            ]
-        }
-        
-        // Literature and Poetry
-        if title.contains("Literature") || title.contains("Poetry") {
-            let reading = [
-                mcq("q_\(lessonId)_r1", "Poetic word for 'moon'", "చంద్రుడు", ["చంద్రుడు", "సూర్యుడు", "నక్షత్రం", "ఆకాశం"]),
-                mcq("q_\(lessonId)_r2", "Classical word for 'woman'", "స్త్రీ", ["స్త్రీ", "అమ్మాయి", "ఆడది", "మహిళ"]),
-                mcq("q_\(lessonId)_r3", "Poetic expression for 'beautiful'", "సుందరమైన", ["సుందరమైన", "అందమైన", "చక్కని", "మంచి"])
-            ]
-            let writing = [
-                mcq("q_\(lessonId)_w1", "Write 'కవిత' (poem)", "కవిత", ["కవిత", "కథ", "పాట", "నాటకం"]),
-                mcq("q_\(lessonId)_w2", "Write 'కవి' (poet)", "కవి", ["కవి", "రచయిత", "గాయకుడు", "నటుడు"]),
-                mcq("q_\(lessonId)_w3", "Write 'ఛందస్సు' (meter/rhythm)", "ఛందస్సు", ["ఛందస్సు", "తాళం", "స్వరం", "రాగం"])
-            ]
-            let listening = [
-                listen("q_\(lessonId)_l1", "Identify 'కవిత చదువు'", "కవిత చదువు", ["కవిత చదువు", "కథ చదువు", "పాట పాడు", "నాటకం చూడు"]),
-                listen("q_\(lessonId)_l2", "Identify 'చంద్రుడు'", "చంద్రుడు", ["చంద్రుడు", "సూర్యుడు", "నక్షత్రం", "ఆకాశం"])
-            ]
-            let speaking = [
-                speak("q_\(lessonId)_s1", "Say 'కవిత చాలా అందంగా ఉంది'", "కవిత చాలా అందంగా ఉంది"),
-                speak("q_\(lessonId)_s2", "Say 'నాకు కవిత్వం అంటే ఇష్టం'", "నాకు కవిత్వం అంటే ఇష్టం")
-            ]
-            return [
-                LessonActivity(id: "activity_\(lessonId)_reading", type: .reading, title: "Reading Practice", instructions: "Read literary texts", xpValue: baseXP, questions: reading, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_writing", type: .writing, title: "Writing Practice", instructions: "Write literary terms", xpValue: baseXP, questions: writing, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_listening", type: .listening, title: "Listening Practice", instructions: "Identify poetic language", xpValue: baseXP, questions: listening, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_speaking", type: .speaking, title: "Speaking Practice", instructions: "Discuss literature", xpValue: baseXP, questions: speaking, canSkip: true)
-            ]
-        }
-        
-        // Cultural Context and Traditions
-        if title.contains("Cultural") || title.contains("Traditions") {
-            let reading = [
-                mcq("q_\(lessonId)_r1", "'Festival' in Telugu", "పండుగ", ["పండుగ", "వేడుక", "కార్యక్రమం", "సభ"]),
-                mcq("q_\(lessonId)_r2", "'Traditional dress' in Telugu", "సాంప్రదాయ దుస్తులు", ["సాంప్రదాయ దుస్తులు", "కొత్త దుస్తులు", "పాత దుస్తులు", "అందమైన దుస్తులు"]),
-                mcq("q_\(lessonId)_r3", "'Respect elders' in Telugu", "పెద్దలను గౌరవించు", ["పెద్దలను గౌరవించు", "చిన్నవాళ్లను చూసుకో", "అందరినీ ప్రేమించు", "మంచిగా ప్రవర్తించు"])
-            ]
-            let writing = [
-                mcq("q_\(lessonId)_w1", "Write 'దీవాలి' (Diwali)", "దీవాలి", ["దీవాలి", "దసరా", "హోలీ", "ఉగాది"]),
-                mcq("q_\(lessonId)_w2", "Write 'ప్రార్థన' (prayer)", "ప్రార్థన", ["ప్రార్థన", "పూజ", "వేడుక", "కార్యక్రమం"]),
-                mcq("q_\(lessonId)_w3", "Write 'సంస్కృతి' (culture)", "సంస్కృతి", ["సంస్కృతి", "సంప్రదాయం", "ఆచారం", "నియమం"])
-            ]
-            let listening = [
-                listen("q_\(lessonId)_l1", "Identify 'పండుగ జరుపుకుంటాము'", "పండుగ జరుపుకుంటాము", ["పండుగ జరుపుకుంటాము", "వేడుక చేస్తాము", "కార్యక్రమం ఉంది", "సభ ఉంది"]),
-                listen("q_\(lessonId)_l2", "Identify 'సాంప్రదాయం'", "సాంప్రదాయం", ["సాంప్రదాయం", "సంస్కృతి", "ఆచారం", "నియమం"])
-            ]
-            let speaking = [
-                speak("q_\(lessonId)_s1", "Say 'మన సంస్కృతి గొప్పది'", "మన సంస్కృతి గొప్పది"),
-                speak("q_\(lessonId)_s2", "Say 'పండుగలు చాలా ముఖ్యం'", "పండుగలు చాలా ముఖ్యం")
-            ]
-            return [
-                LessonActivity(id: "activity_\(lessonId)_reading", type: .reading, title: "Reading Practice", instructions: "Read about culture", xpValue: baseXP, questions: reading, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_writing", type: .writing, title: "Writing Practice", instructions: "Write cultural terms", xpValue: baseXP, questions: writing, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_listening", type: .listening, title: "Listening Practice", instructions: "Identify traditions", xpValue: baseXP, questions: listening, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_speaking", type: .speaking, title: "Speaking Practice", instructions: "Discuss culture", xpValue: baseXP, questions: speaking, canSkip: true)
-            ]
-        }
-        
-        // Business and Professional
-        if title.contains("Business") || title.contains("Professional") {
-            let reading = [
-                mcq("q_\(lessonId)_r1", "'Meeting' in Telugu", "సమావేశం", ["సమావేశం", "చర్చ", "సభ", "కార్యక్రమం"]),
-                mcq("q_\(lessonId)_r2", "'Office' in Telugu", "కార్యాలయం", ["కార్యాలయం", "దుకాణం", "కంపెనీ", "ఇల్లు"]),
-                mcq("q_\(lessonId)_r3", "'Project' in Telugu", "ప్రాజెక్టు", ["ప్రాజెక్టు", "పని", "పనిముట్టు", "కార్యం"])
-            ]
-            let writing = [
-                mcq("q_\(lessonId)_w1", "Write 'వ్యాపారం' (business)", "వ్యాపారం", ["వ్యాపారం", "పని", "కంపెనీ", "దుకాణం"]),
-                mcq("q_\(lessonId)_w2", "Write 'ఉద్యోగం' (job)", "ఉద్యోగం", ["ఉద్యోగం", "పని", "వృత్తి", "సేవ"]),
-                mcq("q_\(lessonId)_w3", "Write 'లాభం' (profit)", "లాభం", ["లాభం", "నష్టం", "ఆదాయం", "ఖర్చు"])
-            ]
-            let listening = [
-                listen("q_\(lessonId)_l1", "Identify 'సమావేశం ఉంది'", "సమావేశం ఉంది", ["సమావేశం ఉంది", "చర్చ ఉంది", "సభ ఉంది", "కార్యక్రమం ఉంది"]),
-                listen("q_\(lessonId)_l2", "Identify 'వ్యాపారం బాగుంది'", "వ్యాపారం బాగుంది", ["వ్యాపారం బాగుంది", "పని బాగుంది", "ఉద్యోగం బాగుంది", "కంపెనీ బాగుంది"])
-            ]
-            let speaking = [
-                speak("q_\(lessonId)_s1", "Say 'నా ఉద్యోగం కార్యాలయంలో'", "నా ఉద్యోగం కార్యాలయంలో"),
-                speak("q_\(lessonId)_s2", "Say 'సమావేశం రేపు ఉంది'", "సమావేశం రేపు ఉంది")
-            ]
-            return [
-                LessonActivity(id: "activity_\(lessonId)_reading", type: .reading, title: "Reading Practice", instructions: "Read business terms", xpValue: baseXP, questions: reading, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_writing", type: .writing, title: "Writing Practice", instructions: "Write professional vocabulary", xpValue: baseXP, questions: writing, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_listening", type: .listening, title: "Listening Practice", instructions: "Identify business phrases", xpValue: baseXP, questions: listening, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_speaking", type: .speaking, title: "Speaking Practice", instructions: "Professional communication", xpValue: baseXP, questions: speaking, canSkip: true)
-            ]
-        }
-        
-        // Technology and Modern Life
-        if title.contains("Technology") || title.contains("Modern") {
-            let reading = [
-                mcq("q_\(lessonId)_r1", "'Computer' in Telugu", "కంప్యూటర్", ["కంప్యూటర్", "ఫోన్", "టీవీ", "రేడియో"]),
-                mcq("q_\(lessonId)_r2", "'Internet' in Telugu", "ఇంటర్నెట్", ["ఇంటర్నెట్", "వెబ్‌సైట్", "ఇమెయిల్", "మెసేజ్"]),
-                mcq("q_\(lessonId)_r3", "'Mobile phone' in Telugu", "మొబైల్ ఫోన్", ["మొబైల్ ఫోన్", "ల్యాండ్‌లైన్", "టెలిఫోన్", "స్మార్ట్‌ఫోన్"])
-            ]
-            let writing = [
-                mcq("q_\(lessonId)_w1", "Write 'యాప్' (app)", "యాప్", ["యాప్", "సాఫ్ట్‌వేర్", "ప్రోగ్రామ్", "గేమ్"]),
-                mcq("q_\(lessonId)_w2", "Write 'వీడియో' (video)", "వీడియో", ["వీడియో", "ఫోటో", "ఆడియో", "ఫైల్"]),
-                mcq("q_\(lessonId)_w3", "Write 'డౌన్‌లోడ్' (download)", "డౌన్‌లోడ్", ["డౌన్‌లోడ్", "అప్‌లోడ్", "షేర్", "సేవ్"])
-            ]
-            let listening = [
-                listen("q_\(lessonId)_l1", "Identify 'కంప్యూటర్ ఆన్ చేయి'", "కంప్యూటర్ ఆన్ చేయి", ["కంప్యూటర్ ఆన్ చేయి", "ఫోన్ ఆన్ చేయి", "టీవీ ఆన్ చేయి", "లైట్ ఆన్ చేయి"]),
-                listen("q_\(lessonId)_l2", "Identify 'ఇంటర్నెట్ కనెక్ట్ చేయి'", "ఇంటర్నెట్ కనెక్ట్ చేయి", ["ఇంటర్నెట్ కనెక్ట్ చేయి", "వైఫై కనెక్ట్ చేయి", "బ్లూటూత్ కనెక్ట్ చేయి", "కేబుల్ కనెక్ట్ చేయి"])
-            ]
-            let speaking = [
-                speak("q_\(lessonId)_s1", "Say 'నా ఫోన్ చార్జ్ అయిపోయింది'", "నా ఫోన్ చార్జ్ అయిపోయింది"),
-                speak("q_\(lessonId)_s2", "Say 'ఇంటర్నెట్ స్పీడ్ తక్కువగా ఉంది'", "ఇంటర్నెట్ స్పీడ్ తక్కువగా ఉంది")
-            ]
-            return [
-                LessonActivity(id: "activity_\(lessonId)_reading", type: .reading, title: "Reading Practice", instructions: "Read technology terms", xpValue: baseXP, questions: reading, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_writing", type: .writing, title: "Writing Practice", instructions: "Write tech vocabulary", xpValue: baseXP, questions: writing, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_listening", type: .listening, title: "Listening Practice", instructions: "Identify tech phrases", xpValue: baseXP, questions: listening, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_speaking", type: .speaking, title: "Speaking Practice", instructions: "Discuss technology", xpValue: baseXP, questions: speaking, canSkip: true)
-            ]
-        }
-        
-        // Travel and Transportation
-        if title.contains("Travel") || title.contains("Transportation") {
-            let reading = [
-                mcq("q_\(lessonId)_r1", "'Train' in Telugu", "రైలు", ["రైలు", "బస్సు", "కారు", "ఆటో"]),
-                mcq("q_\(lessonId)_r2", "'Airport' in Telugu", "విమానాశ్రయం", ["విమానాశ్రయం", "రైల్వే స్టేషన్", "బస్ స్టాండ్", "టాక్సీ స్టాండ్"]),
-                mcq("q_\(lessonId)_r3", "'Ticket' in Telugu", "టికెట్", ["టికెట్", "పాస్", "కార్డ్", "టోకెన్"])
-            ]
-            let writing = [
-                mcq("q_\(lessonId)_w1", "Write 'ప్రయాణం' (journey)", "ప్రయాణం", ["ప్రయాణం", "యాత్র", "పర్యటన", "విహారం"]),
-                mcq("q_\(lessonId)_w2", "Write 'సామాన్లు' (luggage)", "సామాన్లు", ["సామాన్లు", "బ్యాగులు", "వస్తువులు", "సరుకులు"]),
-                mcq("q_\(lessonId)_w3", "Write 'రిజర్వేషన్' (reservation)", "రిజర్వేషన్", ["రిజర్వేషన్", "బుకింగ్", "టికెట్", "సీట్"])
-            ]
-            let listening = [
-                listen("q_\(lessonId)_l1", "Identify 'రైలు వస్తోంది'", "రైలు వస్తోంది", ["రైలు వస్తోంది", "బస్సు వస్తోంది", "కారు వస్తోంది", "ఆటో వస్తోంది"]),
-                listen("q_\(lessonId)_l2", "Identify 'టికెట్ కావాలి'", "టికెట్ కావాలి", ["టికెట్ కావాలి", "పాస్ కావాలి", "కార్డ్ కావాలి", "టోకెన్ కావాలి"])
-            ]
-            let speaking = [
-                speak("q_\(lessonId)_s1", "Say 'నేను రైలులో వెళ్లాలి'", "నేను రైలులో వెళ్లాలి"),
-                speak("q_\(lessonId)_s2", "Say 'విమానాశ్రయం ఎక్కడ ఉంది?'", "విమానాశ్రయం ఎక్కడ ఉంది?")
-            ]
-            return [
-                LessonActivity(id: "activity_\(lessonId)_reading", type: .reading, title: "Reading Practice", instructions: "Read travel terms", xpValue: baseXP, questions: reading, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_writing", type: .writing, title: "Writing Practice", instructions: "Write transportation vocabulary", xpValue: baseXP, questions: writing, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_listening", type: .listening, title: "Listening Practice", instructions: "Identify travel phrases", xpValue: baseXP, questions: listening, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_speaking", type: .speaking, title: "Speaking Practice", instructions: "Discuss travel", xpValue: baseXP, questions: speaking, canSkip: true)
-            ]
-        }
-        
-        // Health and Medical
-        if title.contains("Health") || title.contains("Medical") {
-            let reading = [
-                mcq("q_\(lessonId)_r1", "'Doctor' in Telugu", "వైద్యుడు", ["వైద్యుడు", "నర్సు", "రోగి", "ఆసుపత్రి"]),
-                mcq("q_\(lessonId)_r2", "'Medicine' in Telugu", "మందు", ["మందు", "మాత్ర", "ఇంజెక్షన్", "చికిత్స"]),
-                mcq("q_\(lessonId)_r3", "'I have a headache' in Telugu", "నాకు తలనొప్పి ఉంది", ["నాకు తలనొప్పి ఉంది", "నాకు జ్వరం ఉంది", "నాకు దగ్గు ఉంది", "నాకు కడుపునొప్పి ఉంది"])
-            ]
-            let writing = [
-                mcq("q_\(lessonId)_w1", "Write 'ఆసుపత్రి' (hospital)", "ఆసుపత్రి", ["ఆసుపత్రి", "క్లినిక్", "వైద్యశాల", "ఫార్మసీ"]),
-                mcq("q_\(lessonId)_w2", "Write 'అనారోగ్యం' (illness)", "అనారోగ్యం", ["అనారోగ్యం", "వ్యాధి", "రోగం", "జబ్బు"]),
-                mcq("q_\(lessonId)_w3", "Write 'ఆరోగ్యం' (health)", "ఆరోగ్యం", ["ఆరోగ్యం", "శక్తి", "బలం", "ఫిట్‌నెస్"])
-            ]
-            let listening = [
-                listen("q_\(lessonId)_l1", "Identify 'వైద్యుడిని కలవాలి'", "వైద్యుడిని కలవాలి", ["వైద్యుడిని కలవాలి", "నర్సును కలవాలి", "ఆసుపత్రికి వెళ్లాలి", "మందు తీసుకోవాలి"]),
-                listen("q_\(lessonId)_l2", "Identify 'మందు తీసుకో'", "మందు తీసుకో", ["మందు తీసుకో", "మాత్ర తీసుకో", "ఇంజెక్షన్ వేయించుకో", "చికిత్స చేయించుకో"])
-            ]
-            let speaking = [
-                speak("q_\(lessonId)_s1", "Say 'నాకు జ్వరం ఉంది'", "నాకు జ్వరం ఉంది"),
-                speak("q_\(lessonId)_s2", "Say 'వైద్యుడిని కలవాలి'", "వైద్యుడిని కలవాలి")
-            ]
-            return [
-                LessonActivity(id: "activity_\(lessonId)_reading", type: .reading, title: "Reading Practice", instructions: "Read health terms", xpValue: baseXP, questions: reading, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_writing", type: .writing, title: "Writing Practice", instructions: "Write medical vocabulary", xpValue: baseXP, questions: writing, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_listening", type: .listening, title: "Listening Practice", instructions: "Identify health phrases", xpValue: baseXP, questions: listening, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_speaking", type: .speaking, title: "Speaking Practice", instructions: "Discuss health", xpValue: baseXP, questions: speaking, canSkip: true)
-            ]
-        }
-        
-        // Education and Learning
-        if title.contains("Education") || title.contains("Learning") {
-            let reading = [
-                mcq("q_\(lessonId)_r1", "'Student' in Telugu", "విద్యార్థి", ["విద్యార్థి", "ఉపాధ్యాయుడు", "ప్రిన్సిపాల్", "పాఠశాల"]),
-                mcq("q_\(lessonId)_r2", "'Homework' in Telugu", "ఇంటి పని", ["ఇంటి పని", "పాఠం", "పరీక్ష", "అధ్యయనం"]),
-                mcq("q_\(lessonId)_r3", "'University' in Telugu", "విశ్వవిద్యాలయం", ["విశ్వవిద్యాలయం", "కళాశాల", "పాఠశాల", "ఇన్‌స్టిట్యూట్"])
-            ]
-            let writing = [
-                mcq("q_\(lessonId)_w1", "Write 'పరీక్ష' (exam)", "పరీక్ష", ["పరీక్ష", "టెస్ట్", "అసైన్‌మెంట్", "క్విజ్"]),
-                mcq("q_\(lessonId)_w2", "Write 'గ్రేడ్' (grade)", "గ్రేడ్", ["గ్రేడ్", "మార్కులు", "స్కోర్", "రేటింగ్"]),
-                mcq("q_\(lessonId)_w3", "Write 'డిగ్రీ' (degree)", "డిగ్రీ", ["డిగ్రీ", "సర్టిఫికేట్", "డిప్లోమా", "కోర్సు"])
-            ]
-            let listening = [
-                listen("q_\(lessonId)_l1", "Identify 'పాఠం చదువుకో'", "పాఠం చదువుకో", ["పాఠం చదువుకో", "ఇంటి పని చేయి", "పరీక్షకు సిద్ధం కావు", "నోట్స్ రాయి"]),
-                listen("q_\(lessonId)_l2", "Identify 'విద్యార్థి జీవితం'", "విద్యార్థి జీవితం", ["విద్యార్థి జీవితం", "ఉపాధ్యాయుడి జీవితం", "పాఠశాల జీవితం", "కళాశాల జీవితం"])
-            ]
-            let speaking = [
-                speak("q_\(lessonId)_s1", "Say 'నేను విద్యార్థిని'", "నేను విద్యార్థిని"),
-                speak("q_\(lessonId)_s2", "Say 'పరీక్ష రేపు ఉంది'", "పరీక్ష రేపు ఉంది")
-            ]
-            return [
-                LessonActivity(id: "activity_\(lessonId)_reading", type: .reading, title: "Reading Practice", instructions: "Read education terms", xpValue: baseXP, questions: reading, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_writing", type: .writing, title: "Writing Practice", instructions: "Write academic vocabulary", xpValue: baseXP, questions: writing, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_listening", type: .listening, title: "Listening Practice", instructions: "Identify education phrases", xpValue: baseXP, questions: listening, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_speaking", type: .speaking, title: "Speaking Practice", instructions: "Discuss education", xpValue: baseXP, questions: speaking, canSkip: true)
-            ]
-        }
-        
-        // Sports and Recreation
-        if title.contains("Sports") || title.contains("Recreation") || title.contains("Games") {
-            let reading = [
-                mcq("q_\(lessonId)_r1", "'Cricket' in Telugu", "క్రికెట్", ["క్రికెట్", "ఫుట్‌బాల్", "టెన్నిస్", "బ్యాడ్మింటన్"]),
-                mcq("q_\(lessonId)_r2", "'Player' in Telugu", "ఆటగాడు", ["ఆటగాడు", "కోచ్", "రిఫరీ", "అభిమాని"]),
-                mcq("q_\(lessonId)_r3", "'Victory' in Telugu", "విజయం", ["విజయం", "ఓటమి", "డ్రా", "మ్యాచ్"])
-            ]
-            let writing = [
-                mcq("q_\(lessonId)_w1", "Write 'ఆట' (game/sport)", "ఆట", ["ఆట", "క్రీడ", "మ్యాచ్", "పోటీ"]),
-                mcq("q_\(lessonId)_w2", "Write 'స్టేడియం' (stadium)", "స్టేడియం", ["స్టేడియం", "మైదానం", "కోర్ట్", "గ్రౌండ్"]),
-                mcq("q_\(lessonId)_w3", "Write 'పోటీ' (competition)", "పోటీ", ["పోటీ", "మ్యాచ్", "టోర్నమెంట్", "చాంపియన్‌షిప్"])
-            ]
-            let listening = [
-                listen("q_\(lessonId)_l1", "Identify 'ఆట ఆడుతున్నాను'", "ఆట ఆడుతున్నాను", ["ఆట ఆడుతున్నాను", "క్రీడ చేస్తున్నాను", "మ్యాచ్ చూస్తున్నాను", "పోటీలో పాల్గొంటున్నాను"]),
-                listen("q_\(lessonId)_l2", "Identify 'విజయం సాధించాను'", "విజయం సాధించాను", ["విజయం సాధించాను", "ఓడిపోయాను", "డ్రా అయింది", "మ్యాచ్ గెలిచాను"])
-            ]
-            let speaking = [
-                speak("q_\(lessonId)_s1", "Say 'నాకు క్రికెట్ అంటే ఇష్టం'", "నాకు క్రికెట్ అంటే ఇష్టం"),
-                speak("q_\(lessonId)_s2", "Say 'మ్యాచ్ చాలా రోమాంచకంగా ఉంది'", "మ్యాచ్ చాలా రోమాంచకంగా ఉంది")
-            ]
-            return [
-                LessonActivity(id: "activity_\(lessonId)_reading", type: .reading, title: "Reading Practice", instructions: "Read sports terms", xpValue: baseXP, questions: reading, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_writing", type: .writing, title: "Writing Practice", instructions: "Write sports vocabulary", xpValue: baseXP, questions: writing, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_listening", type: .listening, title: "Listening Practice", instructions: "Identify sports phrases", xpValue: baseXP, questions: listening, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_speaking", type: .speaking, title: "Speaking Practice", instructions: "Discuss sports", xpValue: baseXP, questions: speaking, canSkip: true)
-            ]
-        }
-        
-        // Nature and Environment
-        if title.contains("Nature") || title.contains("Environment") || title.contains("Weather") {
-            let reading = [
-                mcq("q_\(lessonId)_r1", "'Tree' in Telugu", "చెట్టు", ["చెట్టు", "పువ్వు", "ఆకు", "కొమ్మ"]),
-                mcq("q_\(lessonId)_r2", "'River' in Telugu", "నది", ["నది", "సముద్రం", "కొలను", "బావి"]),
-                mcq("q_\(lessonId)_r3", "'Mountain' in Telugu", "కొండ", ["కొండ", "లోయ", "మైదానం", "అడవి"])
-            ]
-            let writing = [
-                mcq("q_\(lessonId)_w1", "Write 'వర్షం' (rain)", "వర్షం", ["వర్షం", "ఎండ", "గాలి", "మంచు"]),
-                mcq("q_\(lessonId)_w2", "Write 'పక్షి' (bird)", "పక్షి", ["పక్షి", "జంతువు", "చేప", "కీటకం"]),
-                mcq("q_\(lessonId)_w3", "Write 'పర్యావరణం' (environment)", "పర్యావరణం", ["పర్యావరణం", "ప్రకృతి", "వాతావరణం", "భూమి"])
-            ]
-            let listening = [
-                listen("q_\(lessonId)_l1", "Identify 'వర్షం వస్తోంది'", "వర్షం వస్తోంది", ["వర్షం వస్తోంది", "ఎండ వేస్తోంది", "గాలి వీస్తోంది", "మంచు కురుస్తోంది"]),
-                listen("q_\(lessonId)_l2", "Identify 'చెట్లను కాపాడాలి'", "చెట్లను కాపాడాలి", ["చెట్లను కాపాడాలి", "పక్షులను కాపాడాలి", "నదులను కాపాడాలి", "పర్యావరణాన్ని కాపాడాలి"])
-            ]
-            let speaking = [
-                speak("q_\(lessonId)_s1", "Say 'ప్రకృతి చాలా అందంగా ఉంది'", "ప్రకృతి చాలా అందంగా ఉంది"),
-                speak("q_\(lessonId)_s2", "Say 'పర్యావరణాన్ని కాపాడుకోవాలి'", "పర్యావరణాన్ని కాపాడుకోవాలి")
-            ]
-            return [
-                LessonActivity(id: "activity_\(lessonId)_reading", type: .reading, title: "Reading Practice", instructions: "Read nature terms", xpValue: baseXP, questions: reading, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_writing", type: .writing, title: "Writing Practice", instructions: "Write environmental vocabulary", xpValue: baseXP, questions: writing, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_listening", type: .listening, title: "Listening Practice", instructions: "Identify nature phrases", xpValue: baseXP, questions: listening, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_speaking", type: .speaking, title: "Speaking Practice", instructions: "Discuss nature", xpValue: baseXP, questions: speaking, canSkip: true)
-            ]
-        }
-        
-        // Generic catch-all for any remaining topics
-        if title.contains("Practice") || title.contains("Review") || title.contains("Mixed") {
-            let reading = [
-                mcq("q_\(lessonId)_r1", "Mixed vocabulary: 'Important'", "ముఖ్యమైన", ["ముఖ్యమైన", "సాధారణ", "కష్టమైన", "సులభమైన"]),
-                mcq("q_\(lessonId)_r2", "Mixed vocabulary: 'Different'", "వేరు", ["వేరు", "ఒకే", "సమానం", "భిన్నం"]),
-                mcq("q_\(lessonId)_r3", "Mixed vocabulary: 'Together'", "కలిసి", ["కలిసి", "వేరుగా", "ఒంటరిగా", "సమూహంగా"])
-            ]
-            let writing = [
-                mcq("q_\(lessonId)_w1", "Write 'అవసరం' (need)", "అవసరం", ["అవసరం", "కోరిక", "కావాలి", "వద్దు"]),
-                mcq("q_\(lessonId)_w2", "Write 'సమస్య' (problem)", "సమస్య", ["సమస్య", "పరిష్కారం", "కష్టం", "ఇబ్బంది"]),
-                mcq("q_\(lessonId)_w3", "Write 'అవకాశం' (opportunity)", "అవకాశం", ["అవకాశం", "అవకాశం లేదు", "అవకాశం ఉంది", "అవకాశం వచ్చింది"])
-            ]
-            let listening = [
-                listen("q_\(lessonId)_l1", "Identify 'చాలా ముఖ్యం'", "చాలా ముఖ్యం", ["చాలా ముఖ్యం", "అంత ముఖ్యం కాదు", "సాధారణం", "కొత్తది"]),
-                listen("q_\(lessonId)_l2", "Identify 'కలిసి చేద్దాం'", "కలిసి చేద్దాం", ["కలిసి చేద్దాం", "వేరుగా చేద్దాం", "ఒంటరిగా చేస్తాను", "సమూహంగా చేద్దాం"])
-            ]
-            let speaking = [
-                speak("q_\(lessonId)_s1", "Say 'ఇది చాలా ముఖ్యం'", "ఇది చాలా ముఖ్యం"),
-                speak("q_\(lessonId)_s2", "Say 'మనం కలిసి చేద్దాం'", "మనం కలిసి చేద్దాం")
-            ]
-            return [
-                LessonActivity(id: "activity_\(lessonId)_reading", type: .reading, title: "Reading Practice", instructions: "Read mixed vocabulary", xpValue: baseXP, questions: reading, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_writing", type: .writing, title: "Writing Practice", instructions: "Write general terms", xpValue: baseXP, questions: writing, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_listening", type: .listening, title: "Listening Practice", instructions: "Identify common phrases", xpValue: baseXP, questions: listening, canSkip: false),
-                LessonActivity(id: "activity_\(lessonId)_speaking", type: .speaking, title: "Speaking Practice", instructions: "Practice general conversation", xpValue: baseXP, questions: speaking, canSkip: true)
-            ]
-        }
-        
-        // If a topic is not handled specifically, fall back to the existing builder
-        print("⚠️ No specific content found for title: '\(title)' - using fallback")
-        return createStandardActivitiesGlobal(lessonId.replacingOccurrences(of: "lesson_", with: ""), level: difficulty)
-    }
-
-    private func createStandardActivitiesGlobal(_ lessonId: String, level: Int) -> [LessonActivity] {
-    let baseXP = level * 20
-    let readingQuestions: [ActivityQuestion] = (1...3).map { idx in
-        ActivityQuestion(
-            id: "q\(lessonId)_r\(idx)",
-            type: .multipleChoice,
-            question: "Choose the correct option (Reading) #\(idx)",
-            correctAnswer: "అ",
-            options: ["అ", "ఆ", "ఇ", "ఈ"],
-            audioFile: nil,
-            strokeOrder: nil,
-            explanation: "Practice recognizing characters"
+    private func createRetroflexConsonantLesson(lessonId: String) -> [LessonActivity] {
+        return createConsonantGroupLessonActivities(
+            lessonId: lessonId,
+            consonants: ["ట", "ఠ", "డ", "ఢ", "ణ"],
+            groupName: "Ta Group (Retroflex)",
+            groupDescription: "retroflex consonants made with tongue curled back",
+            audioFile: "ta_retroflex_group_intro.mp3"
         )
     }
-    let writingQuestions: [ActivityQuestion] = (1...3).map { idx in
-        ActivityQuestion(
-            id: "q\(lessonId)_w\(idx)",
-            type: idx == 1 ? .tracing : .textInput,
-            question: idx == 1 ? "Trace the character:" : "Type the shown character:",
-            correctAnswer: "అ",
-            options: nil,
-            audioFile: nil,
-            strokeOrder: idx == 1 ? ["Start with main stroke", "Add details"] : nil,
-            explanation: "Writing practice"
+    
+    private func createDentalConsonantLesson(lessonId: String) -> [LessonActivity] {
+        return createConsonantGroupLessonActivities(
+            lessonId: lessonId,
+            consonants: ["త", "థ", "ద", "ధ", "న"],
+            groupName: "Dental Group",
+            groupDescription: "dental consonants made with tongue touching teeth",
+            audioFile: "dental_group_intro.mp3"
         )
     }
-    let listeningQuestions: [ActivityQuestion] = (1...2).map { idx in
-        ActivityQuestion(
-            id: "q\(lessonId)_l\(idx)",
-            type: .audioIdentification,
-            question: "Listen and select (Listening) #\(idx)",
-            correctAnswer: "అ",
-            options: ["అ", "ఆ", "ఇ", "ఈ"],
-            audioFile: nil,
-            strokeOrder: nil,
-            explanation: "Listening practice"
+    
+    private func createLabialConsonantLesson(lessonId: String) -> [LessonActivity] {
+        return createConsonantGroupLessonActivities(
+            lessonId: lessonId,
+            consonants: ["ప", "ఫ", "బ", "భ", "మ"],
+            groupName: "Pa Group (Labial)",
+            groupDescription: "labial consonants made with lips",
+            audioFile: "pa_group_intro.mp3"
         )
     }
-    let speakingQuestions: [ActivityQuestion] = (1...2).map { idx in
-        ActivityQuestion(
-            id: "q\(lessonId)_s\(idx)",
-            type: .speaking,
-            question: "Pronounce clearly (Speaking) #\(idx)",
-            correctAnswer: "అ",
-            options: nil,
-            audioFile: nil,
-            strokeOrder: nil,
-            explanation: "Speaking practice"
-        )
+    
+    private func createFinalConsonantLesson(lessonId: String) -> [LessonActivity] {
+        return [
+            LessonActivity(
+                id: "activity_\(lessonId)_final_consonants",
+                type: .reading,
+                title: "Complete Your Consonant Journey! 🏁",
+                instructions: "Learn the remaining important Telugu consonants",
+                xpValue: 50,
+                questions: [
+                    ActivityQuestion(
+                        id: "q_\(lessonId)_teaching_final",
+                        type: .characterRecognition,
+                        question: "teaching_moment",
+                        correctAnswer: "య",
+                        options: nil,
+                        audioFile: "final_consonants_intro.mp3",
+                        strokeOrder: [
+                            "These are the final consonants! 🌟",
+                            "య (ya), ర (ra), ల (la), వ (va) - semi-vowels",
+                            "శ (sha), ష (sha), స (sa) - sibilants",
+                            "హ (ha) - aspirate",
+                            "ళ (la) - retroflex lateral",
+                            "క్ష (ksha) - conjunct consonant",
+                            "ఱ (rra) - special 'r' sound",
+                            "Now you know all Telugu consonants!"
+                        ],
+                        explanation: "These consonants complete the Telugu alphabet system"
+                    )
+                ],
+                canSkip: false
+            )
+        ]
     }
-    return [
-        LessonActivity(
-            id: "activity_\(lessonId)_reading",
-            type: .reading,
-            title: "Reading Practice",
-            instructions: "Practice reading Telugu text",
-            xpValue: baseXP,
-            questions: readingQuestions,
-            canSkip: false
-        ),
-        LessonActivity(
-            id: "activity_\(lessonId)_writing",
-            type: .writing,
-            title: "Writing Practice",
-            instructions: "Practice writing Telugu characters",
-            xpValue: baseXP,
-            questions: writingQuestions,
-            canSkip: false
-        ),
-        LessonActivity(
-            id: "activity_\(lessonId)_listening",
-            type: .listening,
-            title: "Listening Practice",
-            instructions: "Listen and identify sounds",
-            xpValue: baseXP,
-            questions: listeningQuestions,
-            canSkip: false
-        ),
-        LessonActivity(
-            id: "activity_\(lessonId)_speaking",
-            type: .speaking,
-            title: "Speaking Practice",
-            instructions: "Practice pronunciation",
-            xpValue: baseXP,
-            questions: speakingQuestions,
-            canSkip: true
-        )
-    ]
+    
+    private func createReviewAndGuninthaluLesson(lessonId: String) -> [LessonActivity] {
+        return [
+            LessonActivity(
+                id: "activity_\(lessonId)_grand_review",
+                type: .reading,
+                title: "Telugu Alphabet Master! 🏆",
+                instructions: "Review all vowels and consonants with fun games",
+                xpValue: 50,
+                questions: [
+                    ActivityQuestion(
+                        id: "q_\(lessonId)_master_review",
+                        type: .characterRecognition,
+                        question: "You've learned all Telugu letters! Show your mastery!",
+                        correctAnswer: "master",
+                        options: ["అ", "క", "చ", "ట", "త", "ప", "య", "ర", "ల", "వ", "స", "హ"],
+                        audioFile: "alphabet_mastery.mp3",
+                        strokeOrder: ["Identify each letter", "Remember their sounds", "You're ready for words!"],
+                        explanation: "Incredible! You've mastered the Telugu alphabet! 🎉"
+                    )
+                ],
+                canSkip: false
+            ),
+            LessonActivity(
+                id: "activity_\(lessonId)_guninthalu_intro",
+                type: .reading,
+                title: "Introduction to గుణింతాలు (Vowel Signs) ✨",
+                instructions: "Learn how vowels attach to consonants",
+                xpValue: 50,
+                questions: [
+                    ActivityQuestion(
+                        id: "q_\(lessonId)_guninthalu_teaching",
+                        type: .characterRecognition,
+                        question: "teaching_moment",
+                        correctAnswer: "కా",
+                        options: nil,
+                        audioFile: "guninthalu_intro.mp3",
+                        strokeOrder: [
+                            "Now you'll learn గుణింతాలు! ✨",
+                            "These are vowel signs that attach to consonants",
+                            "క + ా = కా (ka + aa = kaa)",
+                            "క + ి = కి (ka + i = ki)",
+                            "This is how Telugu words are formed!",
+                            "You're ready for the Basic level!"
+                        ],
+                        explanation: "గుణింతాలు (guninthalu) are the key to reading Telugu words!"
+                    )
+                ],
+                canSkip: false
+            )
+        ]
+    }
+    
+    private func createConsonantGroupLessonActivities(lessonId: String, consonants: [String], groupName: String, groupDescription: String, audioFile: String) -> [LessonActivity] {
+        return [
+            LessonActivity(
+                id: "activity_\(lessonId)_teaching",
+                type: .reading,
+                title: "Meet the \(groupName)! 🎯",
+                instructions: "Learn \(groupDescription): \(consonants.joined(separator: ", "))",
+                xpValue: 40,
+                questions: [
+                    ActivityQuestion(
+                        id: "q_\(lessonId)_teaching_group",
+                        type: .characterRecognition,
+                        question: "teaching_moment",
+                        correctAnswer: consonants[0],
+                        options: nil,
+                        audioFile: audioFile,
+                        strokeOrder: [
+                            "Welcome to the \(groupName)! 🌟",
+                            "These are \(groupDescription)",
+                            "Listen to each sound and notice the pattern"
+                        ] + consonants.map { "\($0) makes its unique sound" },
+                        explanation: "\(groupName) consonants share similar pronunciation methods"
+                    )
+                ],
+                canSkip: false
+            ),
+            LessonActivity(
+                id: "activity_\(lessonId)_audio_practice",
+                type: .reading,
+                title: "\(groupName) Sound Challenge 🎵",
+                instructions: "Listen and identify each consonant",
+                xpValue: 50,
+                questions: consonants.prefix(4).map { consonant in
+                    ActivityQuestion(
+                        id: "q_\(lessonId)_audio_\(consonant)",
+                        type: .audioIdentification,
+                        question: "Which consonant makes this sound?",
+                        correctAnswer: consonant,
+                        options: Array(consonants.prefix(4)),
+                        audioFile: "\(consonant).mp3",
+                        strokeOrder: nil,
+                        explanation: "Perfect! \(consonant) makes this sound. [Celebration] ✨"
+                    )
+                },
+                canSkip: false
+            )
+        ]
     }
 }

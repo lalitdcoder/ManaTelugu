@@ -13,56 +13,52 @@ struct ProgressDashboardView: View {
     }
     
     var body: some View {
-        NavigationStack {
+        ZStack {
+            // Gentle pastel background
+            LinearGradient(gradient: Gradient(colors: [Color(red: 0.97, green: 0.98, blue: 1.0), MTColors.funBlue.opacity(0.10), MTColors.funGreen.opacity(0.10)]), startPoint: .top, endPoint: .bottom)
+                .ignoresSafeArea()
+            
             ScrollView {
-            VStack(alignment: .leading, spacing: MTSpacing.large) {
-                Text("Progress")
-                    .font(MTTypography.title())
-                    .foregroundColor(MTColors.text)
-                    .padding(.horizontal)
-                
-                // Stats Overview
-                StatsOverview()
-                    .padding(.horizontal)
-                
-                // Weekly Progress Chart
-                VStack(alignment: .leading, spacing: MTSpacing.small) {
-                    Text("This Week")
-                        .font(MTTypography.heading())
+                VStack(alignment: .leading, spacing: 32) {
+                    // Header
+                    Text("Progress")
+                        .font(MTTypography.title())
                         .foregroundColor(MTColors.text)
+                        .padding(.horizontal)
                     
-                    // Simple bar chart representation (text-based since we don't have Chart framework fully set up)
-                    ForEach(weeklyData) { dataPoint in
-                        HStack {
-                            Text(dataPoint.day)
-                                .frame(width: 60, alignment: .leading)
-                                .font(MTTypography.caption())
-                                .foregroundColor(MTColors.text)
-                            
-                            GeometryReader { geometry in
-                                Rectangle()
-                                    .fill(MTColors.primary)
-                                    .frame(width: CGFloat(dataPoint.minutes) * 5, height: 20)
-                            }
-                            .frame(height: 20)
-                            
-                            Text("\(dataPoint.minutes) min")
-                                .font(MTTypography.caption())
-                                .foregroundColor(MTColors.text)
-                                .frame(width: 50, alignment: .trailing)
-                        }
+
+                    
+                    // Stats Overview
+                    StatsOverview()
+                        .padding(.horizontal)
+                    
+                    // Weekly Progress Chart
+                    VStack(alignment: .leading, spacing: 16) {
+                        Text("This Week")
+                            .font(MTTypography.heading())
+                            .foregroundColor(MTColors.text)
+                        ModernBarChart(weeklyData: weeklyData)
                     }
-                }
-                .padding()
-                .background(MTColors.surfaceAlt)
-                .cornerRadius(12)
-                .padding(.horizontal)
-                
-                // Badges Section
-                BadgesSection()
+                    .padding()
+                    .background(Color.white.opacity(0.95))
+                    .cornerRadius(16)
+                    .shadow(color: MTColors.funBlue.opacity(0.08), radius: 4, x: 0, y: 2)
                     .padding(.horizontal)
+                    
+                    // Badges Section
+                    BadgesSection()
+                        .padding(.horizontal)
+                }
+                .padding(.vertical)
             }
-            .padding(.vertical)
+        }
+        .navigationTitle("")
+        .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                NavBarIcon(systemName: "house.fill", selected: false)
+            }
+            ToolbarItem(placement: .navigationBarTrailing) {
+                NavBarIcon(systemName: "star.fill", selected: false)
             }
         }
         .onAppear {
@@ -71,11 +67,11 @@ struct ProgressDashboardView: View {
     }
     
     private func loadWeeklyData() {
-        // Simple local estimate: 1 minute per 60 interactions (rough)
         let calendar = Calendar.current
         let formatter = DateFormatter()
         formatter.dateFormat = "EEE"
         let today = Date()
+        
         weeklyData = (0..<7).map { i in
             let date = calendar.date(byAdding: .day, value: -i, to: today)!
             let day = formatter.string(from: date)
@@ -85,128 +81,153 @@ struct ProgressDashboardView: View {
     }
 }
 
+// MARK: - Stats Overview
 struct StatsOverview: View {
     @EnvironmentObject var session: AppSession
     
     var body: some View {
-        VStack(spacing: MTSpacing.medium) {
-            HStack(spacing: MTSpacing.large) {
-                StatCard(title: "Streak", value: "\(session.userProfile.streakDays)", icon: "flame")
-                StatCard(title: "Total XP", value: "\(session.userProfile.totalXP)", icon: "star")
-            }
-            
-            HStack(spacing: MTSpacing.large) {
-                StatCard(title: "Letters", value: "12/50", icon: "textformat.abc.dottedunderline")
-                StatCard(title: "Words", value: "30/200", icon: "books.vertical")
-            }
+        LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 2), spacing: 16) {
+            StatCard(title: "Total XP", value: "\(session.userProfile.totalXP)", icon: "star.fill", color: MTColors.funYellow)
+            StatCard(title: "Streak", value: "\(session.userProfile.streakDays) days", icon: "flame.fill", color: MTColors.funPink)
+            StatCard(title: "Lessons", value: "\(session.userProfile.lessonsCompleted)", icon: "book.fill", color: MTColors.funBlue)
+            StatCard(title: "Letters", value: "\(session.userProfile.lettersMastered)", icon: "character.textbox", color: MTColors.funGreen)
         }
     }
 }
 
+// MARK: - Stat Card
 struct StatCard: View {
     let title: String
     let value: String
     let icon: String
+    let color: Color
     
     var body: some View {
-        VStack(spacing: MTSpacing.small) {
-            Image(systemName: icon)
-                .font(.title2)
-                .foregroundColor(MTColors.primary)
+        VStack(spacing: 12) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(color.opacity(0.15))
+                    .frame(width: 48, height: 48)
+                Image(systemName: icon)
+                    .font(.system(size: 24, weight: .medium))
+                    .foregroundColor(color)
+            }
             
-            Text(value)
-                .font(MTTypography.heading())
-                .foregroundColor(MTColors.text)
-            
-            Text(title)
-                .font(MTTypography.caption())
-                .foregroundColor(MTColors.text.opacity(0.7))
+            VStack(spacing: 4) {
+                Text(value)
+                    .font(MTTypography.heading())
+                    .foregroundColor(MTColors.text)
+                Text(title)
+                    .font(MTTypography.caption())
+                    .foregroundColor(MTColors.text.opacity(0.7))
+            }
         }
-        .frame(maxWidth: .infinity)
         .padding()
-        .background(MTColors.surfaceAlt)
-        .cornerRadius(12)
+        .background(Color.white.opacity(0.95))
+        .cornerRadius(16)
+        .shadow(color: color.opacity(0.08), radius: 4, x: 0, y: 2)
     }
 }
 
+// MARK: - Badges Section
 struct BadgesSection: View {
     @EnvironmentObject var session: AppSession
+    
     var body: some View {
-        VStack(alignment: .leading, spacing: MTSpacing.small) {
-            Text("Badges")
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Achievements")
                 .font(MTTypography.heading())
                 .foregroundColor(MTColors.text)
-            
-            Text("Earn badges by completing milestones")
-                .font(MTTypography.caption())
-                .foregroundColor(MTColors.text.opacity(0.7))
             
             DynamicBadgesGrid()
         }
     }
 }
 
+// MARK: - Badge View
 struct BadgeView: View {
-    let name: String
-    let isEarned: Bool
+    let badge: Badge
+    let isUnlocked: Bool
     
     var body: some View {
-        VStack {
+        VStack(spacing: 8) {
             ZStack {
                 Circle()
-                    .fill(isEarned ? MTColors.primary : Color.gray.opacity(0.2))
+                    .fill(isUnlocked ? MTColors.funYellow.opacity(0.2) : Color.gray.opacity(0.1))
                     .frame(width: 60, height: 60)
                 
-                if isEarned {
-                    Image(systemName: "rosette")
-                        .font(.title2)
-                        .foregroundColor(.white)
-                } else {
-                    Image(systemName: "lock")
-                        .font(.title2)
-                        .foregroundColor(.white)
-                }
+                Image(systemName: isUnlocked ? "star.fill" : "lock.fill")
+                    .font(.system(size: 28, weight: .medium))
+                    .foregroundColor(isUnlocked ? MTColors.funYellow : Color.gray)
             }
             
-            Text(name)
+            Text(badge.name)
                 .font(MTTypography.caption())
                 .foregroundColor(MTColors.text)
                 .multilineTextAlignment(.center)
+                .lineLimit(2)
         }
+        .padding(.vertical, 8)
+        .opacity(isUnlocked ? 1.0 : 0.6)
     }
 }
 
+// MARK: - Dynamic Badges Grid
 struct DynamicBadgesGrid: View {
     @EnvironmentObject var session: AppSession
     @State private var badges: [Badge] = []
     
     var body: some View {
-        LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 3), spacing: MTSpacing.medium) {
+        LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 3), spacing: 16) {
             ForEach(badges) { badge in
-                let earned = isBadgeEarned(badge)
-                BadgeView(name: badge.name, isEarned: earned)
+                BadgeView(
+                    badge: badge,
+                    isUnlocked: session.userProfile.unlockedBadges.contains(badge.id)
+                )
             }
         }
-        .onAppear { loadBadges() }
+        .onAppear {
+            loadBadges()
+        }
     }
     
     private func loadBadges() {
-        badges = session.dataRepository.badges()
+        if let url = Bundle.main.url(forResource: "badges", withExtension: "json"),
+           let data = try? Data(contentsOf: url),
+           let loadedBadges = try? JSONDecoder().decode([Badge].self, from: data) {
+            badges = loadedBadges
+        }
     }
+}
+
+
+
+// MARK: - Modern Bar Chart
+struct ModernBarChart: View {
+    let weeklyData: [ProgressDashboardView.ProgressDataPoint]
     
-    private func isBadgeEarned(_ badge: Badge) -> Bool {
-        switch badge.criteria {
-        case .streak(let days):
-            return session.userProfile.streakDays >= days
-        case .lettersMastered(let count):
-            // Placeholder; wire to real mastery store later
-            return count <= 10
-        case .lessonsCompleted(let count):
-            // Placeholder; no lessons yet
-            return count <= 0
-        case .wordsMastered(_):
-            // Placeholder; not tracked yet
-            return false
+    var body: some View {
+        VStack(spacing: 12) {
+            ForEach(weeklyData) { dataPoint in
+                HStack {
+                    Text(dataPoint.day)
+                        .frame(width: 60, alignment: .leading)
+                        .font(MTTypography.caption())
+                        .foregroundColor(MTColors.text)
+                    
+                    GeometryReader { geometry in
+                        RoundedRectangle(cornerRadius: 6)
+                            .fill(LinearGradient(gradient: Gradient(colors: [MTColors.funBlue, MTColors.funGreen]), startPoint: .leading, endPoint: .trailing))
+                            .frame(width: max(10, CGFloat(dataPoint.minutes) * 5), height: 18)
+                    }
+                    .frame(height: 18)
+                    
+                    Text("\(dataPoint.minutes) min")
+                        .font(MTTypography.caption())
+                        .foregroundColor(MTColors.text)
+                        .frame(width: 50, alignment: .trailing)
+                }
+            }
         }
     }
 }

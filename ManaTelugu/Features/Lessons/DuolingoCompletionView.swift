@@ -120,6 +120,7 @@ struct DuolingoCompletionView: View {
             .padding()
             .navigationBarHidden(true)
             .onAppear {
+                print("DuolingoCompletionView appeared with lesson: \(lesson.title), totalXP: \(totalXP), timeSpent: \(timeSpent)")
                 startAnimations()
             }
         }

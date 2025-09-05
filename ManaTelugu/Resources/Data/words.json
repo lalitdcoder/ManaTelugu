@@ -559,7 +559,7 @@
     "id": "w_uncle_mothers_brother",
     "telugu": "మామ / మామయ్య",
     "transliteration": "mama / mamayya",
-    "english": "Uncle (mother’s brother / respectful)",
+    "english": "Uncle (mother's brother / respectful)",
     "imageName": "uncle_mother_brother.png",
     "audioFile": "మామ.mp3",
     "theme": "Family"
@@ -568,7 +568,7 @@
     "id": "w_aunt_fathers_sister",
     "telugu": "అత్త / అత్తయ్య",
     "transliteration": "atta / attayya",
-    "english": "Aunt (father’s sister / respectful)",
+    "english": "Aunt (father's sister / respectful)",
     "imageName": "aunt_father_sister.png",
     "audioFile": "అత్త.mp3",
     "theme": "Family"
@@ -577,7 +577,7 @@
     "id": "w_aunt_mothers_sister",
     "telugu": "పిన్ని / పెద్దమ్మ",
     "transliteration": "pinni / peddamma",
-    "english": "Aunt (mother’s sister)",
+    "english": "Aunt (mother's sister)",
     "imageName": "aunt_mother_sister.png",
     "audioFile": "పిన్ని.mp3",
     "theme": "Family"
@@ -834,6 +834,132 @@
     "audioFile": "తిను.mp3",
     "theme": "Daily Actions"
   },
+  {
+    "id": "w_drink",
+    "telugu": "త్రాగు",
+    "transliteration": "trāgu",
+    "english": "Drink",
+    "imageName": "drink.png",
+    "audioFile": "త్రాగు.mp3",
+    "theme": "Daily Actions"
+  },
+  {
+    "id": "w_sleep",
+    "telugu": "నిద్రపో",
+    "transliteration": "nidrapō",
+    "english": "Sleep",
+    "imageName": "sleep.png",
+    "audioFile": "నిద్రపో.mp3",
+    "theme": "Daily Actions"
+  },
+  {
+    "id": "w_wake_up",
+    "telugu": "లేచు",
+    "transliteration": "lēcu",
+    "english": "Wake up",
+    "imageName": "wake_up.png",
+    "audioFile": "లేచు.mp3",
+    "theme": "Daily Actions"
+  },
+  {
+    "id": "w_study",
+    "telugu": "చదువు",
+    "transliteration": "chaduvu",
+    "english": "Study / Read",
+    "imageName": "study.png",
+    "audioFile": "చదువు.mp3",
+    "theme": "Daily Actions"
+  },
+  {
+    "id": "w_write",
+    "telugu": "వ్రాయి",
+    "transliteration": "vrāyi",
+    "english": "Write",
+    "imageName": "write.png",
+    "audioFile": "వ్రాయి.mp3",
+    "theme": "Daily Actions"
+  },
+  {
+    "id": "w_play",
+    "telugu": "ఆడు",
+    "transliteration": "āḍu",
+    "english": "Play",
+    "imageName": "play.png",
+    "audioFile": "ఆడు.mp3",
+    "theme": "Daily Actions"
+  },
+  {
+    "id": "w_work",
+    "telugu": "పని చెయ్యి",
+    "transliteration": "pani ceyyi",
+    "english": "Work",
+    "imageName": "work.png",
+    "audioFile": "పని చెయ్యి.mp3",
+    "theme": "Daily Actions"
+  },
+  {
+    "id": "w_walk",
+    "telugu": "నడువు",
+    "transliteration": "naḍuvu",
+    "english": "Walk",
+    "imageName": "walk.png",
+    "audioFile": "నడువు.mp3",
+    "theme": "Daily Actions"
+  },
+  {
+    "id": "w_run_new",
+    "telugu": "పరుగెత్తు",
+    "transliteration": "parugettu",
+    "english": "Run",
+    "imageName": "run_new.png",
+    "audioFile": "పరుగెత్తు.mp3",
+    "theme": "Daily Actions"
+  },
+  {
+    "id": "w_take_bath",
+    "telugu": "స్నానం చెయ్యి",
+    "transliteration": "snānam ceyyi",
+    "english": "Take a bath",
+    "imageName": "bath.png",
+    "audioFile": "స్నానం చెయ్యి.mp3",
+    "theme": "Daily Actions"
+  },
+  {
+    "id": "w_cook",
+    "telugu": "వంట చెయ్యి",
+    "transliteration": "vaṇṭa ceyyi",
+    "english": "Cook",
+    "imageName": "cook.png",
+    "audioFile": "వంట చెయ్యి.mp3",
+    "theme": "Daily Actions"
+  },
+  {
+    "id": "w_clean",
+    "telugu": "శుభ్రం చెయ్యి",
+    "transliteration": "śubhraṁ ceyyi",
+    "english": "Clean",
+    "imageName": "clean.png",
+    "audioFile": "శుభ్రం చెయ్యి.mp3",
+    "theme": "Daily Actions"
+  },
+  {
+    "id": "w_listen",
+    "telugu": "విను",
+    "transliteration": "vinu",
+    "english": "Listen",
+    "imageName": "listen.png",
+    "audioFile": "విను.mp3",
+    "theme": "Daily Actions"
+  },
+  {
+    "id": "w_speak",
+    "telugu": "మాట్లాడి",
+    "transliteration": "māṭlāḍi",
+    "english": "Speak / Talk",
+    "imageName": "speak.png",
+    "audioFile": "మాట్లాడి.mp3",
+    "theme": "Daily Actions"
+  },
   { "id": "g_hello", "telugu": "నమస్కారం", "transliteration": "Namaskāraṁ", "english": "Hello / Greetings", "imageName": "greet_hello.png", "audioFile": "నమస్కారం.mp3", "theme": "Greetings" },
   { "id": "g_good_morning", "telugu": "శుభోదయం", "transliteration": "Śubhōdayaṁ", "english": "Good morning", "imageName": "greet_morning.png", "audioFile": "శుభోదయం.mp3", "theme": "Greetings" },
   { "id": "g_good_afternoon", "telugu": "శుభ మద్యాహ్నం", "transliteration": "Śubha madhyāhnaṁ", "english": "Good afternoon", "imageName": "greet_afternoon.png", "audioFile": "శుభ మద్యాహ్నం.mp3", "theme": "Greetings" },
@@ -1008,6 +1134,60 @@
     "theme": "Weather"
   },
   {
+    "id": "w_sunny",
+    "telugu": "ఎండ",
+    "transliteration": "enda",
+    "english": "Sunny",
+    "imageName": "sunny.png",
+    "audioFile": "ఎండ.mp3",
+    "theme": "Weather"
+  },
+  {
+    "id": "w_rain_new",
+    "telugu": "వర్షం",
+    "transliteration": "varsham",
+    "english": "Rain",
+    "imageName": "rain_new.png",
+    "audioFile": "వర్షం.mp3",
+    "theme": "Weather"
+  },
+  {
+    "id": "w_cloudy",
+    "telugu": "మబ్బు",
+    "transliteration": "mabbu",
+    "english": "Cloudy",
+    "imageName": "cloudy.png",
+    "audioFile": "మబ్బు.mp3",
+    "theme": "Weather"
+  },
+  {
+    "id": "w_windy",
+    "telugu": "గాలి",
+    "transliteration": "gaali",
+    "english": "Windy",
+    "imageName": "windy.png",
+    "audioFile": "గాలి.mp3",
+    "theme": "Weather"
+  },
+  {
+    "id": "w_cold",
+    "telugu": "చలి",
+    "transliteration": "chali",
+    "english": "Cold",
+    "imageName": "cold.png",
+    "audioFile": "చలి.mp3",
+    "theme": "Weather"
+  },
+  {
+    "id": "w_snow",
+    "telugu": "మంచు",
+    "transliteration": "manchu",
+    "english": "Snow",
+    "imageName": "snow.png",
+    "audioFile": "మంచు.mp3",
+    "theme": "Weather"
+  },
+  {
     "id": "w_cow",
     "telugu": "ఆవు",
     "transliteration": "aavu",
@@ -1036,11 +1216,11 @@
   },
   {
     "id": "w_goat",
-    "telugu": "బొడి",
-    "transliteration": "bodi",
+    "telugu": "మేక",
+    "transliteration": "Meka",
     "english": "Goat",
     "imageName": "goat.png",
-    "audioFile": "బొడి.mp3",
+    "audioFile": "మేక.mp3",
     "theme": "Animals"
   },
   {
@@ -1081,11 +1261,11 @@
   },
   {
     "id": "w_rabbit",
-    "telugu": "మెలిక",
-    "transliteration": "melika",
+    "telugu": "కుందేలు",
+    "transliteration": "Kundelu",
     "english": "Rabbit",
     "imageName": "rabbit.png",
-    "audioFile": "మెలిక.mp3",
+    "audioFile": "కుందేలు.mp3",
     "theme": "Animals"
   },
   {
@@ -1144,11 +1324,11 @@
   },
   {
     "id": "w_parrot",
-    "telugu": "కవ్వ",
-    "transliteration": "kavva",
+    "telugu": "చిలుక",
+    "transliteration": "Chiluka",
     "english": "Parrot",
     "imageName": "parrot.png",
-    "audioFile": "కవ్వ.mp3",
+    "audioFile": "చిలుక.mp3",
     "theme": "Animals"
   }
 ]

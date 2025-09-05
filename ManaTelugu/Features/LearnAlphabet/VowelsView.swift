@@ -25,7 +25,9 @@ struct VowelsView: View {
             .padding()
         }
         .onAppear { 
-            load()
+            Task {
+                await load()
+            }
             session.sessionTimer.start()
         }
         .onDisappear {
@@ -38,8 +40,8 @@ struct VowelsView: View {
         .navigationBarTitleDisplayMode(.inline)
     }
     
-    private func load() {
-        let all = session.dataRepository.letters()
+    private func load() async {
+        let all = await session.dataRepository.letters()
         let filtered = all.filter { vowelOrder.contains($0.glyph) }
         vowels = filtered.sorted { a, b in
             guard let ia = vowelOrder.firstIndex(of: a.glyph), let ib = vowelOrder.firstIndex(of: b.glyph) else { return false }

@@ -15,4 +15,8 @@ struct UserProfile: Codable {
     var dailyLearningMinutes: Int
     var lastLearningDate: Date?
     var dailyGoalMinutes: Int
+    var unlockedBadges: Set<String> = []
+    var lettersMastered: Int = 0
+    var lessonsCompleted: Int = 0
+    var wordsMastered: Int = 0
 }

@@ -70,6 +70,19 @@ struct ActivityQuestion: Identifiable, Codable, Hashable {
     let audioFile: String? // For listening activities
     let strokeOrder: [String]? // For writing activities
     let explanation: String?
+    let tolerance: Double? // For tracing accuracy (0.0-1.0, default 0.85)
+    
+    init(id: String, type: QuestionType, question: String, correctAnswer: String, options: [String]? = nil, audioFile: String? = nil, strokeOrder: [String]? = nil, explanation: String? = nil, tolerance: Double? = nil) {
+        self.id = id
+        self.type = type
+        self.question = question
+        self.correctAnswer = correctAnswer
+        self.options = options
+        self.audioFile = audioFile
+        self.strokeOrder = strokeOrder
+        self.explanation = explanation
+        self.tolerance = tolerance
+    }
 }
 
 enum QuestionType: String, Codable, CaseIterable {

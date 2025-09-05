@@ -86,7 +86,9 @@ struct LettersQuizView: View {
         }
         .padding()
         .onAppear {
-            buildQuestions()
+            Task {
+                await buildQuestions()
+            }
             quizStartTime = Date()
             session.sessionTimer.start()
         }
@@ -108,10 +110,10 @@ struct LettersQuizView: View {
         }
     }
     
-    private func buildQuestions() {
+    private func buildQuestions() async {
         let vowels = ["అ","ఆ","ఇ","ఈ","ఉ","ఊ","ఋ","ౠ","ఎ","ఏ","ఐ","ఒ","ఓ","ఔ","అం","అః"]
         let consonants = ["క","ఖ","గ","ఘ","ఙ","చ","ఛ","జ","ఝ","ఞ","ట","ఠ","డ","ఢ","ణ","త","థ","ద","ధ","న","ప","ఫ","బ","భ","మ","య","ర","ల","వ","శ","ష","స","హ","ళ","క్ష","ఱ"]
-        let all = session.dataRepository.letters()
+        let all = await session.dataRepository.letters()
         let pool: [Letter]
         let questionCount: Int
         

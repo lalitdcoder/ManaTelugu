@@ -1,0 +1,32 @@
+[
+  {
+    "id": "badge_first_star",
+    "name": "First Star!",
+    "criteria": { "lessonsCompleted": 1 },
+    "imageName": "star_badge.png"
+  },
+  {
+    "id": "badge_alphabet_hero",
+    "name": "Alphabet Hero",
+    "criteria": { "lettersMastered": 10 },
+    "imageName": "alphabet_hero.png"
+  },
+  {
+    "id": "badge_word_wizard",
+    "name": "Word Wizard",
+    "criteria": { "wordsMastered": 20 },
+    "imageName": "word_wizard.png"
+  },
+  {
+    "id": "badge_streak_superstar",
+    "name": "Streak Superstar",
+    "criteria": { "streak": 7 },
+    "imageName": "streak_superstar.png"
+  },
+  {
+    "id": "badge_level_champion",
+    "name": "Level Champion",
+    "criteria": { "lessonsCompleted": 10 },
+    "imageName": "level_champion.png"
+  }
+]

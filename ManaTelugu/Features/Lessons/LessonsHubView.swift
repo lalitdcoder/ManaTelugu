@@ -2,64 +2,106 @@ import SwiftUI
 
 struct LessonsHubView: View {
     @EnvironmentObject var session: AppSession
-    @StateObject private var lessonsRepository = LessonsRepository()
+    private var lessonsRepository: LessonsRepository { session.lessonsRepository }
     @State private var showingLevelCompletionAlert = false
     @State private var completedLevelTitle = ""
     @State private var nextLevelTitle = ""
     @State private var showingAllLessons: [String: Bool] = [:]
+    @State private var isLoading = true
     
     var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: MTSpacing.large) {
-                    headerSection
-                    
-                    ForEach(lessonsRepository.levels) { level in
-                        LevelCardView(
-                            level: level,
-                            progress: lessonsRepository.getLevelProgress(level.id),
-                            isUnlocked: lessonsRepository.isLevelUnlocked(level, userXP: session.userProfile.totalXP),
-                            lessonsRepository: lessonsRepository,
-                            showingAllLessons: $showingAllLessons
-                        )
-                    }
+        ZStack {
+            // Gentle pastel background
+            LinearGradient(gradient: Gradient(colors: [Color(red: 0.97, green: 0.98, blue: 1.0), MTColors.funBlue.opacity(0.10), MTColors.funGreen.opacity(0.10)]), startPoint: .top, endPoint: .bottom)
+                .ignoresSafeArea()
+            
+            if isLoading {
+                ProgressView("Loading Lessons...")
+                    .progressViewStyle(CircularProgressViewStyle(tint: MTColors.funBlue))
+                    .scaleEffect(1.5)
+                    .foregroundColor(MTColors.text)
+            } else if lessonsRepository.levels.isEmpty {
+                VStack(spacing: 16) {
+                    Image(systemName: "books.vertical.fill")
+                        .font(.system(size: 48))
+                        .foregroundColor(MTColors.funBlue.opacity(0.6))
+                    Text("No Lessons Available")
+                        .font(MTTypography.heading(kidMode: session.userProfile.kidMode))
+                        .foregroundColor(MTColors.text.opacity(0.8))
+                    Text("Check back later for new content.")
+                        .font(MTTypography.body(kidMode: session.userProfile.kidMode))
+                        .foregroundColor(MTColors.text.opacity(0.6))
                 }
-                .padding(.horizontal)
-                .padding(.vertical)
+            } else {
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 32) {
+                        // Header
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Lessons")
+                                .font(MTTypography.title(kidMode: session.userProfile.kidMode))
+                                .foregroundColor(MTColors.text)
+                            Text("Structured beginner lessons")
+                                .font(MTTypography.body(kidMode: session.userProfile.kidMode))
+                                .foregroundColor(MTColors.text.opacity(0.7))
+                        }
+                        .padding(.horizontal)
+                        
+                        // Level Cards
+                        VStack(spacing: 28) {
+                            ForEach(lessonsRepository.levels) { level in
+                                let completedCount = lessonsRepository.getCompletedLessonCount(for: level.id)
+                                let totalLessons = level.lessons.count
+                                let progressPercentage = totalLessons > 0 ? Double(completedCount) / Double(totalLessons) : 0.0
+                                LevelSectionCard(
+                                    level: level,
+                                    progress: progressPercentage,
+                                    isUnlocked: true,
+                                    lessonsRepository: lessonsRepository,
+                                    showingAllLessons: $showingAllLessons
+                                )
+                            }
+                        }
+                        .padding(.horizontal)
+                    }
+                    .padding(.vertical)
+                }
+                .alert("Level Complete! 🎉", isPresented: $showingLevelCompletionAlert) {
+                    Button("Continue") { }
+                } message: {
+                    Text("Great job completing \(completedLevelTitle)! Ready for the next level?")
+                }
             }
         }
-        .alert("Level Complete! 🎉", isPresented: $showingLevelCompletionAlert) {
-            Button("Continue") { }
-        } message: {
-            Text("Great job completing \(completedLevelTitle)! Ready for the next level?")
+        .navigationTitle("")
+        .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                NavBarIcon(systemName: "house.fill", selected: false)
+            }
+            ToolbarItem(placement: .navigationBarTrailing) {
+                NavBarIcon(systemName: "star.fill", selected: false)
+            }
         }
-        .onReceive(lessonsRepository.$levelProgress) { _ in
-            checkForLevelCompletion()
-        }
-    }
-    
-    private var headerSection: some View {
-        VStack(alignment: .leading, spacing: MTSpacing.small) {
-            Text("Learn Telugu")
-                .font(MTTypography.title(kidMode: session.userProfile.kidMode))
-                .foregroundColor(MTColors.text)
-            
-            Text("Structured lessons from beginner to advanced")
-                .font(MTTypography.body(kidMode: session.userProfile.kidMode))
-                .foregroundColor(MTColors.text.opacity(0.7))
+        .onAppear {
+            Task {
+                // Ensure we only load if the data isn't already available
+                if lessonsRepository.levels.isEmpty {
+                    await lessonsRepository.loadLevels()
+                }
+                isLoading = false
+                checkForLevelCompletion()
+            }
         }
     }
     
     private func checkForLevelCompletion() {
         for level in lessonsRepository.levels {
-            if let progress = lessonsRepository.getLevelProgress(level.id),
-               progress.isCompleted,
-               let completionDate = progress.completionDate,
-               Date().timeIntervalSince(completionDate) < 5 { // Show alert for recently completed levels
-                
+            let completedCount = lessonsRepository.getCompletedLessonCount(for: level.id)
+            let totalLessons = level.lessons.count
+            if completedCount == totalLessons {
                 completedLevelTitle = level.title
-                if let nextLevel = lessonsRepository.getNextLevel(after: level.id) {
-                    nextLevelTitle = nextLevel.title
+                let currentIndex = lessonsRepository.levels.firstIndex { $0.id == level.id } ?? -1
+                if currentIndex >= 0 && currentIndex < lessonsRepository.levels.count - 1 {
+                    nextLevelTitle = lessonsRepository.levels[currentIndex + 1].title
                 } else {
                     nextLevelTitle = "You've completed all levels!"
                 }
@@ -70,216 +112,134 @@ struct LessonsHubView: View {
     }
 }
 
-struct LevelCardView: View {
+// MARK: - Level Section Card
+struct LevelSectionCard: View {
     let level: LearningLevel
-    let progress: LevelProgress?
+    let progress: Double // 0.0 to 1.0
     let isUnlocked: Bool
     let lessonsRepository: LessonsRepository
     @Binding var showingAllLessons: [String: Bool]
     @EnvironmentObject var session: AppSession
-    
+    @State private var isPressed = false
     var body: some View {
-        let isExpanded = showingAllLessons[level.id] ?? false
-        let lessonsToShow = isExpanded ? level.lessons : Array(level.lessons.prefix(2))
-        // Show button whenever there are lessons and the view is not expanded yet
-        let shouldShowButton = !isExpanded && !level.lessons.isEmpty
-        
-        VStack(alignment: .leading, spacing: MTSpacing.medium) {
-            // Level Header
+        VStack(alignment: .leading, spacing: 16) {
             HStack {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 16)
+                        .fill(MTColors.funBlue.opacity(0.12))
+                        .frame(width: 56, height: 56)
+                    Image(systemName: "graduationcap.fill")
+                        .font(.system(size: 28, weight: .medium))
+                        .foregroundColor(MTColors.funBlue)
+                }
                 VStack(alignment: .leading, spacing: 4) {
                     Text(level.title)
                         .font(MTTypography.heading(kidMode: session.userProfile.kidMode))
                         .foregroundColor(MTColors.text)
-                    
                     Text(level.description)
                         .font(MTTypography.caption(kidMode: session.userProfile.kidMode))
                         .foregroundColor(MTColors.text.opacity(0.7))
-                    
                 }
-                
                 Spacer()
-                
                 VStack(alignment: .trailing, spacing: 4) {
-                    difficultyStars
-                    
-                    if let progress = progress {
-                        Text("\(Int(progress.completionPercentage))%")
-                            .font(MTTypography.caption(kidMode: session.userProfile.kidMode))
-                            .foregroundColor(MTColors.primary)
-                    }
+                    Text("\(Int(progress * 100))%")
+                        .font(MTTypography.caption(kidMode: session.userProfile.kidMode))
+                        .foregroundColor(MTColors.text.opacity(0.6))
+                    ModernProgressBar(progress: progress)
+                        .frame(width: 80)
                 }
             }
-            
-            // Progress Bar
-            if let progress = progress {
-                ProgressView(value: progress.completionPercentage / 100.0)
-                    .progressViewStyle(LinearProgressViewStyle(tint: Color(hex: level.color)))
-                    .scaleEffect(x: 1, y: 2, anchor: .center)
-            }
-            
-            // Lessons Grid - Show preview (first 2) or all lessons
-            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: MTSpacing.small), count: 2), spacing: MTSpacing.small) {
+            .padding(.bottom, 4)
+            // Lessons Grid
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 140))], spacing: 16) {
+                let isExpanded = showingAllLessons[level.id] ?? false
+                let lessonsToShow = isExpanded ? level.lessons : Array(level.lessons.prefix(2))
                 ForEach(lessonsToShow) { lesson in
-                    NavigationLink {
-                        DuolingoLessonView(lesson: lesson, lessonsRepository: lessonsRepository)
-                    } label: {
-                        LessonCardView(lesson: lesson, lessonsRepository: lessonsRepository)
-                    }
+                    LessonSectionCard(lesson: lesson, lessonsRepository: lessonsRepository)
                 }
             }
-            
-            // Show button outside grid when not expanded
-            if shouldShowButton {
-                Button(action: {
-                    withAnimation(.easeInOut(duration: 0.3)) {
-                        showingAllLessons[level.id] = true
-                    }
-                }) {
-                    HStack {
-                        Image(systemName: "plus.circle.fill")
-                            .font(.title2)
-                            .foregroundColor(.white)
-                        // If there are more than the preview count, show remaining; otherwise show generic label
-                        let remainingCount = max(level.lessons.count - lessonsToShow.count, 0)
-                        Text(remainingCount > 0 ? "View \(remainingCount) More Lessons" : "View Lessons")
-                            .font(.headline)
-                            .foregroundColor(.white)
-                    }
-                    .padding()
-                    .frame(maxWidth: .infinity)
-                    .background(Color.blue)
-                    .cornerRadius(12)
+            if (showingAllLessons[level.id] ?? false) == false && !level.lessons.isEmpty {
+                Button("View All Lessons") {
+                    isPressed = true
+                    showingAllLessons[level.id] = true
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { isPressed = false }
                 }
-                .padding(.top, 8)
+                .font(MTTypography.body(kidMode: session.userProfile.kidMode))
+                .foregroundColor(.white)
+                .padding()
+                .frame(maxWidth: .infinity)
+                .background(MTColors.funBlue)
+                .cornerRadius(12)
+                .shadow(color: MTColors.funBlue.opacity(isPressed ? 0.15 : 0.08), radius: isPressed ? 8 : 4, x: 0, y: 2)
+                .scaleEffect(isPressed ? 0.97 : 1.0)
+                .animation(.easeInOut(duration: 0.15), value: isPressed)
             }
         }
         .padding()
         .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(MTColors.surfaceAlt)
+            RoundedRectangle(cornerRadius: 18)
+                .fill(Color.white.opacity(0.95))
+                .shadow(color: MTColors.funBlue.opacity(0.08), radius: 4, x: 0, y: 2)
         )
-    }
-    
-    private var difficultyStars: some View {
-        HStack(spacing: 2) {
-            ForEach(1...4, id: \.self) { star in
-                Image(systemName: star <= level.difficulty ? "star.fill" : "star")
-                    .font(.caption)
-                    .foregroundColor(star <= level.difficulty ? Color(hex: level.color) : MTColors.text.opacity(0.3))
-            }
-        }
-    }
-    
-    private var lockedLevelView: some View {
-        VStack(spacing: MTSpacing.medium) {
-            Image(systemName: "lock.fill")
-                .font(.title)
-                .foregroundColor(MTColors.text.opacity(0.4))
-            
-            Text("Requires \(level.requiredXP) XP")
-                .font(MTTypography.body(kidMode: session.userProfile.kidMode))
-                .foregroundColor(MTColors.text.opacity(0.6))
-            
-            Text("Current XP: \(session.userProfile.totalXP)")
-                .font(MTTypography.caption(kidMode: session.userProfile.kidMode))
-                .foregroundColor(MTColors.text.opacity(0.5))
-        }
-        .frame(height: 120)
+        .padding(.vertical, 4)
     }
 }
 
-struct LessonCardView: View {
+// MARK: - Lesson Section Card
+struct LessonSectionCard: View {
     let lesson: Lesson
     let lessonsRepository: LessonsRepository
     @EnvironmentObject var session: AppSession
-    
+    @State private var animate = false
     private var isCompleted: Bool {
         lessonsRepository.isLessonCompleted(lesson.id)
     }
-    
     var body: some View {
-        VStack(alignment: .leading, spacing: MTSpacing.small) {
-            HStack {
-                Text("Lesson \(lesson.order)")
-                    .font(MTTypography.caption(kidMode: session.userProfile.kidMode))
-                    .foregroundColor(MTColors.text.opacity(0.6))
-                
-                Spacer()
-                
-                if isCompleted {
-                    Image(systemName: "checkmark.circle.fill")
-                        .foregroundColor(.green)
-                        .font(.caption)
+        NavigationLink(destination: DuolingoLessonView(lesson: lesson, lessonsRepository: lessonsRepository).environmentObject(session)) {
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    Text("Lesson \(lesson.order)")
+                        .font(MTTypography.caption(kidMode: session.userProfile.kidMode))
+                        .foregroundColor(MTColors.text.opacity(0.6))
+                    Spacer()
+                    if isCompleted {
+                        Image(systemName: "checkmark.seal.fill")
+                            .foregroundColor(MTColors.funGreen)
+                            .font(.caption)
+                    }
+                }
+                Text(lesson.title)
+                    .font(MTTypography.body(kidMode: session.userProfile.kidMode))
+                    .fontWeight(.medium)
+                    .foregroundColor(MTColors.text)
+                    .multilineTextAlignment(.leading)
+                HStack {
+                    Image(systemName: "star.fill")
+                        .font(.system(size: 18))
+                        .foregroundColor(MTColors.funYellow)
+                    Text("+\(lesson.xpReward) XP")
+                        .font(MTTypography.caption(kidMode: session.userProfile.kidMode))
+                        .foregroundColor(MTColors.funYellow)
+                        .fontWeight(.medium)
+                    Spacer()
+                    Text("\(lesson.estimatedMinutes) min")
+                        .font(MTTypography.caption(kidMode: session.userProfile.kidMode))
+                        .foregroundColor(MTColors.text.opacity(0.6))
                 }
             }
-            
-            Text(lesson.title)
-                .font(MTTypography.body(kidMode: session.userProfile.kidMode))
-                .fontWeight(.medium)
-                .foregroundColor(MTColors.text)
-                .multilineTextAlignment(.leading)
-            
-            HStack {
-                difficultyStars
-                Spacer()
-                Text("\(lesson.estimatedMinutes) min")
-                    .font(MTTypography.caption(kidMode: session.userProfile.kidMode))
-                    .foregroundColor(MTColors.text.opacity(0.6))
-            }
-            
-            Text("+\(lesson.xpReward) XP")
-                .font(MTTypography.caption(kidMode: session.userProfile.kidMode))
-                .foregroundColor(MTColors.primary)
-                .fontWeight(.medium)
-        }
-        .padding()
-        .frame(height: 120)
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(isCompleted ? MTColors.primary.opacity(0.1) : MTColors.surface)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(isCompleted ? MTColors.primary.opacity(0.3) : MTColors.text.opacity(0.1), lineWidth: 1)
-                )
-        )
-    }
-    
-    private var difficultyStars: some View {
-        HStack(spacing: 1) {
-            ForEach(1...4, id: \.self) { star in
-                Image(systemName: star <= lesson.difficulty ? "star.fill" : "star")
-                    .font(.caption2)
-                    .foregroundColor(star <= lesson.difficulty ? MTColors.primary : MTColors.text.opacity(0.3))
-            }
+            .padding()
+            .frame(height: 120)
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(isCompleted ? MTColors.funGreen.opacity(0.08) : MTColors.surface)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(isCompleted ? MTColors.funGreen.opacity(0.3) : MTColors.text.opacity(0.1), lineWidth: 1)
+                    )
+            )
+            .scaleEffect(animate ? 1.04 : 1.0)
+            .animation(.spring(response: 0.4, dampingFraction: 0.5), value: animate)
         }
     }
 }
-
-// MARK: - Color Extension
-extension Color {
-    init(hex: String) {
-        let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
-        var int: UInt64 = 0
-        Scanner(string: hex).scanHexInt64(&int)
-        let a, r, g, b: UInt64
-        switch hex.count {
-        case 3: // RGB (12-bit)
-            (a, r, g, b) = (255, (int >> 8) * 17, (int >> 4 & 0xF) * 17, (int & 0xF) * 17)
-        case 6: // RGB (24-bit)
-            (a, r, g, b) = (255, int >> 16, int >> 8 & 0xFF, int & 0xFF)
-        case 8: // ARGB (32-bit)
-            (a, r, g, b) = (int >> 24, int >> 16 & 0xFF, int >> 8 & 0xFF, int & 0xFF)
-        default:
-            (a, r, g, b) = (1, 1, 1, 0)
-        }
-
-        self.init(
-            .sRGB,
-            red: Double(r) / 255,
-            green: Double(g) / 255,
-            blue:  Double(b) / 255,
-            opacity: Double(a) / 255
-        )
-    }
-}
+// Reuse ModernProgressBar and NavBarIcon from HomeView

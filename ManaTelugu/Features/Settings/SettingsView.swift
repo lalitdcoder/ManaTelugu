@@ -6,59 +6,55 @@ struct SettingsView: View {
     @State private var showingResetConfirmation = false
     
     var body: some View {
-        NavigationStack {
-            Form {
-                // App Preferences
-                Section("App Preferences") {
-                    Toggle("Kid Mode", isOn: $session.userProfile.kidMode)
-                        .onChange(of: session.userProfile.kidMode) { _, newValue in
-                            // Handle kid mode change
+        ZStack {
+            // Gentle pastel background
+            LinearGradient(gradient: Gradient(colors: [Color(red: 0.97, green: 0.98, blue: 1.0), MTColors.funBlue.opacity(0.10), MTColors.funGreen.opacity(0.10)]), startPoint: .top, endPoint: .bottom)
+                .ignoresSafeArea()
+            
+            ScrollView {
+                VStack(alignment: .leading, spacing: 32) {
+                    // Header
+                    Text("Settings")
+                        .font(MTTypography.title())
+                        .foregroundColor(MTColors.text)
+                        .padding(.horizontal)
+                    
+                    // App Preferences Section
+                    SettingsSection(title: "App Preferences", icon: "gearshape.fill", accent: MTColors.funBlue) {
+                        ModernToggle(label: "Sound Effects", isOn: .constant(true))
+                        ModernToggle(label: "Haptic Feedback", isOn: .constant(true))
+                    }
+                    
+                    // Progress Section
+                    SettingsSection(title: "Progress", icon: "chart.bar.fill", accent: MTColors.funGreen) {
+                        SettingsButton(label: "Export Progress", action: { showingExportSheet = true })
+                        SettingsButton(label: "Reset Progress", action: { showingResetConfirmation = true }, isDestructive: true)
+                    }
+                    
+                    // About Section
+                    SettingsSection(title: "About", icon: "info.circle.fill", accent: MTColors.funPink) {
+                        HStack {
+                            Text("Version 1.0")
+                                .font(MTTypography.body())
+                                .foregroundColor(MTColors.text.opacity(0.7))
+                            Spacer()
                         }
-                    
-                    Toggle("Sound Effects", isOn: .constant(true))
-                    
-                    Toggle("Haptic Feedback", isOn: .constant(true))
-                }
-                
-                // Progress
-                Section("Progress") {
-                    Button(action: {
-                        showingExportSheet = true
-                    }) {
-                        Text("Export Progress")
-                            .foregroundColor(MTColors.primary)
-                    }
-                    
-                    Button(action: {
-                        showingResetConfirmation = true
-                    }) {
-                        Text("Reset Progress")
-                            .foregroundColor(.red)
                     }
                 }
-                
-                // About
-                Section("About") {
-                    Button(action: {
-                        // Parental gate would go here
-                        if let url = URL(string: "mailto:support@manatelugu.com") {
-                            UIApplication.shared.open(url)
-                        }
-                    }) {
-                        Text("Contact Support")
-                            .foregroundColor(MTColors.primary)
-                    }
-                    
-                    Text("Version 1.0")
-                        .foregroundColor(MTColors.text.opacity(0.7))
-                }
+                .padding(.vertical)
+            }
+        }
+        .navigationTitle("")
+        .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                NavBarIcon(systemName: "house.fill", selected: false)
+            }
+            ToolbarItem(placement: .navigationBarTrailing) {
+                NavBarIcon(systemName: "star.fill", selected: false)
             }
         }
         .confirmationDialog("Reset Progress", isPresented: $showingResetConfirmation, titleVisibility: .visible) {
-            Button("Reset All Progress", role: .destructive) {
-                resetProgress()
-            }
-            
+            Button("Reset All Progress", role: .destructive) { resetProgress() }
             Button("Cancel", role: .cancel) { }
         } message: {
             Text("Are you sure you want to reset all your learning progress?")
@@ -69,7 +65,6 @@ struct SettingsView: View {
     }
     
     private func resetProgress() {
-        // Reset all progress
         session.userProfile.streakDays = 0
         session.userProfile.totalXP = 0
         session.userProfile.lastOpened = nil
@@ -77,48 +72,110 @@ struct SettingsView: View {
     }
 }
 
-struct ExportProgressView: View {
-    @Environment(\.dismiss) private var dismiss
+// MARK: - Settings Section
+struct SettingsSection: View {
+    let title: String
+    let icon: String
+    let accent: Color
+    let content: AnyView
+    
+    init<Content: View>(title: String, icon: String, accent: Color, @ViewBuilder content: () -> Content) {
+        self.title = title
+        self.icon = icon
+        self.accent = accent
+        self.content = AnyView(content())
+    }
     
     var body: some View {
-        NavigationStack {
-            VStack(spacing: MTSpacing.large) {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack(spacing: 12) {
+                Image(systemName: icon)
+                    .font(.system(size: 24, weight: .medium))
+                    .foregroundColor(accent)
+                Text(title)
+                    .font(MTTypography.heading())
+                    .foregroundColor(MTColors.text)
+            }
+            VStack(spacing: 8) {
+                content
+            }
+            .padding()
+            .background(Color.white.opacity(0.95))
+            .cornerRadius(16)
+            .shadow(color: accent.opacity(0.08), radius: 4, x: 0, y: 2)
+        }
+        .padding(.horizontal)
+    }
+}
+
+// MARK: - Modern Toggle
+struct ModernToggle: View {
+    let label: String
+    @Binding var isOn: Bool
+    
+    var body: some View {
+        Toggle(isOn: $isOn) {
+            Text(label)
+                .font(MTTypography.body())
+                .foregroundColor(MTColors.text)
+        }
+        .tint(MTColors.funGreen)
+    }
+}
+
+// MARK: - Settings Button
+struct SettingsButton: View {
+    let label: String
+    let action: () -> Void
+    var isDestructive: Bool = false
+    
+    var body: some View {
+        Button(action: action) {
+            HStack {
+                Text(label)
+                    .font(MTTypography.body())
+                    .foregroundColor(isDestructive ? .red : MTColors.funBlue)
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .foregroundColor(Color.gray.opacity(0.4))
+            }
+        }
+    }
+}
+
+// MARK: - Export Progress View
+struct ExportProgressView: View {
+    @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject var session: AppSession
+    
+    var body: some View {
+        NavigationView {
+            VStack(spacing: 24) {
+                Image(systemName: "square.and.arrow.up")
+                    .font(.system(size: 48, weight: .light))
+                    .foregroundColor(MTColors.funBlue)
+                
                 Text("Export Progress")
                     .font(MTTypography.title())
                     .foregroundColor(MTColors.text)
                 
-                Text("Your progress data will be exported as a JSON file that you can share or save.")
+                Text("Your learning progress data will be exported as a JSON file that you can save or share.")
                     .font(MTTypography.body())
                     .foregroundColor(MTColors.text.opacity(0.7))
                     .multilineTextAlignment(.center)
                     .padding(.horizontal)
                 
-                // Sample data preview
-                ScrollView {
-                    Text(sampleProgressData())
-                        .font(.caption)
-                        .foregroundColor(MTColors.text)
-                        .padding()
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(MTColors.surfaceAlt)
-                        .cornerRadius(8)
+                Button("Export Data") {
+                    exportProgress()
                 }
-                
-                Button(action: exportProgress) {
-                    Text("Export as JSON")
-                        .font(MTTypography.body())
-                        .fontWeight(.bold)
-                        .foregroundColor(.white)
-                        .padding()
-                        .frame(maxWidth: .infinity)
-                        .background(MTColors.primary)
-                        .cornerRadius(12)
-                }
-                .padding(.horizontal)
+                .buttonStyle(.borderedProminent)
+                .tint(MTColors.funBlue)
+                .controlSize(.large)
                 
                 Spacer()
             }
             .padding()
+            .navigationTitle("")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
@@ -130,33 +187,9 @@ struct ExportProgressView: View {
         }
     }
     
-    private func sampleProgressData() -> String {
-        return """
-        {
-          "streakDays": 5,
-          "totalXP": 1250,
-          "lastOpened": "2025-08-28T10:30:00Z",
-          "lettersMastered": 18,
-          "wordsLearned": 42,
-          "badgesEarned": 3
-        }
-        """
-    }
-    
     private func exportProgress() {
-        // Create sample data
-        _ = sampleProgressData()
-        
-        // In a real app, we would create a file and share it
-        // For now, we'll just show an alert
-        let alert = UIAlertController(title: "Progress Exported", message: "Your progress data has been exported successfully.", preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "OK", style: .default))
-        
-        // Show alert (we would need to get the root view controller)
-        if let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-           let window = scene.windows.first,
-           let root = window.rootViewController {
-            root.present(alert, animated: true)
-        }
+        // Simple export functionality - in a real app, you'd implement actual file export
+        session.hapticsService.success()
+        // For now, just show success feedback
     }
 }

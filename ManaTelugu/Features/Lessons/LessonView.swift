@@ -119,14 +119,7 @@ struct LessonView: View {
                 timeSpent: Date().timeIntervalSince(startTime),
                 scores: (reading: readingScore, writing: writingScore, speaking: speakingScore),
                 onDismiss: {
-                    lessonsRepository.completeLesson(
-                        lesson,
-                        xpEarned: lesson.xpReward,
-                        correctAnswers: Int(readingScore + writingScore + speakingScore),
-                        totalQuestions: 10,
-                        timeSpent: Date().timeIntervalSince(startTime),
-                        responses: []
-                    )
+                    lessonsRepository.markLessonComplete(lessonId: lesson.id, levelId: lesson.levelId)
                     session.userProfile.totalXP += lesson.xpReward
                     session.userProfile.streakDays += 1
                     dismiss()

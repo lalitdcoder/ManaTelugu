@@ -1,11 +1,20 @@
 import SwiftUI
 
+// Helper struct for predefined sound match questions
+struct SoundMatchQuestion {
+    let audioText: String
+    let audioFile: String
+    let options: [(telugu: String, transliteration: String)]
+    let correctAnswer: String
+}
+
 struct SoundMatchGameView: View {
     @EnvironmentObject var session: AppSession
     @State private var letters: [Letter] = []
     @State private var words: [Word] = []
     @State private var quizItems: [QuizItem] = []
     @State private var currentQuizIndex = 0
+    @State private var questionData: [String: SoundMatchQuestion] = [:] // Store question data for display
     @State private var selectedOption: String?
     @State private var isPlaying = false
     @State private var feedbackMessage: String?
@@ -118,10 +127,13 @@ struct SoundMatchGameView: View {
             Spacer()
         }
         .onAppear {
-            loadData()
-            startNewGame()
+            Task {
+                await loadData()
+                startNewGame()
+            }
         }
         .onReceive(timer) { _ in
+            guard isPlaying else { return }
             if timeRemaining > 0 {
                 timeRemaining -= 1
             } else {
@@ -133,42 +145,211 @@ struct SoundMatchGameView: View {
         .navigationBarTitleDisplayMode(.large)
     }
     
-    private func loadData() {
-        letters = session.dataRepository.letters()
-        words = session.dataRepository.words()
+    private func loadData() async {
+        letters = await session.dataRepository.letters()
+        words = await session.dataRepository.words()
         
         // Create sample quiz items
         createQuizItems()
     }
     
     private func createQuizItems() {
-        // Create sample quiz items mixing letters and words
         var items: [QuizItem] = []
         
-        // Add letter-based questions
-        for letter in letters.prefix(5) {
-            let options = letters.prefix(4).map { $0.id }
-            let quizItem = QuizItem(
-                id: "quiz_\(letter.id)",
-                prompt: letter.audioFile,
-                correctId: letter.id,
-                options: Array(options.shuffled().prefix(4)),
-                kind: .soundMatch
+        // Predefined Telugu sound matching questions
+        let soundMatchQuestions = [
+            // Basic vowels
+            SoundMatchQuestion(
+                audioText: "అ",
+                audioFile: "అ.mp3",
+                options: [
+                    ("అ", "a"),
+                    ("ఆ", "aa"),
+                    ("ఇ", "i"),
+                    ("ఉ", "u")
+                ],
+                correctAnswer: "అ"
+            ),
+            SoundMatchQuestion(
+                audioText: "ఇ",
+                audioFile: "ఇ.mp3",
+                options: [
+                    ("ఇ", "i"),
+                    ("ఈ", "ii"),
+                    ("ఉ", "u"),
+                    ("ఎ", "e")
+                ],
+                correctAnswer: "ఇ"
+            ),
+            
+            // Basic consonants
+            SoundMatchQuestion(
+                audioText: "క",
+                audioFile: "క.mp3",
+                options: [
+                    ("క", "ka"),
+                    ("గ", "ga"),
+                    ("ఖ", "kha"),
+                    ("చ", "cha")
+                ],
+                correctAnswer: "క"
+            ),
+            SoundMatchQuestion(
+                audioText: "ప",
+                audioFile: "ప.mp3",
+                options: [
+                    ("ప", "pa"),
+                    ("బ", "ba"),
+                    ("ఫ", "pha"),
+                    ("మ", "ma")
+                ],
+                correctAnswer: "ప"
+            ),
+            SoundMatchQuestion(
+                audioText: "మ",
+                audioFile: "మ.mp3",
+                options: [
+                    ("మ", "ma"),
+                    ("న", "na"),
+                    ("వ", "va"),
+                    ("ల", "la")
+                ],
+                correctAnswer: "మ"
+            ),
+            
+            // Names and common words
+            SoundMatchQuestion(
+                audioText: "రామ",
+                audioFile: "రామ.mp3",
+                options: [
+                    ("రామ", "rāma"),
+                    ("కృష్ణ", "kṛṣṇa"),
+                    ("సీత", "sīta"),
+                    ("హనుమాన్", "hanumān")
+                ],
+                correctAnswer: "రామ"
+            ),
+            SoundMatchQuestion(
+                audioText: "అన్నం",
+                audioFile: "అన్నం.mp3",
+                options: [
+                    ("అన్నం", "annaṁ - rice"),
+                    ("పాలు", "pālu - milk"),
+                    ("నీరు", "nīru - water"),
+                    ("రసం", "rasam - soup")
+                ],
+                correctAnswer: "అన్నం"
+            ),
+            SoundMatchQuestion(
+                audioText: "పాలు",
+                audioFile: "పాలు.mp3",
+                options: [
+                    ("పాలు", "pālu - milk"),
+                    ("కాఫీ", "kāphī - coffee"),
+                    ("టీ", "ṭī - tea"),
+                    ("నీరు", "nīru - water")
+                ],
+                correctAnswer: "పాలు"
+            ),
+            
+            // Animals
+            SoundMatchQuestion(
+                audioText: "కుక్క",
+                audioFile: "కుక్క.mp3",
+                options: [
+                    ("కుక్క", "kukka - dog"),
+                    ("పిల్లి", "pilli - cat"),
+                    ("కోడి", "kōḍi - hen"),
+                    ("పక్షి", "pakṣi - bird")
+                ],
+                correctAnswer: "కుక్క"
+            ),
+            SoundMatchQuestion(
+                audioText: "పక్షి",
+                audioFile: "పక్షి.mp3",
+                options: [
+                    ("పక్షి", "pakṣi - bird"),
+                    ("కుక్క", "kukka - dog"),
+                    ("పిల్లి", "pilli - cat"),
+                    ("కోడి", "kōḍi - hen")
+                ],
+                correctAnswer: "పక్షి"
+            ),
+            
+            // Nature
+            SoundMatchQuestion(
+                audioText: "సూర్యుడు",
+                audioFile: "సూర్యుడు.mp3",
+                options: [
+                    ("సూర్యుడు", "sūryuḍu - sun"),
+                    ("చంద్రుడు", "candraḍu - moon"),
+                    ("నక్షత్రం", "nakṣatraṁ - star"),
+                    ("ఆకాశం", "ākāśaṁ - sky")
+                ],
+                correctAnswer: "సూర్యుడు"
+            ),
+            SoundMatchQuestion(
+                audioText: "వృక్షం",
+                audioFile: "వృక్షం.mp3",
+                options: [
+                    ("వృక్షం", "vr̥kṣaṁ - tree"),
+                    ("పువ్వు", "puvvu - flower"),
+                    ("పండు", "paṇḍu - fruit"),
+                    ("గడ్డి", "gaḍḍi - grass")
+                ],
+                correctAnswer: "వృక్షం"
+            ),
+            SoundMatchQuestion(
+                audioText: "పువ్వు",
+                audioFile: "పువ్వు.mp3",
+                options: [
+                    ("పువ్వు", "puvvu - flower"),
+                    ("పండు", "paṇḍu - fruit"),
+                    ("వృక్షం", "vr̥kṣaṁ - tree"),
+                    ("గడ్డి", "gaḍḍi - grass")
+                ],
+                correctAnswer: "పువ్వు"
+            ),
+            
+            // Transportation and people
+            SoundMatchQuestion(
+                audioText: "బండి",
+                audioFile: "బండి.mp3",
+                options: [
+                    ("బండి", "baṇḍi - cart"),
+                    ("కారు", "kāru - car"),
+                    ("బస్సు", "bassu - bus"),
+                    ("రైలు", "railu - train")
+                ],
+                correctAnswer: "బండి"
+            ),
+            SoundMatchQuestion(
+                audioText: "మనిషి",
+                audioFile: "మనిషి.mp3",
+                options: [
+                    ("మనిషి", "maniṣi - man"),
+                    ("పిల్లవాడు", "pillavāḍu - boy"),
+                    ("అమ్మాయి", "ammāyi - girl"),
+                    ("చిన్నపిల్ల", "cinna pilla - child")
+                ],
+                correctAnswer: "మనిషి"
             )
-            items.append(quizItem)
-        }
+        ]
         
-        // Add word-based questions
-        for word in words.prefix(5) {
-            let options = words.prefix(4).map { $0.id }
+        // Convert to QuizItem format and store question data
+        for (index, question) in soundMatchQuestions.enumerated() {
+            let quizId = "sound_match_\(index)"
             let quizItem = QuizItem(
-                id: "quiz_\(word.id)",
-                prompt: word.audioFile,
-                correctId: word.id,
-                options: Array(options.shuffled().prefix(4)),
+                id: quizId,
+                prompt: question.audioFile,
+                correctId: question.correctAnswer,
+                options: question.options.map { $0.telugu }, // Telugu text
                 kind: .soundMatch
             )
             items.append(quizItem)
+            
+            // Store question data for display purposes
+            questionData[quizId] = question
         }
         
         quizItems = items.shuffled()
@@ -177,11 +358,19 @@ struct SoundMatchGameView: View {
     private func displayTextAndCorrectness(for optionId: String, quizItem: QuizItem) -> (String, Bool) {
         let isCorrect = (optionId == quizItem.correctId)
         
-        // Find the corresponding letter or word
+        // Use predefined question data if available
+        if let question = questionData[quizItem.id] {
+            // Find the matching option in the question data
+            if let option = question.options.first(where: { $0.telugu == optionId }) {
+                return ("\(option.telugu)\n(\(option.transliteration))", isCorrect)
+            }
+        }
+        
+        // Fallback to original logic for backward compatibility
         if let letter = letters.first(where: { $0.id == optionId }) {
-            return ("\(letter.glyph)\n\(letter.transliteration)", isCorrect)
+            return ("\(letter.glyph)\n(\(letter.transliteration))", isCorrect)
         } else if let word = words.first(where: { $0.id == optionId }) {
-            return ("\(word.telugu)\n\(word.english)", isCorrect)
+            return ("\(word.telugu)\n(\(word.english))", isCorrect)
         }
         
         return (optionId, isCorrect)
@@ -192,9 +381,11 @@ struct SoundMatchGameView: View {
         
         if isCorrect {
             score += 1
-            feedbackMessage = "Correct! Well done!"
+            feedbackMessage = "Correct! Well done! +5 XP"
             feedbackColor = MTColors.success
             session.hapticsService.success()
+            // Award XP for correct answer
+            session.awardXP(5)
         } else {
             feedbackMessage = "Try again next time!"
             feedbackColor = MTColors.warning

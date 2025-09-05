@@ -17,6 +17,7 @@ class AudioService: AudioServiceProtocol {
         try? session.setActive(true, options: [])
     }
     
+    // Adding debug logs to identify potential issues in AudioService.swift
     func play(name: String, rate: Float = 1.0) {
         guard let url = Bundle.main.url(forResource: name, withExtension: nil) else {
             print("Audio file not found: \(name)")
@@ -27,6 +28,7 @@ class AudioService: AudioServiceProtocol {
             audioPlayer?.enableRate = true
             audioPlayer?.rate = rate
             audioPlayer?.prepareToPlay()
+            print("Playing audio file: \(name) at rate: \(rate)")
             audioPlayer?.play()
         } catch {
             print("Failed to play audio: \(error)")

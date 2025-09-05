@@ -64,21 +64,46 @@ struct LessonCompletionView: View {
                         color: Color.orange,
                         animated: showingStreakAnimation
                     )
-                }
+                    .onAppear {
+                        if showingStreakAnimation {
+                            withAnimation(.easeInOut(duration: 1.0)) {
+                                // Add celebratory animation for streak milestone
+                                if (session.userProfile.streakDays + 1) % 5 == 0 {
+                                    // Trigger milestone animation
+                                    showMilestoneCelebration()
+                                }
+                            }
+                        }
+                    }
                 
-                // Performance Scores
-                VStack(alignment: .leading, spacing: MTSpacing.small) {
-                    Text("Performance")
-                        .font(MTTypography.heading(kidMode: session.userProfile.kidMode))
-                        .foregroundColor(MTColors.text)
-                    
-                    ScoreRow(title: "Reading", score: scores.reading)
-                    ScoreRow(title: "Writing", score: scores.writing)
-                    ScoreRow(title: "Speaking", score: scores.speaking)
+                    // Performance Scores
+                    VStack(alignment: .leading, spacing: MTSpacing.small) {
+                        Text("Performance")
+                            .font(MTTypography.heading(kidMode: session.userProfile.kidMode))
+                            .foregroundColor(MTColors.text)
+                        
+                        ScoreRow(title: "Reading", score: scores.reading)
+                        ScoreRow(title: "Writing", score: scores.writing)
+                        ScoreRow(title: "Speaking", score: scores.speaking)
+                    }
+                    .padding()
+                    .background(MTColors.surfaceAlt)
+                    .cornerRadius(12)
+                    .onAppear {
+                        // Add badge unlock logic
+                        Task {
+                            if scores.reading > 90 {
+                                await unlockBadge("Reading Master")
+                            }
+                            if scores.writing > 90 {
+                                await unlockBadge("Writing Prodigy")
+                            }
+                            if scores.speaking > 90 {
+                                await unlockBadge("Speaking Star")
+                            }
+                        }
+                    }
                 }
-                .padding()
-                .background(MTColors.surfaceAlt)
-                .cornerRadius(12)
                 
                 Spacer()
                 
@@ -99,6 +124,7 @@ struct LessonCompletionView: View {
             .padding()
             .navigationBarTitleDisplayMode(.inline)
             .onAppear {
+                print("LessonCompletionView appeared with lesson: \(lesson.title), xpEarned: \(xpEarned), timeSpent: \(timeSpent)")
                 startAnimations()
             }
         }
@@ -111,7 +137,7 @@ struct LessonCompletionView: View {
         }
         
         // Animate XP counter
-        let timer = Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) { timer in
+        Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) { timer in
             if animatedXP < xpEarned {
                 animatedXP += max(1, xpEarned / 20)
                 if animatedXP >= xpEarned {
@@ -133,6 +159,24 @@ struct LessonCompletionView: View {
         let minutes = Int(timeInterval) / 60
         let seconds = Int(timeInterval) % 60
         return "\(minutes):\(String(format: "%02d", seconds))"
+    }
+    
+    private func showMilestoneCelebration() {
+        // Trigger haptic feedback for milestone
+        session.hapticsService.success()
+        
+        // Add visual celebration animation
+        withAnimation(.spring(response: 0.6, dampingFraction: 0.7)) {
+            // Could add more celebration effects here
+        }
+    }
+    
+    private func unlockBadge(_ badgeName: String) async {
+        // Use the async version from DataRepository
+        await DataRepository.shared.unlockBadge(badgeName, session: session)
+        
+        // Award XP for badge unlock
+        session.awardXP(50)
     }
 }
 
@@ -217,3 +261,6 @@ struct ScoreRow: View {
         }
     }
 }
+
+// Investigating potential issues in LessonCompletionView.swift
+// Adding debug logs or comments to identify problematic areas

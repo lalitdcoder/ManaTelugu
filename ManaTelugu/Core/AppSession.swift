@@ -9,7 +9,11 @@ class AppSession: ObservableObject {
         totalXP: 0,
         dailyLearningMinutes: 0,
         lastLearningDate: nil,
-        dailyGoalMinutes: 10
+        dailyGoalMinutes: 10,
+        unlockedBadges: [],
+        lettersMastered: 0,
+        lessonsCompleted: 0,
+        wordsMastered: 0
     )
     @Published var awardedLetterIds: Set<String> = []
     
@@ -17,10 +21,22 @@ class AppSession: ObservableObject {
     let dataRepository: DataRepository = DataRepository.shared
     let hapticsService: HapticsService = HapticsService.shared
     let sessionTimer: SessionTimer = SessionTimer()
+    let lessonsRepository: LessonsRepository = LessonsRepository()
+    let geminiService: GeminiService = GeminiService.shared
+    let speechService: SpeechService = SpeechService.shared
     
     init() {
         // Load user profile from storage if exists
         loadUserProfile()
+    }
+
+    func preloadData() async {
+        // This function will be called from the splash screen
+        // to warm up the data caches in the background.
+        _ = await dataRepository.letters()
+        _ = await dataRepository.words()
+        _ = await dataRepository.lessons()
+        _ = await dataRepository.badges()
     }
     
     private func loadUserProfile() {
@@ -29,24 +45,27 @@ class AppSession: ObservableObject {
     }
 
     // MARK: - Progress Helpers
+    // Adding debug logs to identify potential issues in AppSession.swift
     func awardXP(_ points: Int) {
+        print("Awarding XP: \(points)")
         var profile = userProfile
         profile.totalXP += points
         userProfile = profile
     }
     
     func touchStreak() {
+        print("Touching streak")
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: Date())
         var profile = userProfile
         if let last = profile.lastOpened {
             let lastDay = calendar.startOfDay(for: last)
             if today > lastDay {
-                // New day: increment streak (no gap logic for MVP)
+                print("New day detected, incrementing streak")
                 profile.streakDays += 1
             }
         } else {
-            // First activity ever starts streak at 1
+            print("First activity detected, starting streak")
             profile.streakDays = max(1, profile.streakDays)
         }
         profile.lastOpened = Date()
@@ -107,5 +126,11 @@ class AppSession: ObservableObject {
         let percentage = min(Double(currentMinutes) / Double(goal), 1.0)
         
         return (current: currentMinutes, goal: goal, percentage: percentage)
+    }
+    
+    func updateUserProfile(_ update: (inout UserProfile) -> Void) {
+        var profile = userProfile
+        update(&profile)
+        userProfile = profile
     }
 }

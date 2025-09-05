@@ -42,7 +42,7 @@ struct CardMatchGameView: View {
                         let isFlipped = flippedIndices.contains(index)
                         let isMatched = matchedIndices.contains(index)
                         
-                        MatchCardView(
+                        CardMatchCardView(
                             card: card,
                             isFlipped: isFlipped,
                             isMatched: isMatched
@@ -75,15 +75,17 @@ struct CardMatchGameView: View {
             Spacer()
         }
         .onAppear {
-            loadData()
-            setupGame()
+            Task {
+                await loadData()
+                setupGame()
+            }
         }
         .navigationTitle("Card Match")
         .navigationBarTitleDisplayMode(.large)
     }
     
-    private func loadData() {
-        words = session.dataRepository.words().prefix(8).map { $0 }
+    private func loadData() async {
+        words = await session.dataRepository.words().prefix(8).map { $0 }
     }
     
     private func setupGame() {
@@ -134,9 +136,14 @@ struct CardMatchGameView: View {
                     matchedIndices.formUnion(flippedIndices)
                     session.hapticsService.success()
                     
+                    // Award XP for successful match
+                    session.awardXP(10)
+                    
                     // Check if game is completed
                     if matchedIndices.count == cards.count {
                         gameCompleted = true
+                        // Award bonus XP for completing the game
+                        session.awardXP(50)
                     }
                 } else {
                     session.hapticsService.warning()
@@ -153,7 +160,7 @@ struct CardMatchGameView: View {
     }
 }
 
-struct MatchCardView: View {
+struct CardMatchCardView: View {
     let card: CardMatchGameView.Card
     let isFlipped: Bool
     let isMatched: Bool
