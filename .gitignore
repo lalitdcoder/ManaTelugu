@@ -97,6 +97,12 @@ iOSInjectionProject/
 *.ipa
 *.dSYM
 
+# Xcode workspace files
+*.xcworkspace
+
+# Xcode user data
+*.xcuserdata
+
 # Temporary files
 *.tmp
 *.temp
@@ -119,3 +125,20 @@ Thumbs.db
 *.backup
 *.bak
 *.orig
+
+# DMG files
+*.dmg
+
+# Log files
+*.log
+
+# Editor files
+*.swp
+*.swo
+
+# Python cache
+*.pyc
+__pycache__/
+
+# Node modules
+node_modules/
