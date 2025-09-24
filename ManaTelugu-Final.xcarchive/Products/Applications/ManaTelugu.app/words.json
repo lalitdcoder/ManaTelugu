@@ -559,7 +559,7 @@
     "id": "w_uncle_mothers_brother",
     "telugu": "మామ / మామయ్య",
     "transliteration": "mama / mamayya",
-    "english": "Uncle (mother’s brother / respectful)",
+    "english": "Uncle (mother's brother / respectful)",
     "imageName": "uncle_mother_brother.png",
     "audioFile": "మామ.mp3",
     "theme": "Family"
@@ -568,7 +568,7 @@
     "id": "w_aunt_fathers_sister",
     "telugu": "అత్త / అత్తయ్య",
     "transliteration": "atta / attayya",
-    "english": "Aunt (father’s sister / respectful)",
+    "english": "Aunt (father's sister / respectful)",
     "imageName": "aunt_father_sister.png",
     "audioFile": "అత్త.mp3",
     "theme": "Family"
@@ -577,7 +577,7 @@
     "id": "w_aunt_mothers_sister",
     "telugu": "పిన్ని / పెద్దమ్మ",
     "transliteration": "pinni / peddamma",
-    "english": "Aunt (mother’s sister)",
+    "english": "Aunt (mother's sister)",
     "imageName": "aunt_mother_sister.png",
     "audioFile": "పిన్ని.mp3",
     "theme": "Family"
@@ -926,7 +926,7 @@
   },
   {
     "id": "w_cook",
-    "telugu": "వంట చెయ్యি",
+    "telugu": "వంట చెయ్యి",
     "transliteration": "vaṇṭa ceyyi",
     "english": "Cook",
     "imageName": "cook.png",
@@ -1216,11 +1216,11 @@
   },
   {
     "id": "w_goat",
-    "telugu": "బొడి",
-    "transliteration": "bodi",
+    "telugu": "మేక",
+    "transliteration": "Meka",
     "english": "Goat",
     "imageName": "goat.png",
-    "audioFile": "బొడి.mp3",
+    "audioFile": "మేక.mp3",
     "theme": "Animals"
   },
   {
@@ -1261,11 +1261,11 @@
   },
   {
     "id": "w_rabbit",
-    "telugu": "మెలిక",
-    "transliteration": "melika",
+    "telugu": "కుందేలు",
+    "transliteration": "Kundelu",
     "english": "Rabbit",
     "imageName": "rabbit.png",
-    "audioFile": "మెలిక.mp3",
+    "audioFile": "కుందేలు.mp3",
     "theme": "Animals"
   },
   {
@@ -1324,11 +1324,11 @@
   },
   {
     "id": "w_parrot",
-    "telugu": "కవ్వ",
-    "transliteration": "kavva",
+    "telugu": "చిలుక",
+    "transliteration": "Chiluka",
     "english": "Parrot",
     "imageName": "parrot.png",
-    "audioFile": "కవ్వ.mp3",
+    "audioFile": "చిలుక.mp3",
     "theme": "Animals"
   }
 ]

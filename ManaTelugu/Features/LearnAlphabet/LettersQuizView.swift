@@ -1,6 +1,6 @@
 import SwiftUI
 
-enum LettersQuizScope {
+enum LettersQuizScope: Hashable {
     case vowels
     case consonants
     case all
@@ -98,8 +98,6 @@ struct LettersQuizView: View {
                 session.addLearningTime(minutes: minutes)
             }
         }
-        .navigationTitle(title)
-        .navigationBarTitleDisplayMode(.inline)
     }
     
     private var title: String {

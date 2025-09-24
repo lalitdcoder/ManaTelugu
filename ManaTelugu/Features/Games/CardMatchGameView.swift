@@ -16,7 +16,13 @@ struct CardMatchGameView: View {
     }
     
     var body: some View {
-        VStack(spacing: MTSpacing.large) {
+        ZStack {
+            // Enhanced background gradient for Liquid Glass effect
+            Color.clear
+                .liquidGlassBackground()
+                .ignoresSafeArea()
+            
+            VStack(spacing: MTSpacing.large) {
             // Header with moves counter
             HStack {
                 Text("Moves: \(moves)")
@@ -73,6 +79,7 @@ struct CardMatchGameView: View {
             }
             
             Spacer()
+            }
         }
         .onAppear {
             Task {
@@ -167,9 +174,15 @@ struct CardMatchCardView: View {
     
     var body: some View {
         ZStack {
-            RoundedRectangle(cornerRadius: 12)
-                .fill(isMatched ? MTColors.success.opacity(0.3) : MTColors.surfaceAlt)
-                .aspectRatio(1, contentMode: .fit)
+            LiquidGlassView(
+                intensity: 0.1,
+                cornerRadius: 22,
+                padding: 0
+            ) {
+                RoundedRectangle(cornerRadius: 22, style: .continuous)
+                    .fill(isMatched ? MTColors.success.opacity(0.05) : Color.clear)
+                    .aspectRatio(1, contentMode: .fit)
+            }
             
             if isFlipped || isMatched {
                 VStack(spacing: MTSpacing.small) {

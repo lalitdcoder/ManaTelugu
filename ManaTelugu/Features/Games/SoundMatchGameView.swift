@@ -17,8 +17,10 @@ struct SoundMatchGameView: View {
     @State private var questionData: [String: SoundMatchQuestion] = [:] // Store question data for display
     @State private var selectedOption: String?
     @State private var isPlaying = false
-    @State private var feedbackMessage: String?
-    @State private var feedbackColor: Color = MTColors.text
+    @State private var showingFeedback = false
+    @State private var isCorrect = false
+    @State private var feedbackMessage = ""
+    @State private var xpEarned = 0
     @State private var score = 0
     @State private var timeRemaining = 60
     
@@ -30,7 +32,13 @@ struct SoundMatchGameView: View {
     let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
     
     var body: some View {
-        VStack(spacing: MTSpacing.large) {
+        ZStack {
+            // Enhanced background gradient for Liquid Glass effect
+            Color.clear
+                .liquidGlassBackground()
+                .ignoresSafeArea()
+            
+            VStack(spacing: MTSpacing.large) {
             // Header with score and timer
             HStack {
                 HStack {
@@ -112,19 +120,20 @@ struct SoundMatchGameView: View {
                     .foregroundColor(MTColors.text)
             }
             
-            // Feedback message
-            if let message = feedbackMessage {
-                Text(message)
-                    .font(MTTypography.body(kidMode: session.userProfile.kidMode))
-                    .fontWeight(.bold)
-                    .foregroundColor(feedbackColor)
-                    .padding()
-                    .background(feedbackColor.opacity(0.1))
-                    .cornerRadius(12)
-                    .padding(.horizontal)
+            // Standardized feedback
+            if showingFeedback {
+                GameFeedbackView(
+                    isCorrect: isCorrect,
+                    message: feedbackMessage,
+                    xpEarned: xpEarned,
+                    correctAnswer: isCorrect ? nil : currentQuizItem?.correctId,
+                    explanation: isCorrect ? "Great job recognizing the Telugu sound!" : "Listen carefully to the pronunciation and try again.",
+                    onContinue: moveToNextQuestion
+                )
             }
             
             Spacer()
+            }
         }
         .onAppear {
             Task {
@@ -378,29 +387,28 @@ struct SoundMatchGameView: View {
     
     private func handleOptionSelection(optionId: String, isCorrect: Bool) {
         selectedOption = optionId
+        self.isCorrect = isCorrect
         
         if isCorrect {
             score += 1
-            feedbackMessage = "Correct! Well done! +5 XP"
-            feedbackColor = MTColors.success
+            feedbackMessage = "Correct! Well done!"
+            xpEarned = 5
             session.hapticsService.success()
-            // Award XP for correct answer
             session.awardXP(5)
         } else {
-            feedbackMessage = "Try again next time!"
-            feedbackColor = MTColors.warning
+            feedbackMessage = "Not quite right, but keep trying!"
+            xpEarned = 0
             session.hapticsService.warning()
         }
         
-        // Move to next question after delay
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-            moveToNextQuestion()
-        }
+        showingFeedback = true
     }
     
     private func moveToNextQuestion() {
         selectedOption = nil
-        feedbackMessage = nil
+        showingFeedback = false
+        feedbackMessage = ""
+        xpEarned = 0
         
         if currentQuizIndex < quizItems.count - 1 {
             currentQuizIndex += 1
@@ -415,7 +423,9 @@ struct SoundMatchGameView: View {
         score = 0
         timeRemaining = 60
         selectedOption = nil
-        feedbackMessage = nil
+        showingFeedback = false
+        feedbackMessage = ""
+        xpEarned = 0
         createQuizItems()
     }
 }

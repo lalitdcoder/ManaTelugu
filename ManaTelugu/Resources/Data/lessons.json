@@ -10,30 +10,36 @@
       "lessons": [
         {
           "id": "lesson_1_vowels",
+          "levelId": "level_1_beginner",
           "title": "Telugu Vowels",
           "description": "Learn the 16 basic Telugu vowels",
           "order": 1,
+          "difficulty": 1,
           "xpReward": 50,
           "estimatedMinutes": 15,
-          "isCompleted": false
+          "activities": []
         },
         {
           "id": "lesson_2_consonants",
+          "levelId": "level_1_beginner",
           "title": "Telugu Consonants",
           "description": "Master the 36 Telugu consonants",
           "order": 2,
+          "difficulty": 1,
           "xpReward": 75,
           "estimatedMinutes": 20,
-          "isCompleted": false
+          "activities": []
         },
         {
           "id": "lesson_3_reading_practice",
+          "levelId": "level_1_beginner",
           "title": "Reading Practice",
           "description": "Practice reading simple Telugu words",
           "order": 3,
+          "difficulty": 2,
           "xpReward": 100,
           "estimatedMinutes": 25,
-          "isCompleted": false
+          "activities": []
         }
       ]
     }

@@ -20,11 +20,12 @@ struct PracticeView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                // Apple-style background with subtle gradient
-                Color(.systemGroupedBackground)
+                // Enhanced background gradient for Liquid Glass effect
+                Color.clear
+                    .liquidGlassBackground()
                     .ignoresSafeArea()
                 
-                ScrollView {
+                EnhancedScrollView {
                     VStack(alignment: .leading, spacing: 32) {
                         // Header - Apple-style with proper spacing
                         VStack(alignment: .leading, spacing: 8) {
@@ -52,7 +53,7 @@ struct PracticeView: View {
                                     .fontWeight(.semibold)
                                     .foregroundColor(.primary)
                             }
-                            .padding(.horizontal, 20)
+                            .padding(.horizontal, MTSpacing.large)
                             
                             VStack(spacing: 12) {
                                 PracticeSectionCard(
@@ -132,8 +133,9 @@ struct PracticeView: View {
                                     },
                                     destination: AnyView(TraceGameView().environmentObject(session))
                                 )
+                                
                             }
-                            .padding(.horizontal, 20)
+                            .padding(.horizontal, MTSpacing.large)
                         }
                         
                         // Quizzes Section - Apple-style section header
@@ -147,7 +149,7 @@ struct PracticeView: View {
                                     .fontWeight(.semibold)
                                     .foregroundColor(.primary)
                             }
-                            .padding(.horizontal, 20)
+                            .padding(.horizontal, MTSpacing.large)
                             
                             VStack(spacing: 12) {
                             PracticeSectionCard(
@@ -189,11 +191,11 @@ struct PracticeView: View {
                                 destination: AnyView(LettersQuizView(scope: .all).environmentObject(session))
                             )
                             }
-                            .padding(.horizontal, 20)
+                            .padding(.horizontal, MTSpacing.large)
                         }
                         
                     }
-                    .padding(.vertical)
+                    .padding(.vertical, MTSpacing.large)
                 }
             }
             .navigationTitle("")
@@ -251,8 +253,12 @@ struct PracticeSectionCard<Content: View>: View {
     @State private var isPressed = false
     
     var body: some View {
-        NavigationLink(destination: destination) {
-            HStack(spacing: 16) {
+        NavigationButton(
+            destination: destination,
+            hapticStyle: .medium,
+            loadingMessage: "Loading practice..."
+        ) {
+            HStack(spacing: MTSpacing.medium) {
                 // Apple-style icon container
                 ZStack {
                     RoundedRectangle(cornerRadius: 12)
@@ -265,11 +271,11 @@ struct PracticeSectionCard<Content: View>: View {
                         .accessibilityHidden(true) // Icon is decorative
                 }
                 
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(title)
-                        .font(.headline)
+                VStack(alignment: .leading, spacing: MTSpacing.tiny) {
+                    (Text(title) as Text)
+                        .font(MTTypography.heading())
                         .fontWeight(.semibold)
-                        .foregroundColor(.primary)
+                        .foregroundColor(MTColors.primaryText)
                         .multilineTextAlignment(.leading)
                     content()
                 }
@@ -279,28 +285,20 @@ struct PracticeSectionCard<Content: View>: View {
                 // Apple-style chevron
                 Image(systemName: "chevron.right")
                     .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(Color(.tertiaryLabel))
+                    .foregroundColor(MTColors.tertiaryText)
                     .accessibilityHidden(true) // Decorative indicator
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
+            .padding(.horizontal, MTSpacing.medium)
+            .padding(.vertical, MTSpacing.regular)
             .background(
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(Color(.secondarySystemGroupedBackground))
+                    .fill(MTColors.surfaceAlt)
                     .shadow(color: .black.opacity(0.05), radius: 1, x: 0, y: 1)
             )
-            .scaleEffect(isPressed ? 0.98 : 1.0)
-            .animation(.easeInOut(duration: 0.1), value: isPressed)
         }
-        .buttonStyle(.plain)
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(.isButton)
         .accessibilityHint("Double tap to start this practice activity")
-        .simultaneousGesture(
-            DragGesture(minimumDistance: 0)
-                .onChanged { _ in isPressed = true }
-                .onEnded { _ in isPressed = false }
-        )
     }
 }
 
@@ -311,63 +309,93 @@ struct PracticeItemView: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: MTSpacing.small) {
-            Text(item.telugu)
-                .font(.title)
-                .foregroundColor(MTColors.text)
+            (Text(item.telugu) as Text)
+                .font(MTTypography.title())
+                .foregroundColor(MTColors.primaryText)
             
             Text(item.transliteration)
                 .font(MTTypography.body())
-                .foregroundColor(MTColors.text.opacity(0.8))
+                .foregroundColor(MTColors.secondaryText)
             
             if showingOptions {
                 Text(item.english)
                     .font(MTTypography.body())
-                    .foregroundColor(MTColors.text)
+                    .foregroundColor(MTColors.primaryText)
                     .padding(.bottom, MTSpacing.small)
                 
-                HStack {
-                    Button(action: {
-                        // Mark as hard
-                        session.hapticsService.warning()
-                    }) {
-                        Text("Hard")
-                            .font(MTTypography.caption())
-                            .padding(.horizontal, MTSpacing.large)
-                            .padding(.vertical, MTSpacing.small)
-                            .background(MTColors.warning)
-                            .foregroundColor(.white)
-                            .cornerRadius(20)
-                    }
+                HStack(spacing: MTSpacing.medium) {
+                    EnhancedButton(
+                        interaction: .medium,
+                        isLoading: false,
+                        isEnabled: true,
+                        action: {
+                            // Mark as hard
+                            session.hapticsService.warning()
+                        },
+                        content: {
+                            Text("Hard")
+                                .font(MTTypography.caption())
+                                .padding(.horizontal, MTSpacing.large)
+                                .padding(.vertical, MTSpacing.small)
+                                .background(MTColors.warning)
+                                .foregroundColor(.white)
+                                .cornerRadius(20)
+                        }
+                    )
+                    .frame(minWidth: MTSpacing.minimumTouchTarget, minHeight: MTSpacing.minimumTouchTarget)
+                    .accessibilityLabel("Mark as hard")
+                    .accessibilityHint("This practice item was difficult")
+                    .accessibilityAddTraits(.isButton)
                     
-                    Button(action: {
-                        // Mark as medium
-                        session.hapticsService.lightImpact()
-                    }) {
-                        Text("Okay")
-                            .font(MTTypography.caption())
-                            .padding(.horizontal, MTSpacing.large)
-                            .padding(.vertical, MTSpacing.small)
-                            .background(MTColors.primary)
-                            .foregroundColor(.white)
-                            .cornerRadius(20)
-                    }
+                    EnhancedButton(
+                        interaction: .medium,
+                        isLoading: false,
+                        isEnabled: true,
+                        action: {
+                            // Mark as medium
+                            session.hapticsService.lightImpact()
+                        },
+                        content: {
+                            Text("Okay")
+                                .font(MTTypography.caption())
+                                .padding(.horizontal, MTSpacing.large)
+                                .padding(.vertical, MTSpacing.small)
+                                .background(MTColors.primary)
+                                .foregroundColor(.white)
+                                .cornerRadius(20)
+                        }
+                    )
+                    .frame(minWidth: MTSpacing.minimumTouchTarget, minHeight: MTSpacing.minimumTouchTarget)
+                    .accessibilityLabel("Mark as okay")
+                    .accessibilityHint("This practice item was moderately difficult")
+                    .accessibilityAddTraits(.isButton)
                     
-                    Button(action: {
-                        // Mark as easy
-                        session.hapticsService.success()
-                    }) {
-                        Text("Easy")
-                            .font(MTTypography.caption())
-                            .padding(.horizontal, MTSpacing.large)
-                            .padding(.vertical, MTSpacing.small)
-                            .background(MTColors.success)
-                            .foregroundColor(.white)
-                            .cornerRadius(20)
-                    }
+                    EnhancedButton(
+                        interaction: .medium,
+                        isLoading: false,
+                        isEnabled: true,
+                        action: {
+                            // Mark as easy
+                            session.hapticsService.success()
+                        },
+                        content: {
+                            Text("Easy")
+                                .font(MTTypography.caption())
+                                .padding(.horizontal, MTSpacing.large)
+                                .padding(.vertical, MTSpacing.small)
+                                .background(MTColors.success)
+                                .foregroundColor(.white)
+                                .cornerRadius(20)
+                        }
+                    )
+                    .frame(minWidth: MTSpacing.minimumTouchTarget, minHeight: MTSpacing.minimumTouchTarget)
+                    .accessibilityLabel("Mark as easy")
+                    .accessibilityHint("This practice item was easy")
+                    .accessibilityAddTraits(.isButton)
                 }
             }
         }
-        .padding()
+        .padding(MTSpacing.medium)
         .background(MTColors.surfaceAlt)
         .cornerRadius(12)
         .onTapGesture {

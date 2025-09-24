@@ -12,6 +12,10 @@ struct SentenceBuilderGameView: View {
     @State private var showingHint = false
     @State private var timeRemaining: Int = 120
     @State private var showingGameOver = false
+    @State private var showingFeedback = false
+    @State private var isCorrect = false
+    @State private var feedbackMessage = ""
+    @State private var xpEarned = 0
     
     enum GameState {
         case playing, paused, gameOver
@@ -45,8 +49,9 @@ struct SentenceBuilderGameView: View {
     
     var body: some View {
         ZStack {
-            // Gentle pastel background
-            LinearGradient(gradient: Gradient(colors: [Color(red: 0.97, green: 0.98, blue: 1.0), MTColors.funBlue.opacity(0.10), MTColors.funGreen.opacity(0.10)]), startPoint: .top, endPoint: .bottom)
+            // Enhanced background gradient for Liquid Glass effect
+            Color.clear
+                .liquidGlassBackground()
                 .ignoresSafeArea()
             
             VStack(spacing: 24) {
@@ -55,49 +60,59 @@ struct SentenceBuilderGameView: View {
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Sentence Builder")
                             .font(MTTypography.title(kidMode: session.userProfile.kidMode))
-                            .foregroundColor(MTColors.text)
+                            .foregroundColor(MTColors.primaryText)
                         Text("Level \(currentLevel)")
                             .font(MTTypography.body(kidMode: session.userProfile.kidMode))
-                            .foregroundColor(MTColors.text.opacity(0.7))
+                            .foregroundColor(MTColors.secondaryText)
                     }
                     Spacer()
                     
                     // Game controls
                     HStack(spacing: 16) {
                         // Hint button
-                        Button(action: { showingHint.toggle() }) {
-                            Image(systemName: "lightbulb.fill")
-                                .font(.system(size: 20, weight: .medium))
-                                .foregroundColor(MTColors.funYellow)
-                                .padding(12)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 12)
-                                        .fill(Color.white.opacity(0.9))
-                                )
-                        }
-                        .buttonStyle(.plain)
+                        EnhancedButton(
+                            interaction: .light,
+                            isLoading: false,
+                            isEnabled: true,
+                            action: { showingHint.toggle() },
+                            content: {
+                                Image(systemName: "lightbulb.fill")
+                                    .font(.system(size: 20, weight: .medium))
+                                    .foregroundColor(MTColors.funYellow)
+                                    .padding(12)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 12)
+                                            .fill(Color.white.opacity(0.9))
+                                    )
+                            }
+                        )
                         
                         // Pause button
-                        Button(action: { gameState = .paused }) {
-                            Image(systemName: "pause.fill")
-                                .font(.system(size: 20, weight: .medium))
-                                .foregroundColor(MTColors.funBlue)
-                                .padding(12)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 12)
-                                        .fill(Color.white.opacity(0.9))
-                                )
-                        }
-                        .buttonStyle(.plain)
+                        EnhancedButton(
+                            interaction: .light,
+                            isLoading: false,
+                            isEnabled: true,
+                            action: { gameState = .paused },
+                            content: {
+                                Image(systemName: "pause.fill")
+                                    .font(.system(size: 20, weight: .medium))
+                                    .foregroundColor(MTColors.funBlue)
+                                    .padding(12)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 12)
+                                            .fill(Color.white.opacity(0.9))
+                                    )
+                            }
+                        )
                     }
                 }
                 .padding(.horizontal)
                 
                 // Game stats
                 HStack(spacing: 32) {
-                    SentenceBuilderStatCard(title: "Score", value: "\(score)", color: MTColors.funGreen)
-                    SentenceBuilderStatCard(title: "Level", value: "\(currentLevel)", color: MTColors.funBlue)
-                    SentenceBuilderStatCard(title: "Time", value: "\(timeRemaining)s", color: MTColors.funPink)
+                    LiquidGlassStatsCard(title: "Score", value: "\(score)", icon: "star.fill", color: MTColors.funGreen)
+                    LiquidGlassStatsCard(title: "Level", value: "\(currentLevel)", icon: "chart.bar.fill", color: MTColors.funBlue)
+                    LiquidGlassStatsCard(title: "Time", value: "\(timeRemaining)s", icon: "clock.fill", color: MTColors.funPink)
                 }
                 .padding(.horizontal)
                 
@@ -106,7 +121,7 @@ struct SentenceBuilderGameView: View {
                     VStack(spacing: 16) {
                         Text("Build this sentence:")
                             .font(MTTypography.heading(kidMode: session.userProfile.kidMode))
-                            .foregroundColor(MTColors.text)
+                            .foregroundColor(MTColors.primaryText)
                         
                         Text(sentence.english)
                             .font(MTTypography.body(kidMode: session.userProfile.kidMode))
@@ -118,13 +133,13 @@ struct SentenceBuilderGameView: View {
                                     .fill(MTColors.funBlue.opacity(0.15))
                             )
                     }
-                    .padding(.horizontal)
+                    .padding(.horizontal, MTSpacing.medium)
                     
                     // Current sentence being built
                     VStack(spacing: 16) {
                         Text("Your sentence:")
                             .font(MTTypography.body(kidMode: session.userProfile.kidMode))
-                            .foregroundColor(MTColors.text)
+                            .foregroundColor(MTColors.primaryText)
                         
                         if selectedWords.isEmpty {
                             Text("Tap words below to build your sentence")
@@ -158,13 +173,13 @@ struct SentenceBuilderGameView: View {
                             )
                         }
                     }
-                    .padding(.horizontal)
+                    .padding(.horizontal, MTSpacing.medium)
                     
                     // Available words
                     VStack(spacing: 16) {
                         Text("Available words:")
                             .font(MTTypography.body(kidMode: session.userProfile.kidMode))
-                            .foregroundColor(MTColors.text)
+                            .foregroundColor(MTColors.primaryText)
                         
                         LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: 3), spacing: 12) {
                             ForEach(sentence.words, id: \.self) { word in
@@ -177,32 +192,72 @@ struct SentenceBuilderGameView: View {
                             }
                         }
                     }
-                    .padding(.horizontal)
+                    .padding(.horizontal, MTSpacing.medium)
                     
                     // Action buttons
-                    HStack(spacing: 20) {
-                        Button("Clear") {
-                            selectedWords.removeAll()
-                            session.hapticsService.lightImpact()
-                        }
+                    HStack(spacing: MTSpacing.large) {
+                        EnhancedButton(
+                            interaction: .medium,
+                            isLoading: false,
+                            isEnabled: true,
+                            action: {
+                                selectedWords.removeAll()
+                                session.hapticsService.lightImpact()
+                            },
+                            content: {
+                                Text("Clear")
+                            }
+                        )
                         .buttonStyle(.bordered)
                         .tint(MTColors.funPink)
                         .controlSize(.large)
+                        .frame(minWidth: MTSpacing.minimumTouchTarget, minHeight: MTSpacing.minimumTouchTarget)
+                        .accessibilityLabel("Clear selected words")
+                        .accessibilityHint("Remove all selected words from the sentence")
+                        .accessibilityAddTraits(.isButton)
                         
-                        Button("Check") {
-                            checkSentence()
-                        }
+                        EnhancedButton(
+                            interaction: .medium,
+                            isLoading: false,
+                            isEnabled: !selectedWords.isEmpty,
+                            action: checkSentence,
+                            content: {
+                                Text("Check")
+                            }
+                        )
                         .buttonStyle(.borderedProminent)
                         .tint(MTColors.funGreen)
                         .controlSize(.large)
-                        .disabled(selectedWords.isEmpty)
+                        .frame(minWidth: MTSpacing.minimumTouchTarget, minHeight: MTSpacing.minimumTouchTarget)
+                        .accessibilityLabel("Check sentence")
+                        .accessibilityHint("Verify if the sentence is correct")
+                        .accessibilityAddTraits(.isButton)
                     }
-                    .padding(.horizontal)
+                    .padding(.horizontal, MTSpacing.medium)
+                }
+                
+                // Standardized feedback
+                if showingFeedback {
+                    GameFeedbackView(
+                        isCorrect: isCorrect,
+                        message: feedbackMessage,
+                        xpEarned: xpEarned,
+                        correctAnswer: isCorrect ? nil : currentSentence?.telugu,
+                        explanation: isCorrect ? "Perfect sentence structure!" : "Try arranging the words in the correct order.",
+                        onContinue: {
+                            showingFeedback = false
+                            if isCorrect {
+                                nextLevel()
+                            } else {
+                                selectedWords.removeAll()
+                            }
+                        }
+                    )
                 }
                 
                 Spacer()
             }
-            .padding(.vertical)
+            .padding(.vertical, MTSpacing.large)
         }
         .onAppear {
             setupGame()
@@ -214,14 +269,14 @@ struct SentenceBuilderGameView: View {
         }
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
+        .toolbar(content: {
             ToolbarItem(placement: .navigationBarLeading) {
                 Button("Exit") {
                     dismiss()
                 }
                 .foregroundColor(MTColors.funBlue)
             }
-        }
+        })
         .sheet(isPresented: $showingHint) {
             HintView(sentence: currentSentence)
         }
@@ -254,22 +309,21 @@ struct SentenceBuilderGameView: View {
     private func checkSentence() {
         guard let sentence = currentSentence else { return }
         
-        let isCorrect = selectedWords == sentence.words
+        self.isCorrect = selectedWords == sentence.words
         
         if isCorrect {
             session.hapticsService.success()
             score += currentLevel * 10
-            nextLevel()
+            feedbackMessage = "Excellent! Perfect sentence!"
+            xpEarned = currentLevel * 5
+            session.awardXP(xpEarned)
         } else {
             session.hapticsService.warning()
-            // Show correct answer briefly
-            withAnimation(.easeInOut(duration: 0.5)) {
-                selectedWords = sentence.words
-            }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                selectedWords.removeAll()
-            }
+            feedbackMessage = "Not quite right, but keep trying!"
+            xpEarned = 0
         }
+        
+        showingFeedback = true
     }
     
     private func nextLevel() {
@@ -313,20 +367,25 @@ struct SentenceBuilderStatCard: View {
     let color: Color
     
     var body: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: MTSpacing.small) {
             Text(value)
                 .font(MTTypography.heading(kidMode: false))
                 .foregroundColor(color)
                 .fontWeight(.bold)
-            Text(title)
+            (Text(title) as Text)
                 .font(MTTypography.caption(kidMode: false))
-                .foregroundColor(MTColors.text.opacity(0.7))
+                .foregroundColor(MTColors.secondaryText)
         }
-        .padding()
+        .padding(MTSpacing.medium)
         .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color.white.opacity(0.9))
-                .shadow(color: color.opacity(0.2), radius: 4, x: 0, y: 2)
+            LiquidGlassView(
+                intensity: 0.12,
+                cornerRadius: 22,
+                padding: 0
+            ) {
+                RoundedRectangle(cornerRadius: 22, style: .continuous)
+                    .fill(color.opacity(0.02))
+            }
         )
     }
 }
@@ -338,9 +397,9 @@ struct WordCardView: View {
     
     var body: some View {
         Button(action: onTap) {
-            Text(word)
+            (Text(word) as Text)
                 .font(MTTypography.body(kidMode: false))
-                .foregroundColor(MTColors.text)
+                .foregroundColor(MTColors.primaryText)
                 .multilineTextAlignment(.center)
                 .lineLimit(2)
                 .padding()
@@ -348,7 +407,7 @@ struct WordCardView: View {
                 .frame(maxWidth: .infinity)
                 .background(
                     RoundedRectangle(cornerRadius: 12)
-                        .fill(Color.white.opacity(0.95))
+                        .fill((Color.white as Color).opacity(0.95))
                         .shadow(color: MTColors.funBlue.opacity(0.15), radius: 4, x: 0, y: 2)
                 )
         }
@@ -369,17 +428,17 @@ struct HintView: View {
             
             Text("Hint")
                 .font(MTTypography.title(kidMode: false))
-                .foregroundColor(MTColors.text)
+                .foregroundColor(MTColors.primaryText)
             
             if let sentence = sentence {
                 VStack(spacing: 16) {
                     Text("The sentence has \(sentence.words.count) words")
                         .font(MTTypography.body(kidMode: false))
-                        .foregroundColor(MTColors.text)
+                        .foregroundColor(MTColors.primaryText)
                     
                     Text("Category: \(sentence.category)")
                         .font(MTTypography.caption(kidMode: false))
-                        .foregroundColor(MTColors.text.opacity(0.7))
+                        .foregroundColor(MTColors.secondaryText)
                 }
             }
             
@@ -393,7 +452,7 @@ struct HintView: View {
         .padding(40)
         .background(
             RoundedRectangle(cornerRadius: 20)
-                .fill(Color.white.opacity(0.95))
+                .fill((Color.white as Color).opacity(0.95))
                 .shadow(color: MTColors.funYellow.opacity(0.2), radius: 16, x: 0, y: 8)
         )
     }
@@ -414,12 +473,12 @@ struct SentenceBuilderGameOverView: View {
             
             Text("Game Complete!")
                 .font(MTTypography.title(kidMode: false))
-                .foregroundColor(MTColors.text)
+                .foregroundColor(MTColors.primaryText)
             
             VStack(spacing: 16) {
                 Text("Final Score")
                     .font(MTTypography.body(kidMode: false))
-                    .foregroundColor(MTColors.text.opacity(0.7))
+                    .foregroundColor(MTColors.secondaryText)
                 Text("\(score)")
                     .font(.system(size: 48, weight: .bold, design: .rounded))
                     .foregroundColor(MTColors.funGreen)
@@ -449,7 +508,7 @@ struct SentenceBuilderGameOverView: View {
         .padding(40)
         .background(
             RoundedRectangle(cornerRadius: 20)
-                .fill(Color.white.opacity(0.95))
+                .fill((Color.white as Color).opacity(0.95))
                 .shadow(color: MTColors.funBlue.opacity(0.2), radius: 16, x: 0, y: 8)
         )
     }

@@ -13,6 +13,9 @@ struct ContentView: View {
     var body: some View {
         RootTabView()
             .environmentObject(session)
+            .onAppear {
+                session.gamificationService.onAppLaunch()
+            }
     }
 }
 

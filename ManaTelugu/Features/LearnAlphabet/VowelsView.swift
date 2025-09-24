@@ -10,12 +10,20 @@ struct VowelsView: View {
     ]
     
     var body: some View {
-        NavigationStack {
-            ScrollView {
+        ZStack {
+            // Enhanced background gradient for Liquid Glass effect
+            Color.clear
+                .liquidGlassBackground()
+                .ignoresSafeArea()
+            
+            EnhancedScrollView(bottomPadding: 140) {
+            VStack(spacing: MTSpacing.medium) {
+                // Removed top quiz CTA for a cleaner learning flow
+                
                 LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: MTSpacing.small), count: 4), spacing: MTSpacing.small) {
-                    ForEach(vowels) { letter in
+                    ForEach(Array(vowels.enumerated()), id: \.element.id) { index, letter in
                         NavigationLink {
-                            LetterDetailView(letter: letter)
+                            LetterDetailView(letters: vowels, initialIndex: index)
                         } label: {
                             LetterCardView(letter: letter)
                         }
@@ -23,6 +31,7 @@ struct VowelsView: View {
                 }
             }
             .padding()
+            }
         }
         .onAppear { 
             Task {
@@ -36,8 +45,6 @@ struct VowelsView: View {
                 session.addLearningTime(minutes: minutes)
             }
         }
-        .navigationTitle("Vowels (అచ్చులు)")
-        .navigationBarTitleDisplayMode(.inline)
     }
     
     private func load() async {
@@ -47,6 +54,28 @@ struct VowelsView: View {
             guard let ia = vowelOrder.firstIndex(of: a.glyph), let ib = vowelOrder.firstIndex(of: b.glyph) else { return false }
             return ia < ib
         }
+    }
+    
+    private func quizCard(title: String, subtitle: String, icon: String) -> some View {
+        HStack(spacing: MTSpacing.medium) {
+            Image(systemName: icon)
+                .font(.title)
+                .foregroundColor(MTColors.primary)
+            VStack(alignment: .leading, spacing: 6) {
+                Text(title)
+                    .font(MTTypography.heading(kidMode: session.userProfile.kidMode))
+                    .foregroundColor(MTColors.text)
+                Text(subtitle)
+                    .font(MTTypography.caption(kidMode: session.userProfile.kidMode))
+                    .foregroundColor(MTColors.text.opacity(0.7))
+            }
+            Spacer()
+            Image(systemName: "chevron.right")
+                .foregroundColor(MTColors.text.opacity(0.5))
+        }
+        .padding(16)
+        .glassEffect(.regular, shape: .rect(cornerRadius: 16))
+        .frame(height: 90)
     }
 }
 

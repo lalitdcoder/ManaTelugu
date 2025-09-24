@@ -15,8 +15,9 @@ struct VocabularyCardsView: View {
     
     var body: some View {
         ZStack {
-            // Gentle pastel background
-            LinearGradient(gradient: Gradient(colors: [Color(red: 0.97, green: 0.98, blue: 1.0), MTColors.funGreen.opacity(0.10), MTColors.funPink.opacity(0.10)]), startPoint: .top, endPoint: .bottom)
+            // Enhanced background gradient for Liquid Glass effect
+            Color.clear
+                .liquidGlassBackground()
                 .ignoresSafeArea()
             
             VStack(spacing: 32) {
@@ -63,16 +64,21 @@ struct VocabularyCardsView: View {
                         }
                         
                         // Audio button - Updated to match new theme
-                        Button(action: {
-                            isPlaying = true
-                            session.hapticsService.lightImpact()
-                            session.audioService.play(name: word.audioFile, rate: 1.0)
-                            
-                            // Simulate playback completion
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-                                isPlaying = false
-                            }
-                        }) {
+                        EnhancedButton(
+                            interaction: .light,
+                            isLoading: false,
+                            isEnabled: true,
+                            action: {
+                                isPlaying = true
+                                session.hapticsService.lightImpact()
+                                session.audioService.play(name: word.audioFile, rate: 1.0)
+                                
+                                // Simulate playback completion
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                                    isPlaying = false
+                                }
+                            },
+                            content: {
                             HStack(spacing: 12) {
                                 Image(systemName: isPlaying ? "stop.fill" : "speaker.wave.2.fill")
                                     .font(.system(size: 20, weight: .medium))
@@ -83,13 +89,16 @@ struct VocabularyCardsView: View {
                             .padding(.horizontal, 24)
                             .padding(.vertical, 16)
                             .background(
-                                RoundedRectangle(cornerRadius: 16)
-                                    .fill(MTColors.funGreen)
+                                MTColors.funGreen
+                                    .glassEffect(.regular, shape: .rect(cornerRadius: 16))
                             )
                             .foregroundColor(.white)
-                            .shadow(color: MTColors.funGreen.opacity(0.3), radius: 8, x: 0, y: 4)
-                        }
-                        .buttonStyle(.plain)
+                            }
+                        )
+                        .frame(minWidth: 44, minHeight: 44)
+                        .accessibilityLabel("Play audio for \(word.telugu)")
+                        .accessibilityHint("Double tap to hear pronunciation")
+                        .accessibilityAddTraits(.isButton)
                         .simultaneousGesture(LongPressGesture(minimumDuration: 0.5)
                             .onEnded { _ in
                                 session.audioService.play(name: word.audioFile, rate: 0.75)
@@ -97,11 +106,7 @@ struct VocabularyCardsView: View {
                         )
                     }
                     .padding(32)
-                    .background(
-                        RoundedRectangle(cornerRadius: 24)
-                            .fill(Color.white.opacity(0.95))
-                            .shadow(color: MTColors.funGreen.opacity(0.15), radius: 16, x: 0, y: 8)
-                    )
+                    .glassEffect(.regular, shape: .rect(cornerRadius: 24))
                     .frame(maxWidth: .infinity)
                     .onTapGesture {
                         withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
@@ -112,51 +117,64 @@ struct VocabularyCardsView: View {
                     // Navigation buttons - Next/Previous instead of Easy/Hard/Okay
                     HStack(spacing: 20) {
                         // Previous button
-                        Button(action: {
-                            session.hapticsService.lightImpact()
-                            moveToPreviousWord()
-                        }) {
-                            HStack(spacing: 8) {
-                                Image(systemName: "chevron.left")
-                                    .font(.system(size: 18, weight: .semibold))
-                                Text("Previous")
-                                    .font(MTTypography.body(kidMode: session.userProfile.kidMode))
-                                    .fontWeight(.medium)
+                        EnhancedButton(
+                            interaction: .medium,
+                            isLoading: false,
+                            isEnabled: currentIndex > 0,
+                            action: {
+                                moveToPreviousWord()
+                            },
+                            content: {
+                                HStack(spacing: 8) {
+                                    Image(systemName: "chevron.left")
+                                        .font(.system(size: 18, weight: .semibold))
+                                    Text("Previous")
+                                        .font(MTTypography.body(kidMode: session.userProfile.kidMode))
+                                        .fontWeight(.medium)
+                                }
+                                .padding(.horizontal, 20)
+                                .padding(.vertical, 16)
+                                .background(
+                                    MTColors.funBlue.opacity(0.15)
+                                        .glassEffect(.subtle, shape: .rect(cornerRadius: 16))
+                                )
+                                .foregroundColor(MTColors.funBlue)
                             }
-                            .padding(.horizontal, 20)
-                            .padding(.vertical, 16)
-                            .background(
-                                RoundedRectangle(cornerRadius: 16)
-                                    .fill(MTColors.funBlue.opacity(0.15))
-                            )
-                            .foregroundColor(MTColors.funBlue)
-                        }
-                        .buttonStyle(.plain)
-                        .disabled(currentIndex == 0)
-                        .opacity(currentIndex == 0 ? 0.5 : 1.0)
+                        )
+                        .frame(minWidth: 44, minHeight: 44)
+                        .accessibilityLabel("Previous word")
+                        .accessibilityHint("Go to previous vocabulary word")
+                        .accessibilityAddTraits(.isButton)
                         
                         // Next button
-                        Button(action: {
-                            session.hapticsService.lightImpact()
-                            moveToNextWord()
-                        }) {
-                            HStack(spacing: 8) {
-                                Text("Next")
-                                    .font(MTTypography.body(kidMode: session.userProfile.kidMode))
-                                    .fontWeight(.medium)
-                                Image(systemName: "chevron.right")
-                                    .font(.system(size: 18, weight: .semibold))
+                        EnhancedButton(
+                            interaction: .medium,
+                            isLoading: false,
+                            isEnabled: currentIndex < words.count - 1,
+                            action: {
+                                moveToNextWord()
+                            },
+                            content: {
+                                HStack(spacing: 8) {
+                                    Text("Next")
+                                        .font(MTTypography.body(kidMode: session.userProfile.kidMode))
+                                        .fontWeight(.medium)
+                                    Image(systemName: "chevron.right")
+                                        .font(.system(size: 18, weight: .semibold))
+                                }
+                                .padding(.horizontal, 20)
+                                .padding(.vertical, 16)
+                                .background(
+                                    MTColors.funGreen
+                                        .glassEffect(.regular, shape: .rect(cornerRadius: 16))
+                                )
+                                .foregroundColor(.white)
                             }
-                            .padding(.horizontal, 20)
-                            .padding(.vertical, 16)
-                            .background(
-                                RoundedRectangle(cornerRadius: 16)
-                                    .fill(MTColors.funGreen)
-                            )
-                            .foregroundColor(.white)
-                            .shadow(color: MTColors.funGreen.opacity(0.3), radius: 8, x: 0, y: 4)
-                        }
-                        .buttonStyle(.plain)
+                        )
+                        .frame(minWidth: 44, minHeight: 44)
+                        .accessibilityLabel("Next word")
+                        .accessibilityHint("Go to next vocabulary word")
+                        .accessibilityAddTraits(.isButton)
                     }
                     .padding(.horizontal)
                 } else {
@@ -172,9 +190,7 @@ struct VocabularyCardsView: View {
         .onAppear {
             Task {
                 words = await session.dataRepository.words(theme: theme)
-                print("DEBUG: Loaded \(words.count) words for theme: \(theme)")
                 if words.isEmpty {
-                    print("DEBUG: No words loaded - using fallback test words")
                     // Fallback test words if data loading fails
                     words = [
                         Word(id: "test_1", telugu: "కుందేలు", transliteration: "Kundelu", english: "Rabbit", imageName: "rabbit.png", audioFile: "కుందేలు.mp3", theme: theme),
@@ -184,8 +200,6 @@ struct VocabularyCardsView: View {
                 }
             }
         }
-        .navigationTitle("")
-        .navigationBarTitleDisplayMode(.inline)
     }
     
     private func moveToNextWord() {

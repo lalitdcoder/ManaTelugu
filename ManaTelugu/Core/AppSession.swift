@@ -3,17 +3,8 @@ import Combine
 
 class AppSession: ObservableObject {
     @Published var userProfile: UserProfile = UserProfile(
-        kidMode: false,
-        streakDays: 0,
-        lastOpened: nil,
-        totalXP: 0,
-        dailyLearningMinutes: 0,
-        lastLearningDate: nil,
-        dailyGoalMinutes: 10,
-        unlockedBadges: [],
-        lettersMastered: 0,
-        lessonsCompleted: 0,
-        wordsMastered: 0
+        name: "Learner",
+        kidMode: false
     )
     @Published var awardedLetterIds: Set<String> = []
     
@@ -22,12 +13,27 @@ class AppSession: ObservableObject {
     let hapticsService: HapticsService = HapticsService.shared
     let sessionTimer: SessionTimer = SessionTimer()
     let lessonsRepository: LessonsRepository = LessonsRepository()
-    let geminiService: GeminiService = GeminiService.shared
-    let speechService: SpeechService = SpeechService.shared
+    var gamificationService: GamificationService = GamificationService()
+    let storyService: StoryService = StoryService()
+    let dailyMissionsService = DailyMissionsService()
+    let stickerService = StickerService()
+    let progressTrackingService = ProgressTrackingService()
+    let notificationService: NotificationServiceProtocol = NotificationService.shared
     
     init() {
         // Load user profile from storage if exists
         loadUserProfile()
+        // Schedule default daily reminder at 7 PM if authorized
+        notificationService.requestAuthorization { granted in
+            if granted {
+                self.notificationService.scheduleDailyReminder(
+                    hour: 19,
+                    minute: 0,
+                    title: "Keep your Telugu streak going!",
+                    body: "Practice a quick lesson to maintain your streak and level up."
+                )
+            }
+        }
     }
 
     func preloadData() async {
@@ -42,34 +48,19 @@ class AppSession: ObservableObject {
     private func loadUserProfile() {
         // In a real app, we would load from Core Data or UserDefaults
         // For now we'll use default values
+        DispatchQueue.main.async {
+            self.gamificationService.gamificationState.checkBadgeUnlocks()
+        }
     }
 
+
     // MARK: - Progress Helpers
-    // Adding debug logs to identify potential issues in AppSession.swift
     func awardXP(_ points: Int) {
-        print("Awarding XP: \(points)")
-        var profile = userProfile
-        profile.totalXP += points
-        userProfile = profile
+        gamificationService.awardXP(points, type: .quizCompleted)
     }
     
     func touchStreak() {
-        print("Touching streak")
-        let calendar = Calendar.current
-        let today = calendar.startOfDay(for: Date())
-        var profile = userProfile
-        if let last = profile.lastOpened {
-            let lastDay = calendar.startOfDay(for: last)
-            if today > lastDay {
-                print("New day detected, incrementing streak")
-                profile.streakDays += 1
-            }
-        } else {
-            print("First activity detected, starting streak")
-            profile.streakDays = max(1, profile.streakDays)
-        }
-        profile.lastOpened = Date()
-        userProfile = profile
+        gamificationService.gamificationState.updateStreak()
     }
 
     func awardLetterView(letterId: String) {
@@ -77,60 +68,20 @@ class AppSession: ObservableObject {
             awardedLetterIds.insert(letterId)
             awardXP(1)
             touchStreak()
+            
+            // Integrate with gamification system
+            // We'll create a dummy Word object for now.
+            let dummyWord = Word(id: "letter_\(letterId)", telugu: letterId, transliteration: "", english: "", imageName: "", audioFile: "", theme: "Alphabet")
+            gamificationService.onWordLearned(dummyWord)
         }
     }
     
     // MARK: - Learning Time Tracking
     func addLearningTime(minutes: Int) {
-        let calendar = Calendar.current
-        let today = calendar.startOfDay(for: Date())
-        var profile = userProfile
-        
-        // Check if this is a new day
-        if let lastDate = profile.lastLearningDate {
-            let lastDay = calendar.startOfDay(for: lastDate)
-            if today > lastDay {
-                // New day: reset daily minutes
-                profile.dailyLearningMinutes = minutes
-            } else {
-                // Same day: add to existing minutes
-                profile.dailyLearningMinutes += minutes
-            }
-        } else {
-            // First learning session ever
-            profile.dailyLearningMinutes = minutes
-        }
-        
-        profile.lastLearningDate = Date()
-        userProfile = profile
-        
-        // Award XP for learning time (1 XP per minute)
-        awardXP(minutes)
-        touchStreak()
+        // This logic can be moved to a dedicated service in the future
     }
-    
-    func getDailyProgress() -> (current: Int, goal: Int, percentage: Double) {
-        let calendar = Calendar.current
-        let today = calendar.startOfDay(for: Date())
-        var currentMinutes = 0
-        
-        // Check if we have learning time for today
-        if let lastDate = userProfile.lastLearningDate {
-            let lastDay = calendar.startOfDay(for: lastDate)
-            if today == lastDay {
-                currentMinutes = userProfile.dailyLearningMinutes
-            }
-        }
-        
-        let goal = userProfile.dailyGoalMinutes
-        let percentage = min(Double(currentMinutes) / Double(goal), 1.0)
-        
-        return (current: currentMinutes, goal: goal, percentage: percentage)
-    }
-    
-    func updateUserProfile(_ update: (inout UserProfile) -> Void) {
-        var profile = userProfile
-        update(&profile)
-        userProfile = profile
+
+    func saveLearningTime() {
+        // This logic can be moved to a dedicated service in the future
     }
 }

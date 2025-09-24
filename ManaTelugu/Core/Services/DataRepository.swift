@@ -31,55 +31,91 @@ actor DataRepository {
         if let cached = lettersCache {
             return cached
         }
-        return await withCheckedContinuation { continuation in
-            DispatchQueue.global(qos: .userInitiated).async {
-                // Try multiple approaches to find the letters.json file
-                var url: URL?
-                
-                // 1. Try bundle resource
-                if let bundleUrl = Bundle.main.url(forResource: "letters", withExtension: "json") {
-                    url = bundleUrl
-                    print("DEBUG: Found letters.json in bundle at: \(bundleUrl)")
+        
+        // Try multiple approaches to find the letters.json file
+        var url: URL?
+        
+        // 1. Try bundle resource
+        if let bundleUrl = Bundle.main.url(forResource: "letters", withExtension: "json") {
+            url = bundleUrl
+        }
+        // 2. Try bundle path
+        else if let bundlePath = Bundle.main.path(forResource: "letters", ofType: "json") {
+            url = URL(fileURLWithPath: bundlePath)
+        }
+        // 3. Try source files (for development)
+        else {
+            let sourceUrl = URL(fileURLWithPath: "/Users/pavan/Desktop/ManaTelugu/ManaTelugu/Resources/Data/letters.json")
+            if FileManager.default.fileExists(atPath: sourceUrl.path) {
+                url = sourceUrl
+            }
+        }
+        
+        var letters: [Letter] = []
+        
+        if let finalUrl = url {
+            if let data = try? Data(contentsOf: finalUrl) {
+                do {
+                    letters = try JSONDecoder().decode([Letter].self, from: data)
+                } catch {
+                    // Fallback to embedded data
+                    letters = EmbeddedLettersData.letters
                 }
-                // 2. Try bundle path
-                else if let bundlePath = Bundle.main.path(forResource: "letters", ofType: "json") {
-                    url = URL(fileURLWithPath: bundlePath)
-                    print("DEBUG: Found letters.json via bundle path: \(bundlePath)")
-                }
-                // 3. Try source files (for development)
-                else {
-                    let sourceUrl = URL(fileURLWithPath: "/Users/pavan/Desktop/ManaTelugu/ManaTelugu/Resources/Data/letters.json")
-                    if FileManager.default.fileExists(atPath: sourceUrl.path) {
-                        url = sourceUrl
-                        print("DEBUG: Found letters.json in source at: \(sourceUrl)")
-                    }
-                }
-                
-                if let finalUrl = url {
-                    print("DEBUG: Found letters.json at: \(finalUrl)")
-                    if let data = try? Data(contentsOf: finalUrl) {
-                        do {
-                            let letters = try JSONDecoder().decode([Letter].self, from: data)
-                            print("DEBUG: Successfully decoded \(letters.count) letters from JSON")
-                            Task {
-                                await self.setLettersCache(letters)
-                                continuation.resume(returning: letters)
-                            }
-                            return
-                        } catch {
-                            print("DEBUG: Could not decode letters.json: \(error)")
-                        }
-                    }
-                }
-                
+            } else {
                 // Fallback to embedded data
-                print("DEBUG: Using embedded letters data as fallback")
-                let letters = EmbeddedLettersData.letters
-                print("DEBUG: Loaded \(letters.count) letters from embedded data")
-                Task {
-                    await self.setLettersCache(letters)
-                    continuation.resume(returning: letters)
+                letters = EmbeddedLettersData.letters
+            }
+        } else {
+            // Fallback to embedded data
+            letters = EmbeddedLettersData.letters
+        }
+        
+        // Apply stroke overrides
+        if let overrides = await loadStrokeOverrides() {
+            letters = await applyStrokeOverrides(overrides, to: letters)
+        }
+        
+        await setLettersCache(letters)
+        return letters
+    }
+
+    // MARK: - Stroke Overrides
+    private func loadStrokeOverrides() -> [String: [[CGPointCodable]]]? {
+        // 1) Look in app bundle
+        if let bundleUrl = Bundle.main.url(forResource: "strokes", withExtension: "json") {
+            if let data = try? Data(contentsOf: bundleUrl) {
+                if let decoded = try? JSONDecoder().decode([String: [[CGPointCodable]]].self, from: data) {
+                    return decoded
                 }
+            }
+        }
+        // 2) Dev path
+        let devPath = "/Users/pavan/Desktop/ManaTelugu/ManaTelugu/Resources/Data/strokes.json"
+        if FileManager.default.fileExists(atPath: devPath) {
+            let url = URL(fileURLWithPath: devPath)
+            if let data = try? Data(contentsOf: url) {
+                if let decoded = try? JSONDecoder().decode([String: [[CGPointCodable]]].self, from: data) {
+                    return decoded
+                }
+            }
+        }
+        return nil
+    }
+    
+    private func applyStrokeOverrides(_ overrides: [String: [[CGPointCodable]]], to letters: [Letter]) -> [Letter] {
+        var map: [String: [[CGPointCodable]]] = overrides
+        return letters.map { letter in
+            if let newStrokes = map[letter.id], !newStrokes.isEmpty {
+                return Letter(
+                    id: letter.id,
+                    glyph: letter.glyph,
+                    name: letter.name,
+                    transliteration: letter.transliteration,
+                    audioFile: letter.audioFile,
+                    strokePathPoints: newStrokes
+                )
+            } else {
+                return letter
             }
         }
     }
@@ -99,33 +135,27 @@ actor DataRepository {
                 // 1. Try bundle resource
                 if let bundleUrl = Bundle.main.url(forResource: "words", withExtension: "json") {
                     url = bundleUrl
-                    print("DEBUG: Found words.json in bundle at: \(bundleUrl)")
                 }
                 // 2. Try bundle path
                 else if let bundlePath = Bundle.main.path(forResource: "words", ofType: "json") {
                     url = URL(fileURLWithPath: bundlePath)
-                    print("DEBUG: Found words.json via bundle path: \(bundlePath)")
                 }
                 // 3. Try source files (for development)
                 else {
                     let sourceUrl = URL(fileURLWithPath: "/Users/pavan/Desktop/ManaTelugu/ManaTelugu/Resources/Data/words.json")
                     if FileManager.default.fileExists(atPath: sourceUrl.path) {
                         url = sourceUrl
-                        print("DEBUG: Found words.json in source at: \(sourceUrl)")
                     }
                 }
                 
                 if let finalUrl = url {
-                    print("DEBUG: Found words.json at: \(finalUrl)")
                     if let data = try? Data(contentsOf: finalUrl) {
                         do {
                             let words = try JSONDecoder().decode([Word].self, from: data)
-                            print("DEBUG: Successfully decoded \(words.count) words from JSON")
                             Task {
                                 await self.setWordsCache(words)
                                 if let theme = theme {
                                     let filteredWords = words.filter { $0.theme == theme }
-                                    print("DEBUG: Filtered to \(filteredWords.count) words for theme: \(theme)")
                                     continuation.resume(returning: filteredWords)
                                 } else {
                                     continuation.resume(returning: words)
@@ -133,20 +163,17 @@ actor DataRepository {
                             }
                             return
                         } catch {
-                            print("DEBUG: Could not decode words.json: \(error)")
+                            // Fallback to embedded data
                         }
                     }
                 }
                 
                 // Fallback to embedded data
-                print("DEBUG: Using embedded words data as fallback")
                 let words = EmbeddedWordsData.words
-                print("DEBUG: Loaded \(words.count) words from embedded data")
                 Task {
                     await self.setWordsCache(words)
                     if let theme = theme {
                         let filteredWords = words.filter { $0.theme == theme }
-                        print("DEBUG: Filtered to \(filteredWords.count) words for theme: \(theme)")
                         continuation.resume(returning: filteredWords)
                     } else {
                         continuation.resume(returning: words)
@@ -202,8 +229,20 @@ actor DataRepository {
                 }
                 
                 do {
-                    let lessons = try JSONDecoder().decode([Lesson].self, from: data)
-                    print("DEBUG: Successfully decoded \(lessons.count) lessons")
+                    let decoder = JSONDecoder()
+                    // First try new dictionary format: { "levels": [...] }
+                    if let lessonData = try? decoder.decode(LessonData.self, from: data) {
+                        let lessons = lessonData.levels.flatMap { $0.lessons }
+                        print("DEBUG: Successfully decoded lessons from LessonData: total \(lessons.count)")
+                        Task {
+                            await self.setLessonsCache(lessons)
+                            continuation.resume(returning: lessons)
+                        }
+                        return
+                    }
+                    // Fallback to legacy format: [Lesson]
+                    let lessons = try decoder.decode([Lesson].self, from: data)
+                    print("DEBUG: Successfully decoded \(lessons.count) lessons (legacy array format)")
                     Task {
                         await self.setLessonsCache(lessons)
                         continuation.resume(returning: lessons)
@@ -279,10 +318,7 @@ actor DataRepository {
             return
         }
         
-        // Logic to unlock badge (e.g., update user profile or database)
-        session.updateUserProfile { profile in
-            profile.unlockedBadges.insert(badge.id)
-        }
-        print("Unlocked badge: \(badgeName)")
+        // Badge unlocking is now handled by GamificationService
+        print("Badge unlocked: \(badgeName)")
     }
 }

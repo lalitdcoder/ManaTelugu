@@ -118,14 +118,83 @@ struct TracingCanvasView: View {
         }
     }
     
+    // MARK: - Path Similarity Calculation
+    private func calculatePathSimilarity(userPoints: [CGPoint], refPoints: [CGPoint]) -> Double {
+        guard !userPoints.isEmpty && !refPoints.isEmpty else { return 0.0 }
+        
+        // Normalize points to same scale
+        let userNormalized = normalizePoints(userPoints)
+        let refNormalized = normalizePoints(refPoints)
+        
+        // Calculate distance between corresponding points
+        let minCount = min(userNormalized.count, refNormalized.count)
+        var totalDistance: Double = 0
+        
+        for i in 0..<minCount {
+            let distance = sqrt(pow(userNormalized[i].x - refNormalized[i].x, 2) + pow(userNormalized[i].y - refNormalized[i].y, 2))
+            totalDistance += distance
+        }
+        
+        let averageDistance = totalDistance / Double(minCount)
+        
+        // Convert distance to similarity score (0-1, where 1 is perfect match)
+        let maxExpectedDistance: Double = 0.3 // Adjust based on your needs
+        let similarity = max(0, 1.0 - (averageDistance / maxExpectedDistance))
+        
+        return min(1.0, similarity)
+    }
+    
+    // MARK: - Stroke Order Score Calculation
+    private func calculateStrokeOrderScore() -> Double {
+        guard completedPaths.count > 1 && referenceStrokes.count > 1 else { return 1.0 }
+        
+        // Simple stroke order validation
+        // This is a basic implementation - you can make it more sophisticated
+        let userStrokeCount = completedPaths.count
+        let refStrokeCount = referenceStrokes.count
+        
+        // Allow some flexibility in stroke count
+        let strokeCountSimilarity = 1.0 - abs(Double(userStrokeCount - refStrokeCount)) / Double(max(userStrokeCount, refStrokeCount))
+        
+        return max(0.0, strokeCountSimilarity)
+    }
+    
+    // MARK: - Helper Functions
+    private func normalizePoints(_ points: [CGPoint]) -> [CGPoint] {
+        guard !points.isEmpty else { return [] }
+        
+        let minX = points.map { $0.x }.min() ?? 0
+        let maxX = points.map { $0.x }.max() ?? 1
+        let minY = points.map { $0.y }.min() ?? 0
+        let maxY = points.map { $0.y }.max() ?? 1
+        
+        let width = maxX - minX
+        let height = maxY - minY
+        let scale = max(width, height)
+        
+        guard scale > 0 else { return points }
+        
+        return points.map { point in
+            CGPoint(
+                x: (point.x - minX) / scale,
+                y: (point.y - minY) / scale
+            )
+        }
+    }
+    
     private func checkTracingCompletion() {
         guard !completedPaths.isEmpty else { return }
-        let minPathLength: Double = 300 // Even stricter
-        let minArea: CGFloat = 20000 // Even stricter
-        let minPoints: Int = 40 // Require at least 40 points in the trace
+        
+        // More balanced validation parameters - not too strict, not too lenient
+        let minPathLength: Double = 200 // Reasonable minimum path length
+        let minArea: CGFloat = 15000 // Reasonable minimum area
+        let minPoints: Int = 30 // Reasonable minimum points
+        let maxStrokes: Int = referenceStrokes.count + 3 // Allow some flexibility in stroke count
+        
         let userBoundingBox = completedPaths.reduce(CGRect.null) { $0.union($1.boundingRect) }
         let hasLongEnoughPath = completedPaths.contains { pathLength($0) > minPathLength }
         let hasBigEnoughArea = userBoundingBox.width * userBoundingBox.height > minArea
+        
         let userPoints: [CGPoint] = completedPaths.flatMap { path in
             var points: [CGPoint] = []
             path.forEach { element in
@@ -137,55 +206,44 @@ struct TracingCanvasView: View {
             }
             return points
         }
+        
         let enoughPoints = userPoints.count >= minPoints
-        // Require at least as many strokes as reference
-        let enoughStrokes = completedPaths.count >= referenceStrokes.count
-        // Require start and end points to be close to reference
-        let refStart = referenceStrokes.first?.first.map { CGPoint(x: $0.x * 120, y: $0.y * 120) }
-        let refEnd = referenceStrokes.last?.last.map { CGPoint(x: $0.x * 120, y: $0.y * 120) }
-        let userStart = completedPaths.first.flatMap { path in
-            var first: CGPoint? = nil
-            path.forEach { element in
-                if case .move(to: let pt) = element, first == nil { first = pt }
-                else if case .line(to: let pt) = element, first == nil { first = pt }
-            }
-            return first
-        }
-        let userEnd = completedPaths.last.flatMap { path in
-            var last: CGPoint? = nil
-            path.forEach { element in
-                if case .line(to: let pt) = element { last = pt }
-                else if case .move(to: let pt) = element, last == nil { last = pt }
-            }
-            return last
-        }
-        let startClose = (refStart != nil && userStart != nil) ? distance(from: refStart!, to: userStart!) < 24 : true
-        let endClose = (refEnd != nil && userEnd != nil) ? distance(from: refEnd!, to: userEnd!) < 24 : true
-        if !(hasLongEnoughPath && hasBigEnoughArea && enoughPoints && enoughStrokes && startClose && endClose) {
-            return
-        }
-        // --- Path similarity check ---
+        let notTooManyStrokes = completedPaths.count <= maxStrokes
+        let enoughStrokes = completedPaths.count >= max(1, referenceStrokes.count - 1) // More flexible stroke count
+        
+        // More flexible stroke order validation
+        let _ = validateStrokeOrder()
+        
+        // Get reference points for comparison
         let refPoints: [CGPoint] = referenceStrokes.flatMap { stroke in
             stroke.map { CGPoint(x: $0.x * 120, y: $0.y * 120) }
         }
-        guard !userPoints.isEmpty, !refPoints.isEmpty else { return }
-        // 3. Compute average min distance from user to ref
-        var userToRefDistances: [Double] = []
-        for userPt in userPoints {
-            let minDist = refPoints.map { distance(from: $0, to: userPt) }.min() ?? 9999
-            userToRefDistances.append(minDist)
+        
+        guard !userPoints.isEmpty, !refPoints.isEmpty else { 
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                onTracingComplete(false)
+            }
+            return 
         }
-        let avgUserToRef = userToRefDistances.reduce(0, +) / Double(userToRefDistances.count)
-        // 4. Compute average min distance from ref to user
-        var refToUserDistances: [Double] = []
-        for refPt in refPoints {
-            let minDist = userPoints.map { distance(from: $0, to: refPt) }.min() ?? 9999
-            refToUserDistances.append(minDist)
+        
+        // Basic requirements check
+        guard hasLongEnoughPath && hasBigEnoughArea && enoughPoints && enoughStrokes && notTooManyStrokes else {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                onTracingComplete(false)
+            }
+            return
         }
-        let avgRefToUser = refToUserDistances.reduce(0, +) / Double(refToUserDistances.count)
-        // 5. Accept if both averages are less than 7% of canvas size (very strict)
-        let threshold: Double = 120 * 0.07
-        if avgUserToRef < threshold && avgRefToUser < threshold {
+        
+        // Improved path similarity calculation
+        let pathSimilarity = calculatePathSimilarity(userPoints: userPoints, refPoints: refPoints)
+        let shapeSimilarity = calculateShapeSimilarity(userPoints: userPoints, refPoints: refPoints)
+        let strokeOrderScore = calculateStrokeOrderScore()
+        
+        // More balanced scoring system
+        let overallScore = (pathSimilarity * 0.5) + (shapeSimilarity * 0.3) + (strokeOrderScore * 0.2)
+        
+        // More reasonable threshold - 60% similarity required
+        if overallScore > 0.6 {
             let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
             impactFeedback.impactOccurred()
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
@@ -196,6 +254,73 @@ struct TracingCanvasView: View {
                 onTracingComplete(false)
             }
         }
+    }
+    
+    private func validateStrokeOrder() -> Bool {
+        // Ensure user drew strokes in roughly the same order as reference
+        guard completedPaths.count >= referenceStrokes.count else { return false }
+        
+        for i in 0..<min(completedPaths.count, referenceStrokes.count) {
+            let userPath = completedPaths[i]
+            let refStroke = referenceStrokes[i]
+            
+            // Get start and end points of user path
+            var userStart: CGPoint?
+            var userEnd: CGPoint?
+            
+            userPath.forEach { element in
+                switch element {
+                case .move(to: let pt):
+                    if userStart == nil { userStart = pt }
+                case .line(to: let pt):
+                    userEnd = pt
+                default: break
+                }
+            }
+            
+            // Get start and end points of reference stroke
+            guard let refStart = refStroke.first, let refEnd = refStroke.last else { continue }
+            let refStartPt = CGPoint(x: refStart.x * 120, y: refStart.y * 120)
+            let refEndPt = CGPoint(x: refEnd.x * 120, y: refEnd.y * 120)
+            
+            // Check if user stroke starts and ends near reference stroke
+            if let start = userStart, let end = userEnd {
+                let startDist = distance(from: start, to: refStartPt)
+                let endDist = distance(from: end, to: refEndPt)
+                
+                // Allow some flexibility but not too much
+                if startDist > 25 || endDist > 25 {
+                    return false
+                }
+            }
+        }
+        
+        return true
+    }
+    
+    private func calculateShapeSimilarity(userPoints: [CGPoint], refPoints: [CGPoint]) -> Double {
+        // Calculate how similar the overall shape is using bounding box and center of mass
+        let userBounds = userPoints.reduce(CGRect.null) { $0.union(CGRect(origin: $1, size: .zero)) }
+        let refBounds = refPoints.reduce(CGRect.null) { $0.union(CGRect(origin: $1, size: .zero)) }
+        
+        // Check aspect ratio similarity
+        let userAspect = userBounds.width / userBounds.height
+        let refAspect = refBounds.width / refBounds.height
+        let aspectSimilarity = 1.0 - abs(userAspect - refAspect) / max(userAspect, refAspect)
+        
+        // Check center of mass similarity
+        let userCenter = CGPoint(
+            x: userPoints.map { $0.x }.reduce(0, +) / Double(userPoints.count),
+            y: userPoints.map { $0.y }.reduce(0, +) / Double(userPoints.count)
+        )
+        let refCenter = CGPoint(
+            x: refPoints.map { $0.x }.reduce(0, +) / Double(refPoints.count),
+            y: refPoints.map { $0.y }.reduce(0, +) / Double(refPoints.count)
+        )
+        let centerDist = distance(from: userCenter, to: refCenter)
+        let centerSimilarity = max(0, 1.0 - centerDist / 60) // Normalize by half canvas size
+        
+        return (aspectSimilarity + centerSimilarity) / 2.0
     }
     
     private func pathLength(_ path: Path) -> Double {

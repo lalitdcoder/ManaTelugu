@@ -10,51 +10,50 @@ struct CardView: View {
     @State private var animate = false
     
     var body: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: MTSpacing.regular) {
             Text(telugu)
                 .font(.system(size: 48, weight: .bold, design: .rounded))
-                .foregroundColor(.primary)
+                .foregroundColor(MTColors.primary)
                 .minimumScaleFactor(0.5)
                 .lineLimit(1)
-            Text(transliteration)
-                .font(.title3)
+            (Text(transliteration) as Text)
+                .font(MTTypography.body())
                 .fontWeight(.medium)
-                .foregroundColor(.secondary)
+                .foregroundColor(MTColors.secondaryText)
                 .minimumScaleFactor(0.8)
                 .lineLimit(2)
             if showTranslation {
                 Text(english)
-                    .font(.headline)
+                    .font(MTTypography.heading())
                     .fontWeight(.semibold)
-                    .foregroundColor(.accentColor)
+                    .foregroundColor(MTColors.accent)
                     .multilineTextAlignment(.center)
                     .lineLimit(3)
             }
         }
-        .padding(20)
+        .padding(MTSpacing.large)
         .frame(maxWidth: .infinity, minHeight: 120)
-        .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(Color(.secondarySystemGroupedBackground))
-                .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 1)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .stroke(Color(.separator), lineWidth: 0.5)
-        )
-        .scaleEffect(animate ? 1.02 : 1.0)
-        .animation(.easeInOut(duration: 0.15), value: animate)
+        .frame(minWidth: MTSpacing.comfortableTouchTarget, minHeight: MTSpacing.comfortableTouchTarget)
+        .glassEffect(.regular, shape: .rect(cornerRadius: 24))
+        .scaleEffect(animate ? 1.05 : 1.0)
+        .animation(.spring(response: 0.3, dampingFraction: 0.6, blendDuration: 0), value: animate)
+        .animation(.easeInOut(duration: 0.3), value: showTranslation)
         .onTapGesture {
-            showTranslation.toggle()
-            animate = true
+            withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
+                showTranslation.toggle()
+                animate = true
+            }
             onTap()
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-                animate = false
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                withAnimation(.easeOut(duration: 0.2)) {
+                    animate = false
+                }
             }
         }
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(.isButton)
-        .accessibilityLabel("\(telugu), \(transliteration)")
-        .accessibilityHint(showTranslation ? "Hide translation" : "Show translation")
+        .accessibilityLabel("Telugu word: \(telugu), \(transliteration)")
+        .accessibilityHint(showTranslation ? "Hide English translation" : "Tap to show English translation")
+        .accessibilityValue(showTranslation ? "Translation: \(english)" : "Tap to reveal translation")
     }
 }

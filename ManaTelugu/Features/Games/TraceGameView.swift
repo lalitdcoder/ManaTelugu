@@ -7,8 +7,10 @@ struct TraceGameView: View {
     @State private var currentLetterIndex = 0
     @State private var path = Path()
     @State private var drawingPoints: [CGPoint] = []
-    @State private var feedbackMessage: String?
-    @State private var showSuccess = false
+    @State private var showingFeedback = false
+    @State private var isCorrect = false
+    @State private var feedbackMessage: String? = nil
+    @State private var xpEarned = 0
     
     var currentLetter: Letter? {
         guard currentLetterIndex < letters.count else { return nil }
@@ -16,17 +18,41 @@ struct TraceGameView: View {
     }
     
     var body: some View {
-        VStack(spacing: MTSpacing.large) {
+        ZStack {
+            // Enhanced background gradient for Liquid Glass effect
+            Color.clear
+                .liquidGlassBackground()
+                .ignoresSafeArea()
+            
+            VStack(spacing: MTSpacing.large) {
             if let letter = currentLetter {
                 header(for: letter)
                 referenceGlyph(for: letter)
                 drawingCanvas(for: letter)
-                feedbackView
+                // Standardized feedback
+                if showingFeedback {
+                    GameFeedbackView(
+                        isCorrect: isCorrect,
+                        message: feedbackMessage ?? "",
+                        xpEarned: xpEarned,
+                        correctAnswer: nil,
+                        explanation: isCorrect ? "Perfect tracing! You're getting better at writing Telugu letters!" : "Keep practicing! Try to follow the lines more closely.",
+                        onContinue: {
+                            showingFeedback = false
+                            if isCorrect {
+                                moveToNextLetter()
+                            } else {
+                                clearDrawing()
+                            }
+                        }
+                    )
+                }
                 controlBar
             } else {
                 loadingView
             }
             Spacer()
+            }
         }
         .onAppear {
             Task {
@@ -78,22 +104,27 @@ struct TraceGameView: View {
         // 5. Accept if both averages are less than 15% of canvas size
         let threshold: Double = Double(geometry.size.width) * 0.15
         if avgUserToRef < threshold && avgRefToUser < threshold {
-            feedbackMessage = "Great job! That looks like \(letter.glyph) +15 XP"
-            showSuccess = true
+            isCorrect = true
+            feedbackMessage = "Great job! That looks like \(letter.glyph)!"
+            xpEarned = 15
             session.hapticsService.success()
-            // Award XP for successful tracing
             session.awardXP(15)
         } else {
-            feedbackMessage = "Keep practicing! Try to follow the lines more closely."
-            showSuccess = false
+            isCorrect = false
+            feedbackMessage = "Not quite right, but keep trying!"
+            xpEarned = 0
             session.hapticsService.warning()
         }
+        
+        showingFeedback = true
     }
     
     private func clearDrawing() {
         path = Path()
         drawingPoints = []
-        feedbackMessage = nil
+        showingFeedback = false
+        feedbackMessage = ""
+        xpEarned = 0
     }
     
     private func moveToNextLetter() {
@@ -134,9 +165,9 @@ private extension TraceGameView {
                 Text(message)
                     .font(MTTypography.body(kidMode: session.userProfile.kidMode))
                     .fontWeight(.bold)
-                    .foregroundColor(showSuccess ? MTColors.success : MTColors.warning)
+                    .foregroundColor(isCorrect ? MTColors.success : MTColors.warning)
                     .padding()
-                    .background(showSuccess ? MTColors.success.opacity(0.1) : MTColors.warning.opacity(0.1))
+                    .background(isCorrect ? MTColors.success.opacity(0.1) : MTColors.warning.opacity(0.1))
                     .cornerRadius(12)
                     .padding(.horizontal)
             }

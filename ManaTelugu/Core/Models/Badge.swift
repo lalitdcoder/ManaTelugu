@@ -33,4 +33,26 @@ enum BadgeCriteria: Codable, Hashable {
         case .wordsMastered(let v): try container.encode(v, forKey: .wordsMastered)
         }
     }
+    
+    // Helper function to get human-readable description
+    func description() -> String {
+        switch self {
+        case .streak(let count):
+            return "Maintain a \(count) day learning streak"
+        case .lettersMastered(let count):
+            return "Master \(count) Telugu letters"
+        case .lessonsCompleted(let count):
+            return "Complete \(count) lesson\(count == 1 ? "" : "s")"
+        case .wordsMastered(let count):
+            return "Master \(count) Telugu word\(count == 1 ? "" : "s")"
+        }
+    }
+    
+    // Helper function to get the target value
+    func targetValue() -> Int {
+        switch self {
+        case .streak(let count), .lettersMastered(let count), .lessonsCompleted(let count), .wordsMastered(let count):
+            return count
+        }
+    }
 }

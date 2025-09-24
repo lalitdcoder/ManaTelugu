@@ -1,17 +1,23 @@
 import Foundation
 import Combine
 
+struct LessonData: Codable {
+    let levels: [LearningLevel]
+}
+
 class LessonsRepository: ObservableObject {
     @Published var levels: [LearningLevel] = []
     private var levelProgress: [String: Int] = [:]
     
-    init() {}
+    init() {
+        self.levels = createComprehensiveLessons()
+    }
     
     func loadLevels() async {
         guard levels.isEmpty else { return }
         
         self.levels = await Task.detached {
-            await self.createComprehensiveLessons()
+            self.createComprehensiveLessons()
         }.value
     }
     
@@ -28,15 +34,15 @@ class LessonsRepository: ObservableObject {
         return false
     }
     
-    private func createComprehensiveLessons() async -> [LearningLevel] {
+    private func createComprehensiveLessons() -> [LearningLevel] {
+        let beginnerLessons = createBeginnerLessons()
         return [
-            // Level 1: Beginner
             LearningLevel(
                 id: "level_1_beginner",
                 title: "Level 1: Beginner",
-                description: "Learn vowels and consonants: Master the Telugu alphabet foundation. Learn all 16 vowels (అ, ఆ, ఇ, ఈ, ఉ, ఊ, ఋ, ఎ, ఏ, ఐ, ఒ, ఓ, ఔ, అం, అః) and 36 consonants (క, ఖ, గ, ఘ, ఙ, చ, ఛ, జ, ఝ, ఞ, ట, ఠ, డ, ఢ, ణ, త, థ, ద, ధ, న, ప, ఫ, బ, భ, మ, య, ర, ల, వ, శ, ష, స, హ, ళ, క్ష, ఱ). Build your reading foundation!",
+                description: "Master Telugu alphabet foundation with vowels and basic consonants.",
                 difficulty: 1,
-                lessons: createBeginnerLessons(),
+                lessons: beginnerLessons,
                 requiredXP: 0,
                 color: "#4CAF50"
             )
@@ -1962,5 +1968,30 @@ class LessonsRepository: ObservableObject {
                 canSkip: false
             )
         ]
+    }
+
+    func findLesson(byId lessonId: String) -> Lesson? {
+        for level in levels {
+            if let lesson = level.lessons.first(where: { $0.id == lessonId }) {
+                return lesson
+            }
+        }
+        return nil
+    }
+
+    private func loadLevels() -> [LearningLevel] {
+        guard let url = Bundle.main.url(forResource: "lessons", withExtension: "json") else {
+            print("Warning: Failed to locate lessons.json in bundle. Using empty levels.")
+            return []
+        }
+        do {
+            let data = try Data(contentsOf: url)
+            let decoder = JSONDecoder()
+            let lessonData = try decoder.decode(LessonData.self, from: data)
+            return lessonData.levels
+        } catch {
+            print("Warning: Failed to load lessons from bundle: \(error). Using empty levels.")
+            return []
+        }
     }
 }

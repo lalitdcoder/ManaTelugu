@@ -17,17 +17,29 @@ struct ConsonantsView: View {
     ]
     
     var body: some View {
-        ScrollView {
-            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: MTSpacing.small), count: 4), spacing: MTSpacing.small) {
-                ForEach(consonants) { letter in
-                    NavigationLink {
-                        LetterDetailView(letter: letter)
-                    } label: {
-                        LetterCardView(letter: letter)
+        ZStack {
+            // Enhanced background gradient for Liquid Glass effect
+            Color.clear
+                .liquidGlassBackground()
+                .ignoresSafeArea()
+            
+            EnhancedScrollView(bottomPadding: 140) {
+            VStack(spacing: MTSpacing.medium) {
+                // Removed quiz CTA here as requested
+                
+                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: MTSpacing.small), count: 4), spacing: MTSpacing.small) {
+                    ForEach(Array(consonants.enumerated()), id: \.element.id) { index, letter in
+                        NavigationLink {
+                            LetterDetailView(letters: consonants, initialIndex: index)
+                        } label: {
+                            LetterCardView(letter: letter)
+                        }
                     }
                 }
+                .padding(.horizontal)
             }
-            .padding()
+            .padding(.vertical)
+            }
         }
         .onAppear { 
             Task {
@@ -41,8 +53,6 @@ struct ConsonantsView: View {
                 session.addLearningTime(minutes: minutes)
             }
         }
-        .navigationTitle("Consonants (హల్లులు)")
-        .navigationBarTitleDisplayMode(.inline)
     }
     
     private func load() async {
@@ -53,12 +63,39 @@ struct ConsonantsView: View {
             return ia < ib
         }
     }
+    
+    private func quizCard(title: String, subtitle: String, icon: String) -> some View {
+        UnifiedLiquidGlassCard(
+            layer: .content,
+            intensity: 0.12,
+            cornerRadius: 16,
+            padding: 16,
+            isInteractive: false
+        ) {
+            HStack(spacing: MTSpacing.medium) {
+                Image(systemName: icon)
+                    .font(.title)
+                    .foregroundColor(MTColors.primary)
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(title)
+                        .font(MTTypography.heading(kidMode: session.userProfile.kidMode))
+                        .foregroundColor(MTColors.text)
+                    Text(subtitle)
+                        .font(MTTypography.caption(kidMode: session.userProfile.kidMode))
+                        .foregroundColor(MTColors.text.opacity(0.7))
+                }
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .foregroundColor(MTColors.text.opacity(0.5))
+            }
+        }
+        .frame(height: 90)
+    }
 }
 
 // MARK: - Letter Card View
 struct LetterCardView: View {
     let letter: Letter
-    @State private var isPressed = false
     
     var body: some View {
         VStack(spacing: 8) {
@@ -71,20 +108,10 @@ struct LetterCardView: View {
                 .foregroundColor(MTColors.text.opacity(0.7))
                 .lineLimit(1)
         }
+        .padding(8)
+        .glassEffect(.subtle, shape: .rect(cornerRadius: 16))
         .frame(width: 80, height: 80)
-        .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(Color.white.opacity(0.95))
-                .shadow(color: MTColors.funBlue.opacity(0.08), radius: 4, x: 0, y: 2)
-        )
-        .scaleEffect(isPressed ? 0.95 : 1.0)
-        .animation(.easeInOut(duration: 0.1), value: isPressed)
-        .onTapGesture {
-            isPressed = true
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                isPressed = false
-            }
-        }
+        // Removed conflicting tap gesture - NavigationLink handles all interactions
     }
 }
 

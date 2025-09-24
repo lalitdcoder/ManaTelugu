@@ -3,44 +3,128 @@ import SwiftUI
 struct AlphabetGridView: View {
     @EnvironmentObject var session: AppSession
     @State private var letters: [Letter] = []
+    
+    // MARK: - Letter Categorization
+    private var vowels: [Letter] {
+        let vowelGlyphs = ["అ", "ఆ", "ఇ", "ఈ", "ఉ", "ఊ", "ఎ", "ఏ", "ఋ", "ౠ", "ఐ", "ఒ", "ఓ", "ఔ", "అం", "అః"]
+        return letters.filter { vowelGlyphs.contains($0.glyph) }
+    }
+    
+    private var consonants: [Letter] {
+        let vowelGlyphs = ["అ", "ఆ", "ఇ", "ఈ", "ఉ", "ఊ", "ఎ", "ఏ", "ఋ", "ౠ", "ఐ", "ఒ", "ఓ", "ఔ", "అం", "అః"]
+        return letters.filter { !vowelGlyphs.contains($0.glyph) }
+    }
+    
     var body: some View {
         ZStack {
-            // Gentle pastel background
-            LinearGradient(gradient: Gradient(colors: [Color(red: 0.97, green: 0.98, blue: 1.0), MTColors.funBlue.opacity(0.10), MTColors.funYellow.opacity(0.10)]), startPoint: .top, endPoint: .bottom)
+            // Enhanced background gradient for Liquid Glass effect
+            Color.clear
+                .liquidGlassBackground()
                 .ignoresSafeArea()
-            ScrollView {
-                VStack(alignment: .leading, spacing: 28) {
+            EnhancedScrollView(bottomPadding: 140) {
+                VStack(alignment: .leading, spacing: MTSpacing.xLarge) {
                     // Header
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Alphabet Adventure")
+                    VStack(alignment: .leading, spacing: MTSpacing.tiny) {
+                        (Text("Alphabet Adventure") as Text)
                             .font(MTTypography.title(kidMode: session.userProfile.kidMode))
-                            .foregroundColor(MTColors.text)
+                            .foregroundColor(MTColors.primaryText)
                         Text("Learn the Telugu script and sounds")
                             .font(MTTypography.body(kidMode: session.userProfile.kidMode))
-                            .foregroundColor(MTColors.text.opacity(0.7))
+                            .foregroundColor(MTColors.secondaryText)
                     }
-                    .padding(.horizontal)
-                    // Letter Grid
-                    LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 16), count: 4), spacing: 16) {
-                        ForEach(letters) { letter in
-                            NavigationLink {
-                                LetterDetailView(letter: letter)
-                            } label: {
-                                ModernLetterCardView(letter: letter)
+                    .padding(.horizontal, MTSpacing.medium)
+                    
+                    // Vowels Section
+                    VStack(alignment: .leading, spacing: MTSpacing.medium) {
+                        HStack {
+                            Text("Vowels (అచ్చులు)")
+                                .font(MTTypography.heading(kidMode: session.userProfile.kidMode))
+                                .foregroundColor(MTColors.funBlue)
+                            Spacer()
+                            Text("\(vowels.count) letters")
+                                .font(MTTypography.caption(kidMode: session.userProfile.kidMode))
+                                .foregroundColor(MTColors.secondaryText)
+                        }
+                        .padding(.horizontal, MTSpacing.medium)
+                        
+                        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: MTSpacing.medium), count: 4), spacing: MTSpacing.medium) {
+                            ForEach(vowels.indices, id: \.self) { index in
+                                let letter = vowels[index]
+                                let originalIndex = letters.firstIndex(where: { $0.id == letter.id }) ?? 0
+                                NavigationLink {
+                                    LetterDetailView(letters: letters, initialIndex: originalIndex)
+                                } label: {
+                                    ModernLetterCardView(letter: letter)
+                                }
+                                .simultaneousGesture(
+                                    TapGesture()
+                                        .onEnded { _ in
+                                            // Haptic feedback
+                                            let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
+                                            impactFeedback.impactOccurred()
+                                            
+                                            // Audio feedback
+                                            session.audioService.play(name: letter.audioFile, rate: 1.0)
+                                        }
+                                )
+                            .frame(minWidth: MTSpacing.minimumTouchTarget, minHeight: MTSpacing.minimumTouchTarget)
+                            .accessibilityLabel("Telugu vowel \(letter.glyph)")
+                            .accessibilityHint("Double tap to learn more about this vowel")
+                            .accessibilityAddTraits(.isButton)
                             }
                         }
+                        .padding(.horizontal, MTSpacing.medium)
                     }
-                    .padding(.horizontal)
+                    
+                    // Consonants Section
+                    VStack(alignment: .leading, spacing: MTSpacing.medium) {
+                        HStack {
+                            Text("Consonants (హల్లులు)")
+                                .font(MTTypography.heading(kidMode: session.userProfile.kidMode))
+                                .foregroundColor(MTColors.funGreen)
+                            Spacer()
+                            Text("\(consonants.count) letters")
+                                .font(MTTypography.caption(kidMode: session.userProfile.kidMode))
+                                .foregroundColor(MTColors.secondaryText)
+                        }
+                        .padding(.horizontal, MTSpacing.medium)
+                        
+                        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: MTSpacing.medium), count: 4), spacing: MTSpacing.medium) {
+                            ForEach(consonants.indices, id: \.self) { index in
+                                let letter = consonants[index]
+                                let originalIndex = letters.firstIndex(where: { $0.id == letter.id }) ?? 0
+                                NavigationLink {
+                                    LetterDetailView(letters: letters, initialIndex: originalIndex)
+                                } label: {
+                                    ModernLetterCardView(letter: letter)
+                                }
+                                .simultaneousGesture(
+                                    TapGesture()
+                                        .onEnded { _ in
+                                            // Haptic feedback
+                                            let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
+                                            impactFeedback.impactOccurred()
+                                            
+                                            // Audio feedback
+                                            session.audioService.play(name: letter.audioFile, rate: 1.0)
+                                        }
+                                )
+                            .frame(minWidth: MTSpacing.minimumTouchTarget, minHeight: MTSpacing.minimumTouchTarget)
+                            .accessibilityLabel("Telugu consonant \(letter.glyph)")
+                            .accessibilityHint("Double tap to learn more about this consonant")
+                            .accessibilityAddTraits(.isButton)
+                            }
+                        }
+                        .padding(.horizontal, MTSpacing.medium)
+                    }
                 }
-                .padding(.vertical)
+                .padding(.vertical, MTSpacing.large)
             }
         }
         .onAppear {
             Task {
                 letters = await session.dataRepository.letters()
-                print("DEBUG: Loaded \(letters.count) letters")
                 if letters.isEmpty {
-                    print("DEBUG: No letters loaded - using fallback test letters")
                     // Fallback test letters if data loading fails
                     letters = [
                         Letter(id: "test_a", glyph: "అ", name: "a", transliteration: "a", audioFile: "letter_a.mp3", strokePathPoints: []),
@@ -61,30 +145,103 @@ struct ModernLetterCardView: View {
     @EnvironmentObject var session: AppSession
     let letter: Letter
     @State private var isPressed = false
+    @State private var isGlowing = false
+    
+    // MARK: - Letter Type Detection
+    private var isVowel: Bool {
+        let vowelGlyphs = ["అ", "ఆ", "ఇ", "ఈ", "ఉ", "ఊ", "ఎ", "ఏ", "ఋ", "ౠ", "ఐ", "ఒ", "ఓ", "ఔ", "అం", "అః"]
+        return vowelGlyphs.contains(letter.glyph)
+    }
+    
+    private var cardColor: Color {
+        isVowel ? MTColors.funBlue : MTColors.funGreen
+    }
+    
     var body: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: MTSpacing.small) {
             ZStack {
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(MTColors.funBlue.opacity(0.10))
-                    .frame(width: 56, height: 56)
+                // Enhanced Liquid Glass Background
+                RoundedRectangle(cornerRadius: 20)
+                    .fill(.ultraThinMaterial)
+                    .opacity(0.6)
+                    .frame(width: 70, height: 70)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 20)
+                            .stroke(
+                                LinearGradient(
+                                    colors: [
+                                        cardColor.opacity(0.4),
+                                        cardColor.opacity(0.1)
+                                    ],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                ),
+                                lineWidth: 2
+                            )
+                    )
+                
+                // Letter Glyph with enhanced styling
                 Text(letter.glyph)
-                    .font(.system(size: 32, weight: .bold, design: .rounded))
-                    .foregroundColor(MTColors.funBlue)
+                    .font(.system(size: 36, weight: .bold, design: .rounded))
+                    .foregroundColor(cardColor)
             }
-            Text(letter.transliteration)
+            
+            // Transliteration with better styling
+            (Text(letter.transliteration) as Text)
                 .font(MTTypography.caption(kidMode: session.userProfile.kidMode))
-                .foregroundColor(MTColors.text.opacity(0.7))
+                .foregroundColor(MTColors.text)
+                .multilineTextAlignment(.center)
         }
         .frame(height: 90)
         .frame(maxWidth: .infinity)
-        .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(Color.white.opacity(0.95))
-                .shadow(color: MTColors.funBlue.opacity(isPressed ? 0.15 : 0.08), radius: isPressed ? 8 : 4, x: 0, y: 2)
-        )
-        .scaleEffect(isPressed ? 0.97 : 1.0)
-        .animation(.easeInOut(duration: 0.15), value: isPressed)
-
+        .frame(minWidth: MTSpacing.minimumTouchTarget, minHeight: MTSpacing.minimumTouchTarget)
+            .background(
+                RoundedRectangle(cornerRadius: 24, style: .continuous)
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                cardColor.opacity(0.12),
+                                cardColor.opacity(0.05)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .glassEffect(.regular, shape: .rect(cornerRadius: 24))
+            )
+        .scaleEffect(isPressed ? 0.95 : 1.0)
+        .animation(.spring(response: 0.3, dampingFraction: 0.6, blendDuration: 0), value: isPressed)
+        .onTapGesture {
+            // Enhanced haptic feedback
+            let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
+            impactFeedback.impactOccurred()
+            
+            // Press animation
+            withAnimation(.easeInOut(duration: 0.1)) {
+                isPressed = true
+            }
+            
+            // Glow effect
+            withAnimation(.easeInOut(duration: 0.3)) {
+                isGlowing = true
+            }
+            
+            // Audio feedback
+            session.audioService.play(name: letter.audioFile, rate: 1.0)
+            
+            // Reset states
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                withAnimation(.easeInOut(duration: 0.1)) {
+                    isPressed = false
+                }
+            }
+            
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                withAnimation(.easeInOut(duration: 0.3)) {
+                    isGlowing = false
+                }
+            }
+        }
     }
 }
 // Reuse NavBarIcon from HomeView

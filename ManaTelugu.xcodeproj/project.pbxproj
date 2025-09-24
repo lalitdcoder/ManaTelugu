@@ -23,10 +23,6 @@
 		};
 /* End PBXContainerItemProxy section */
 
-/* Begin PBXBuildFile section */
-/* End PBXBuildFile section */
-
-
 /* Begin PBXFileReference section */
 		8B7C895B2E6028FC008F05C9 /* ManaTelugu.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ManaTelugu.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		8B7C89682E6028FD008F05C9 /* ManaTeluguTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ManaTeluguTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -85,6 +81,7 @@
 				8B7C896B2E6028FD008F05C9 /* ManaTeluguTests */,
 				8B7C89752E6028FD008F05C9 /* ManaTeluguUITests */,
 				8B7C895C2E6028FC008F05C9 /* Products */,
+				8BA7D0002E6B4B7400F2660E /* Recovered References */,
 			);
 			sourceTree = "<group>";
 		};
@@ -96,6 +93,13 @@
 				8B7C89722E6028FD008F05C9 /* ManaTeluguUITests.xctest */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		8BA7D0002E6B4B7400F2660E /* Recovered References */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = "Recovered References";
 			sourceTree = "<group>";
 		};
 		8BF55F0B2E603BA10084271E /* Products */ = {
@@ -112,6 +116,7 @@
 			buildPhases = (
 				8B7C89572E6028FC008F05C9 /* Sources */,
 				8B7C89582E6028FC008F05C9 /* Frameworks */,
+				8B7C89DE2E6034BC008F05C9 /* Resources */,
 			);
 			buildRules = (
 			);
@@ -205,6 +210,8 @@
 			);
 			mainGroup = 8B7C89522E6028FC008F05C9;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 8B7C895C2E6028FC008F05C9 /* Products */;
 			projectDirPath = "";
@@ -224,13 +231,6 @@
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		8B7C89592E6028FC008F05C9 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		8B7C89662E6028FD008F05C9 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -239,6 +239,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		8B7C89702E6028FD008F05C9 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		8B7C89DE2E6034BC008F05C9 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -413,15 +420,13 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = G6PCD83XNA;
 				ENABLE_PREVIEWS = YES;
-				INFOPLIST_FILE = ManaTelugu/Info.plist;
-				INFOPLIST_KEY_CFBundleIcons_iPad_CFBundlePrimaryIcon_CFBundleIconFiles = "AppIcon60x60 AppIcon76x76 152x152";
-				INFOPLIST_KEY_CFBundleIcons_iPad_CFBundlePrimaryIcon_CFBundleIconName = AppIcon;
+				INFOPLIST_FILE = Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -444,15 +449,13 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = G6PCD83XNA;
 				ENABLE_PREVIEWS = YES;
-				INFOPLIST_FILE = ManaTelugu/Info.plist;
-				INFOPLIST_KEY_CFBundleIcons_iPad_CFBundlePrimaryIcon_CFBundleIconFiles = "AppIcon60x60 AppIcon76x76 152x152";
-				INFOPLIST_KEY_CFBundleIcons_iPad_CFBundlePrimaryIcon_CFBundleIconName = AppIcon;
+				INFOPLIST_FILE = Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",

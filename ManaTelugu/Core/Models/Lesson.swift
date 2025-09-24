@@ -39,14 +39,12 @@ enum ActivityType: String, Codable, CaseIterable {
     case reading = "reading"
     case writing = "writing"
     case listening = "listening"
-    case speaking = "speaking"
     
     var displayName: String {
         switch self {
         case .reading: return "Reading Practice"
         case .writing: return "Writing Practice"
         case .listening: return "Listening Practice"
-        case .speaking: return "Speaking Practice"
         }
     }
     
@@ -55,7 +53,6 @@ enum ActivityType: String, Codable, CaseIterable {
         case .reading: return "book.open"
         case .writing: return "pencil"
         case .listening: return "headphones"
-        case .speaking: return "mic"
         }
     }
 }
@@ -93,7 +90,6 @@ enum QuestionType: String, Codable, CaseIterable {
     case sentenceTranslation = "sentence_translation"
     case tracing = "tracing"
     case audioIdentification = "audio_identification"
-    case speaking = "speaking"
     case listening = "listening"
 }
 

@@ -15,6 +15,8 @@ struct ListeningChallengeGameView: View {
     @State private var isCorrect = false
     @State private var showingGameOver = false
     @State private var streak = 0
+    @State private var feedbackMessage = ""
+    @State private var xpEarned = 0
     
     enum GameState {
         case playing, paused, gameOver
@@ -30,8 +32,9 @@ struct ListeningChallengeGameView: View {
     
     var body: some View {
         ZStack {
-            // Gentle pastel background
-            LinearGradient(gradient: Gradient(colors: [Color(red: 0.97, green: 0.98, blue: 1.0), MTColors.funBlue.opacity(0.10), MTColors.funGreen.opacity(0.10)]), startPoint: .top, endPoint: .bottom)
+            // Enhanced background gradient for Liquid Glass effect
+            Color.clear
+                .liquidGlassBackground()
                 .ignoresSafeArea()
             
             VStack(spacing: 24) {
@@ -67,9 +70,9 @@ struct ListeningChallengeGameView: View {
                 
                 // Game stats
                 HStack(spacing: 32) {
-                    ListeningChallengeStatCard(title: "Score", value: "\(score)", color: MTColors.funGreen)
-                    ListeningChallengeStatCard(title: "Streak", value: "\(streak)", color: MTColors.funYellow)
-                    ListeningChallengeStatCard(title: "Time", value: "\(timeRemaining)s", color: MTColors.funPink)
+                    LiquidGlassStatsCard(title: "Score", value: "\(score)", icon: "star.fill", color: MTColors.funGreen)
+                    LiquidGlassStatsCard(title: "Streak", value: "\(streak)", icon: "flame.fill", color: MTColors.funYellow)
+                    LiquidGlassStatsCard(title: "Time", value: "\(timeRemaining)s", icon: "clock.fill", color: MTColors.funPink)
                 }
                 .padding(.horizontal)
                 
@@ -125,17 +128,20 @@ struct ListeningChallengeGameView: View {
                     .padding(.horizontal)
                     .disabled(showingFeedback)
                     
-                    // Next button (only shown after answering)
+                    // Standardized feedback
                     if showingFeedback {
-                        Button("Next Question") {
-                            Task {
-                                await nextQuestion()
+                        GameFeedbackView(
+                            isCorrect: isCorrect,
+                            message: feedbackMessage,
+                            xpEarned: xpEarned,
+                            correctAnswer: isCorrect ? nil : currentQuestion?.correctAnswer,
+                            explanation: isCorrect ? "Great listening skills!" : "Listen carefully to the pronunciation and try again.",
+                            onContinue: {
+                                Task {
+                                    await nextQuestion()
+                                }
                             }
-                        }
-                        .buttonStyle(.borderedProminent)
-                        .tint(MTColors.funGreen)
-                        .controlSize(.large)
-                        .padding(.horizontal)
+                        )
                     }
                 }
                 
@@ -232,9 +238,14 @@ struct ListeningChallengeGameView: View {
             session.hapticsService.success()
             score += 10 + (streak * 2) // Bonus for streaks
             streak += 1
+            feedbackMessage = "Correct! Well done!"
+            xpEarned = 5 + (streak * 2)
+            session.awardXP(xpEarned)
         } else {
             session.hapticsService.warning()
             streak = 0
+            feedbackMessage = "Not quite right, but keep trying!"
+            xpEarned = 0
         }
         
         showingFeedback = true
@@ -244,6 +255,8 @@ struct ListeningChallengeGameView: View {
         currentQuestion = nil
         selectedAnswer = nil
         showingFeedback = false
+        feedbackMessage = ""
+        xpEarned = 0
         await loadNextQuestion()
     }
     

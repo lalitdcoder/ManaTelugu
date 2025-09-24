@@ -1,0 +1,41 @@
+{
+  "levels": [
+    {
+      "id": "level_1_beginner",
+      "title": "Level 1: Beginner",
+      "description": "Learn vowels and consonants: Master the Telugu alphabet foundation. Learn all 16 vowels (అ, ఆ, ఇ, ఈ, ఉ, ఊ, ఋ, ఎ, ఏ, ఐ, ఒ, ఓ, ఔ, అం, అః) and 36 consonants (క, ఖ, గ, ఘ, ఙ, చ, ఛ, జ, ఝ, ఞ, ట, ఠ, డ, ఢ, ణ, త, థ, ద, ధ, న, ప, ఫ, బ, భ, మ, య, ర, ల, వ, శ, ష, స, హ, ళ, క్ష, ఱ). Build your reading foundation!",
+      "difficulty": 1,
+      "requiredXP": 0,
+      "color": "#4CAF50",
+      "lessons": [
+        {
+          "id": "lesson_1_vowels",
+          "title": "Telugu Vowels",
+          "description": "Learn the 16 basic Telugu vowels",
+          "order": 1,
+          "xpReward": 50,
+          "estimatedMinutes": 15,
+          "isCompleted": false
+        },
+        {
+          "id": "lesson_2_consonants",
+          "title": "Telugu Consonants",
+          "description": "Master the 36 Telugu consonants",
+          "order": 2,
+          "xpReward": 75,
+          "estimatedMinutes": 20,
+          "isCompleted": false
+        },
+        {
+          "id": "lesson_3_reading_practice",
+          "title": "Reading Practice",
+          "description": "Practice reading simple Telugu words",
+          "order": 3,
+          "xpReward": 100,
+          "estimatedMinutes": 25,
+          "isCompleted": false
+        }
+      ]
+    }
+  ]
+}

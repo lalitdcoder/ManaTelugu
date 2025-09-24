@@ -2,73 +2,144 @@ import SwiftUI
 
 struct LetterDetailView: View {
     @EnvironmentObject var session: AppSession
-    let letter: Letter
+    let letters: [Letter]
+    let initialIndex: Int
     @State private var isPlaying = false
+    @State private var isPressed = false
+    @State private var isGlowing = false
+    @Environment(\.dismiss) private var dismiss
+    @State private var index: Int = 0
+    @State private var didInit: Bool = false
+    private var letter: Letter { letters[index] }
+    private var hasNext: Bool { index + 1 < letters.count }
     
     var body: some View {
         ZStack {
-            // Gentle pastel background
-            LinearGradient(gradient: Gradient(colors: [Color(red: 0.97, green: 0.98, blue: 1.0), MTColors.funBlue.opacity(0.10), MTColors.funYellow.opacity(0.10)]), startPoint: .top, endPoint: .bottom)
-                .ignoresSafeArea()
+            // Dynamic animated background
+            LinearGradient(
+                colors: [RefinedColors.background, RefinedColors.secondaryBackground],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .ignoresSafeArea()
             
-            ScrollView {
-                VStack(spacing: 32) {
-                    // Letter glyph - Made even more prominent
-                    Text(letter.glyph)
-                        .font(.system(size: 140, weight: .bold, design: .rounded))
-                        .foregroundColor(MTColors.text)
-                        .padding(.top, 20)
-                    
-                    // Stroke order visualization
-                    VStack(alignment: .leading, spacing: 16) {
-                        Text("Stroke Order")
-                            .font(MTTypography.heading(kidMode: session.userProfile.kidMode))
-                            .foregroundColor(MTColors.text)
+            VStack(spacing: 0) {
+                // Enhanced Liquid Glass Header
+                VStack(spacing: 0) {
+                    // Letter type indicator
+                    HStack {
+                        Text(letterTypeIndicator)
+                            .font(MTTypography.caption(kidMode: session.userProfile.kidMode))
+                            .foregroundColor(letterTypeColor)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
+                            .background(
+                                Capsule()
+                                    .fill(letterTypeColor.opacity(0.2))
+                            )
                         
-                        StrokeOrderView(points: letter.strokePathPoints)
-                            .frame(height: 200)
+                        Spacer()
+                        
+                        // Letter counter
+                        Text("\(index + 1) of \(letters.count)")
+                            .font(MTTypography.caption(kidMode: session.userProfile.kidMode))
+                            .foregroundColor(MTColors.secondaryText)
                     }
-                    .padding(24)
-                    .background(
-                        RoundedRectangle(cornerRadius: 20)
-                            .fill(Color.white.opacity(0.95))
-                            .shadow(color: MTColors.funBlue.opacity(0.15), radius: 12, x: 0, y: 6)
-                    )
+                    .padding(.horizontal, 24)
+                    .padding(.top, 8)
                     
-                    // Letter info
-                    VStack(alignment: .leading, spacing: 20) {
-                        HStack {
-                            Text("Pronunciation")
-                                .font(MTTypography.heading(kidMode: session.userProfile.kidMode))
-                                .foregroundColor(MTColors.text)
-                            
-                            Spacer()
-                            
-                            Button(action: {
-                                isPlaying = true
-                                session.hapticsService.lightImpact()
-                                session.audioService.play(name: letter.audioFile, rate: 1.0)
+                    // Main letter display with enhanced styling
+                    ZStack {
+                        // Glow effect behind letter
+                        Text(letter.glyph)
+                            .font(.system(size: 160, weight: .bold, design: .rounded))
+                            .foregroundColor(letterTypeColor.opacity(0.3))
+                            .blur(radius: 20)
+                            .scaleEffect(1.1)
+                        
+                        // Main letter
+                        Text(letter.glyph)
+                            .font(.system(size: 140, weight: .bold, design: .rounded))
+                            .foregroundColor(MTColors.text)
+                            .scaleEffect(isGlowing ? 1.05 : 1.0)
+                            .animation(.easeInOut(duration: 0.3), value: isGlowing)
+                    }
+                    .padding(.vertical, 20)
+                }
+                .background(
+                    LinearGradient(
+                        colors: [
+                            letterTypeColor.opacity(0.15),
+                            letterTypeColor.opacity(0.08)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                    .glassEffect(.prominent, shape: .rect(cornerRadius: 0))
+                )
+                
+                // Main content
+                EnhancedScrollView(bottomPadding: 100) {
+                    VStack(spacing: 24) {
+                        // Pronunciation Section
+                        VStack(alignment: .leading, spacing: 20) {
+                            HStack {
+                                Image(systemName: "speaker.wave.2")
+                                    .font(.system(size: 20, weight: .medium))
+                                    .foregroundColor(letterTypeColor)
                                 
-                                // Simulate playback completion
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-                                    isPlaying = false
+                                Text("Pronunciation")
+                                    .font(MTTypography.heading(kidMode: session.userProfile.kidMode))
+                                    .foregroundColor(MTColors.text)
+                                
+                                Spacer()
+                            }
+                            
+                            // Enhanced Play Button with Liquid Glass
+                            Button(action: playAudio) {
+                                HStack(spacing: 12) {
+                                    ZStack {
+                                        Circle()
+                                            .fill(letterTypeColor)
+                                            .frame(width: 50, height: 50)
+                                            .scaleEffect(isPlaying ? 1.1 : 1.0)
+                                            .animation(.easeInOut(duration: 0.2), value: isPlaying)
+                                        
+                                        Image(systemName: isPlaying ? "stop.fill" : "play.fill")
+                                            .font(.system(size: 20, weight: .medium))
+                                            .foregroundColor(.white)
+                                    }
+                                    
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Text(isPlaying ? "Playing..." : "Tap to Play")
+                                            .font(MTTypography.body(kidMode: session.userProfile.kidMode))
+                                            .fontWeight(.semibold)
+                                        
+                                        Text(letter.transliteration)
+                                            .font(MTTypography.caption(kidMode: session.userProfile.kidMode))
+                                            .foregroundColor(MTColors.secondaryText)
+                                    }
+                                    
+                                    Spacer()
+                                    
+                                    if isPlaying {
+                                        ProgressView()
+                                            .progressViewStyle(CircularProgressViewStyle(tint: letterTypeColor))
+                                            .scaleEffect(0.8)
+                                    }
                                 }
-                            }) {
-                                HStack(spacing: 8) {
-                                    Image(systemName: isPlaying ? "stop.fill" : "play.fill")
-                                        .font(.system(size: 18, weight: .medium))
-                                    Text(isPlaying ? "Stop" : "Play Sound")
-                                        .font(MTTypography.body(kidMode: session.userProfile.kidMode))
-                                        .fontWeight(.medium)
-                                }
-                                .padding(.horizontal, 20)
-                                .padding(.vertical, 16)
+                                .padding(20)
                                 .background(
-                                    RoundedRectangle(cornerRadius: 16)
-                                        .fill(MTColors.funBlue)
+                                    LinearGradient(
+                                        colors: [
+                                            letterTypeColor.opacity(0.15),
+                                            letterTypeColor.opacity(0.08)
+                                        ],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                    .glassEffect(.regular, shape: .rect(cornerRadius: 20))
                                 )
-                                .foregroundColor(.white)
-                                .shadow(color: MTColors.funBlue.opacity(0.3), radius: 8, x: 0, y: 4)
                             }
                             .buttonStyle(.plain)
                             .simultaneousGesture(LongPressGesture(minimumDuration: 0.5)
@@ -76,120 +147,196 @@ struct LetterDetailView: View {
                                     session.audioService.play(name: letter.audioFile, rate: 0.75)
                                 }
                             )
-                        }
-                        
-                        VStack(alignment: .leading, spacing: 12) {
-                            Text(letter.transliteration)
-                                .font(MTTypography.body(kidMode: session.userProfile.kidMode))
-                                .foregroundColor(MTColors.text)
-                                .padding(.horizontal, 16)
-                                .padding(.vertical, 12)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 12)
-                                        .fill(MTColors.funBlue.opacity(0.15))
-                                )
                             
-                            Text("Name: \(letter.name)")
-                                .font(MTTypography.caption(kidMode: session.userProfile.kidMode))
-                                .foregroundColor(MTColors.text.opacity(0.7))
-                                .padding(.horizontal, 16)
-                                .padding(.vertical, 8)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 12)
-                                        .fill(MTColors.funYellow.opacity(0.15))
-                                )
+                            // Letter Information
+                            VStack(spacing: 12) {
+                                LetterInfoRow(title: "Transliteration", value: letter.transliteration, color: letterTypeColor)
+                                LetterInfoRow(title: "Name", value: letter.name, color: MTColors.funYellow)
+                            }
                         }
+                        .padding(24)
+                        .background(
+                            LinearGradient(
+                                colors: [
+                                    letterTypeColor.opacity(0.08),
+                                    letterTypeColor.opacity(0.03)
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                            .glassEffect(.regular, shape: .rect(cornerRadius: 24))
+                        )
                     }
-                    .padding(24)
-                    .background(
-                        RoundedRectangle(cornerRadius: 20)
-                            .fill(Color.white.opacity(0.95))
-                            .shadow(color: MTColors.funBlue.opacity(0.15), radius: 12, x: 0, y: 6)
-                    )
+                    .padding(.horizontal, 20)
+                    .padding(.top, 20)
+                }
+            }
+            
+            // Fixed Bottom Navigation
+            VStack {
+                Spacer()
+                
+                HStack(spacing: 16) {
+                    // Previous button
+                    if index > 0 {
+                        Button(role: .none, action: previousLetter) {
+                            HStack(spacing: 8) {
+                                Image(systemName: "arrow.left.circle.fill")
+                                    .font(.system(size: 20, weight: .medium))
+                                Text("Previous")
+                                    .font(MTTypography.body(kidMode: session.userProfile.kidMode))
+                                    .fontWeight(.semibold)
+                            }
+                            .foregroundColor(MTColors.text)
+                            .padding(.horizontal, 20)
+                            .padding(.vertical, 16)
+                            .background(
+                                MTColors.secondaryText.opacity(0.1)
+                                    .glassEffect(.subtle, shape: .rect(cornerRadius: 16))
+                            )
+                        }
+                        .buttonStyle(.plain)
+                    }
                     
-                    // Quick quiz button - Updated styling
-                    NavigationLink {
-                        // Placeholder for quiz view
-                        Text("Quiz View")
-                            .navigationTitle("Quiz")
-                    } label: {
+                    // Next/Done button
+                    Button(role: .none, action: nextAction) {
                         HStack(spacing: 12) {
-                            Image(systemName: "brain.head.profile")
-                                .font(.system(size: 20, weight: .medium))
-                            Text("Test Me")
+                            Text(hasNext ? "Next Letter" : "Done")
                                 .font(MTTypography.body(kidMode: session.userProfile.kidMode))
                                 .fontWeight(.bold)
+                            
+                            Image(systemName: hasNext ? "arrow.right.circle.fill" : "checkmark.circle.fill")
+                                .font(.system(size: 20, weight: .medium))
                         }
                         .foregroundColor(.white)
                         .padding(.horizontal, 24)
-                        .padding(.vertical, 20)
+                        .padding(.vertical, 18)
                         .frame(maxWidth: .infinity)
                         .background(
-                            RoundedRectangle(cornerRadius: 16)
-                                .fill(MTColors.funGreen)
+                            LinearGradient(
+                                colors: [
+                                    hasNext ? letterTypeColor : MTColors.funGreen,
+                                    hasNext ? letterTypeColor.opacity(0.8) : MTColors.funGreen.opacity(0.8)
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                            .glassEffect(.regular, shape: .rect(cornerRadius: 20))
                         )
-                        .shadow(color: MTColors.funGreen.opacity(0.3), radius: 8, x: 0, y: 4)
+                        .scaleEffect(isPressed ? 0.95 : 1.0)
+                        .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isPressed)
                     }
                     .buttonStyle(.plain)
+                    .onLongPressGesture(minimumDuration: 0, maximumDistance: .infinity, pressing: { pressing in
+                        withAnimation(.easeInOut(duration: 0.1)) {
+                            isPressed = pressing
+                        }
+                    }, perform: {})
                 }
-                .padding()
+                .padding(.horizontal, 20)
+                .padding(.bottom, 20)
+                .background(
+                    LinearGradient(
+                        colors: [
+                            Color.black.opacity(0.1),
+                            Color.clear
+                        ],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                    .glassEffect(.prominent, shape: .rect(cornerRadius: 0))
+                )
             }
         }
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
+        .onAppear {
+            if !didInit {
+                index = min(max(0, initialIndex), max(letters.count - 1, 0))
+                didInit = true
+            }
+        }
+    }
+    
+    // MARK: - Computed Properties
+    private var letterTypeIndicator: String {
+        let vowelGlyphs = ["అ", "ఆ", "ఇ", "ఈ", "ఉ", "ఊ", "ఎ", "ఏ", "ఋ", "ౠ", "ఐ", "ఒ", "ఓ", "ఔ", "అం", "అః"]
+        return vowelGlyphs.contains(letter.glyph) ? "Vowel (అచ్చు)" : "Consonant (హల్లు)"
+    }
+    
+    private var letterTypeColor: Color {
+        let vowelGlyphs = ["అ", "ఆ", "ఇ", "ఈ", "ఉ", "ఊ", "ఎ", "ఏ", "ఋ", "ౠ", "ఐ", "ఒ", "ఓ", "ఔ", "అం", "అః"]
+        return vowelGlyphs.contains(letter.glyph) ? MTColors.funBlue : MTColors.funGreen
+    }
+    
+    // MARK: - Actions
+    private func playAudio() {
+        // Haptic feedback
+        session.hapticsService.mediumImpact()
+        
+        // Glow effect
+        withAnimation(.easeInOut(duration: 0.3)) {
+            isGlowing = true
+        }
+        
+        // Audio playback
+        isPlaying = true
+        session.audioService.play(name: letter.audioFile, rate: 1.0)
+        
+        // Reset states
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            withAnimation(.easeInOut(duration: 0.3)) {
+                isGlowing = false
+            }
+        }
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            isPlaying = false
+        }
+    }
+    
+    private func nextAction() {
+        session.hapticsService.lightImpact()
+        if hasNext {
+            withAnimation(.easeInOut(duration: 0.3)) {
+                index += 1
+            }
+        } else {
+            dismiss()
+        }
+    }
+    
+    private func previousLetter() {
+        session.hapticsService.lightImpact()
+        withAnimation(.easeInOut(duration: 0.3)) {
+            index -= 1
+        }
     }
 }
 
-struct StrokeOrderView: View {
-    let points: [[CGPointCodable]]
-    @State private var progress: CGFloat = 0
+// MARK: - Letter Info Row Component
+struct LetterInfoRow: View {
+    let title: String
+    let value: String
+    let color: Color
     
     var body: some View {
-        GeometryReader { geometry in
-            ZStack {
-                // Background grid
-                Path { path in
-                    let gridSize: CGFloat = 20
-                    for x in stride(from: 0, through: geometry.size.width, by: gridSize) {
-                        path.move(to: CGPoint(x: x, y: 0))
-                        path.addLine(to: CGPoint(x: x, y: geometry.size.height))
-                    }
-                    for y in stride(from: 0, through: geometry.size.height, by: gridSize) {
-                        path.move(to: CGPoint(x: 0, y: y))
-                        path.addLine(to: CGPoint(x: geometry.size.width, y: y))
-                    }
-                }
-                .stroke(Color.gray.opacity(0.2), lineWidth: 0.5)
-                
-                // Draw stroke paths with proper scaling
-                ForEach(Array(points.enumerated()), id: \.offset) { index, strokePoints in
-                    Path { path in
-                        guard !strokePoints.isEmpty else { return }
-                        
-                        // Scale normalized coordinates (0.0-1.0) to view size
-                        let firstPoint = CGPoint(
-                            x: strokePoints[0].x * geometry.size.width,
-                            y: strokePoints[0].y * geometry.size.height
-                        )
-                        path.move(to: firstPoint)
-                        
-                        for point in strokePoints.dropFirst() {
-                            let scaledPoint = CGPoint(
-                                x: point.x * geometry.size.width,
-                                y: point.y * geometry.size.height
-                            )
-                            path.addLine(to: scaledPoint)
-                        }
-                    }
-                    .stroke(MTColors.funBlue, lineWidth: 3)
-                    .opacity(index < Int(progress * CGFloat(points.count)) ? 1.0 : 0.0)
-                }
-            }
-        }
-        .onAppear {
-            withAnimation(.easeInOut(duration: 2.0)) {
-                progress = 1.0
-            }
+        HStack {
+            Text(title)
+                .font(MTTypography.caption(kidMode: false))
+                .foregroundColor(MTColors.secondaryText)
+            
+            Spacer()
+            
+            Text(value)
+                .font(MTTypography.body(kidMode: false))
+                .foregroundColor(MTColors.text)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .background(
+                    Capsule()
+                        .fill(color.opacity(0.15))
+                )
         }
     }
 }

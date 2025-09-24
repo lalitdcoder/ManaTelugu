@@ -1,163 +1,430 @@
 import SwiftUI
 
-struct GamesHubView: View {
+// MARK: - Professional Games Hub View
+// Clean, vertical layout with engaging visual appeal
+
+struct ProfessionalGamesHubView: View {
     @EnvironmentObject var session: AppSession
-    @State private var selectedGame: Int? = nil
+    @State private var navigationPath = NavigationPath()
+    
+    // Mock games data for professional presentation
+    private let games: [ProfessionalGame] = [
+        ProfessionalGame(
+            id: "1",
+            title: "Sentence Builder",
+            description: "Arrange words to create perfect Telugu sentences",
+            icon: "text.bubble.fill",
+            difficulty: .beginner,
+            estimatedTime: "5 min",
+            isCompleted: false,
+            isLocked: false,
+            highScore: 0,
+            color: .professionalBlue
+        ),
+        ProfessionalGame(
+            id: "2",
+            title: "Listening Challenge",
+            description: "Listen and choose the correct meaning",
+            icon: "ear.fill",
+            difficulty: .intermediate,
+            estimatedTime: "8 min",
+            isCompleted: true,
+            isLocked: false,
+            highScore: 850,
+            color: .professionalGreen
+        ),
+        ProfessionalGame(
+            id: "3",
+            title: "Card Match",
+            description: "Match Telugu words with English meanings",
+            icon: "arrow.left.arrow.right",
+            difficulty: .beginner,
+            estimatedTime: "6 min",
+            isCompleted: false,
+            isLocked: false,
+            highScore: 0,
+            color: .professionalOrange
+        ),
+        ProfessionalGame(
+            id: "4",
+            title: "Sound Match",
+            description: "Listen and pick the right sound",
+            icon: "speaker.wave.2.fill",
+            difficulty: .intermediate,
+            estimatedTime: "7 min",
+            isCompleted: false,
+            isLocked: false,
+            highScore: 0,
+            color: .professionalPurple
+        ),
+        ProfessionalGame(
+            id: "5",
+            title: "Trace Letters",
+            description: "Practice writing Telugu letters",
+            icon: "pencil.tip",
+            difficulty: .beginner,
+            estimatedTime: "10 min",
+            isCompleted: false,
+            isLocked: false,
+            highScore: 0,
+            color: .professionalPink
+        ),
+        ProfessionalGame(
+            id: "6",
+            title: "Word Puzzle",
+            description: "Solve challenging word puzzles",
+            icon: "puzzlepiece.fill",
+            difficulty: .advanced,
+            estimatedTime: "15 min",
+            isCompleted: false,
+            isLocked: true,
+            highScore: 0,
+            color: .professionalBlue
+        )
+    ]
+    
     var body: some View {
-        ZStack {
-            // Gentle pastel background
-            LinearGradient(gradient: Gradient(colors: [Color(red: 0.97, green: 0.98, blue: 1.0), MTColors.funBlue.opacity(0.10), MTColors.funGreen.opacity(0.10)]), startPoint: .top, endPoint: .bottom)
-                .ignoresSafeArea()
-            ScrollView {
-                VStack(alignment: .leading, spacing: 32) {
-                    // Header
-                    Text("Game Zone")
-                        .font(MTTypography.title(kidMode: session.userProfile.kidMode))
-                        .foregroundColor(MTColors.text)
-                        .padding(.horizontal)
-                    Text("Make learning fun with these interactive games")
-                        .font(MTTypography.body(kidMode: session.userProfile.kidMode))
-                        .foregroundColor(MTColors.text.opacity(0.7))
-                        .padding(.horizontal)
-                    // Game Cards
-                    VStack(spacing: 24) {
-                        GameSectionCard(
-                            title: "Vocabulary Match",
-                            icon: "rectangle.stack.fill",
-                            accent: MTColors.funBlue,
-                            action: { selectedGame = 0 },
-                            content: {
-                                Text("Match Telugu words with their English meanings.")
-                                    .font(MTTypography.body(kidMode: session.userProfile.kidMode))
-                                    .foregroundColor(MTColors.text)
-                            }
-                        )
-                        GameSectionCard(
-                            title: "Sentence Builder",
-                            icon: "text.bubble.fill",
-                            accent: MTColors.funGreen,
-                            action: { selectedGame = 1 },
-                            content: {
-                                Text("Build Telugu sentences by arranging words correctly.")
-                                    .font(MTTypography.body(kidMode: session.userProfile.kidMode))
-                                    .foregroundColor(MTColors.text)
-                            }
-                        )
-                        GameSectionCard(
-                            title: "Listening Challenge",
-                            icon: "ear.fill",
-                            accent: MTColors.funPink,
-                            action: { selectedGame = 2 },
-                            content: {
-                                Text("Listen to Telugu words and choose the right meaning.")
-                                    .font(MTTypography.body(kidMode: session.userProfile.kidMode))
-                                    .foregroundColor(MTColors.text)
-                            }
-                        )
-                        GameSectionCard(
-                            title: "Sound Match",
-                            icon: "speaker.wave.2.fill",
-                            accent: MTColors.funYellow,
-                            action: { selectedGame = 3 },
-                            content: {
-                                Text("Listen to the sound and pick the right letter or word.")
-                                    .font(MTTypography.body(kidMode: session.userProfile.kidMode))
-                                    .foregroundColor(MTColors.text)
-                            }
-                        )
-                        GameSectionCard(
-                            title: "Card Match",
-                            icon: "arrow.left.arrow.right",
-                            accent: MTColors.funBlue,
-                            action: { selectedGame = 4 },
-                            content: {
-                                Text("Match Telugu words to their English meanings.")
-                                    .font(MTTypography.body(kidMode: session.userProfile.kidMode))
-                                    .foregroundColor(MTColors.text)
-                            }
-                        )
-                        GameSectionCard(
-                            title: "Trace Letters",
-                            icon: "pencil.tip",
-                            accent: MTColors.funGreen,
-                            action: { selectedGame = 5 },
-                            content: {
-                                Text("Practice writing letters by tracing them.")
-                                    .font(MTTypography.body(kidMode: session.userProfile.kidMode))
-                                    .foregroundColor(MTColors.text)
-                            }
-                        )
+        NavigationStack(path: $navigationPath) {
+            ZStack {
+                // Professional gradient background
+                LinearGradient(
+                    colors: [
+                        Color(red: 0.2, green: 0.4, blue: 0.9),
+                        Color(red: 0.4, green: 0.2, blue: 0.8),
+                        Color(red: 0.8, green: 0.3, blue: 0.6)
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                .ignoresSafeArea(.all, edges: .all)
+                
+                ScrollView {
+                    LazyVStack(spacing: ProfessionalSpacing.large.value) {
+                        // Hero Section
+                        heroSection
+                            .padding(.top, ProfessionalSpacing.extraLarge.value)
+                        
+                        // Game Stats
+                        gameStatsSection
+                        
+                        // Featured Game
+                        featuredGameSection
+                        
+                        // All Games
+                        allGamesSection
+                        
+                        // Bottom padding for tab bar
+                        Color.clear
+                            .frame(height: 120)
                     }
-                    .padding(.horizontal)
+                    .padding(.horizontal, ProfessionalSpacing.medium.value)
                 }
-                .padding(.vertical)
+                .scrollIndicators(.hidden)
             }
-            // NavigationLinks for each game
-            NavigationLink(destination: VocabularyCardsView(theme: "Animals").environmentObject(session), tag: 0, selection: $selectedGame) { EmptyView() }.hidden()
-            NavigationLink(destination: SentenceBuilderGameView().environmentObject(session), tag: 1, selection: $selectedGame) { EmptyView() }.hidden()
-            NavigationLink(destination: ListeningChallengeGameView().environmentObject(session), tag: 2, selection: $selectedGame) { EmptyView() }.hidden()
-            NavigationLink(destination: SoundMatchGameView().environmentObject(session), tag: 3, selection: $selectedGame) { EmptyView() }.hidden()
-            NavigationLink(destination: CardMatchGameView().environmentObject(session), tag: 4, selection: $selectedGame) { EmptyView() }.hidden()
-            NavigationLink(destination: TraceGameView().environmentObject(session), tag: 5, selection: $selectedGame) { EmptyView() }.hidden()
+            .navigationBarHidden(true)
         }
-        .navigationTitle("")
-        .toolbar {
-            ToolbarItem(placement: .navigationBarLeading) {
-                NavBarIcon(systemName: "house.fill", selected: false)
+    }
+    
+    // MARK: - Hero Section
+    private var heroSection: some View {
+        ProfessionalCard(type: .hero) {
+            VStack(alignment: .leading, spacing: ProfessionalSpacing.large.value) {
+                ProfessionalText(
+                    "Learning Games",
+                    style: .heroTitle,
+                    color: .textPrimary
+                )
+                
+                ProfessionalText(
+                    "Master Telugu through fun and engaging games",
+                    style: .bodyText,
+                    color: .textSecondary
+                )
+                
+                HStack(spacing: ProfessionalSpacing.large.value) {
+                    ProfessionalStatCard(
+                        icon: "gamecontroller.fill",
+                        value: "\(games.count)",
+                        label: "Games",
+                        color: .professionalBlue
+                    )
+                    
+                    ProfessionalStatCard(
+                        icon: "trophy.fill",
+                        value: "3",
+                        label: "Won",
+                        color: .professionalOrange
+                    )
+                }
             }
-            ToolbarItem(placement: .navigationBarTrailing) {
-                NavBarIcon(systemName: "star.fill", selected: false)
+        }
+    }
+    
+    // MARK: - Game Stats Section
+    private var gameStatsSection: some View {
+        VStack(alignment: .leading, spacing: ProfessionalSpacing.medium.value) {
+            ProfessionalSectionHeader(
+                title: "Your Progress",
+                subtitle: "Track your gaming achievements"
+            )
+            
+            HStack(spacing: ProfessionalSpacing.medium.value) {
+                ProfessionalStatCard(
+                    icon: "star.fill",
+                    value: "1,250",
+                    label: "Total Score",
+                    color: .professionalGreen
+                )
+                
+                ProfessionalStatCard(
+                    icon: "clock.fill",
+                    value: "45m",
+                    label: "Play Time",
+                    color: .professionalPurple
+                )
+                
+                ProfessionalStatCard(
+                    icon: "flame.fill",
+                    value: "5",
+                    label: "Streak",
+                    color: .professionalOrange
+                )
+            }
+        }
+    }
+    
+    // MARK: - Featured Game Section
+    private var featuredGameSection: some View {
+        VStack(alignment: .leading, spacing: ProfessionalSpacing.medium.value) {
+            ProfessionalSectionHeader(
+                title: "Featured Game",
+                subtitle: "Try this popular game"
+            )
+            
+            if let featuredGame = games.first(where: { $0.isCompleted && !$0.isLocked }) {
+                ProfessionalFeaturedGameCard(game: featuredGame)
+            } else if let firstGame = games.first(where: { !$0.isLocked }) {
+                ProfessionalFeaturedGameCard(game: firstGame)
+            }
+        }
+    }
+    
+    // MARK: - All Games Section
+    private var allGamesSection: some View {
+        VStack(alignment: .leading, spacing: ProfessionalSpacing.medium.value) {
+            ProfessionalSectionHeader(
+                title: "All Games",
+                subtitle: "Choose your challenge"
+            )
+            
+            VStack(spacing: ProfessionalSpacing.medium.value) {
+                ForEach(games, id: \.id) { game in
+                    ProfessionalGameCard(game: game)
+                }
             }
         }
     }
 }
 
-// MARK: - Game Section Card
-struct GameSectionCard<Content: View>: View {
+// MARK: - Professional Game Model
+struct ProfessionalGame {
+    let id: String
     let title: String
+    let description: String
     let icon: String
-    let accent: Color
-    let action: () -> Void
-    let content: () -> Content
-    @EnvironmentObject var session: AppSession
-    @State private var isPressed = false
-    var body: some View {
-        Button(action: {
-            isPressed = true
-            action()
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { isPressed = false }
-        }) {
-            HStack(spacing: 20) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 16)
-                        .fill(accent.opacity(0.15))
-                        .frame(width: 56, height: 56)
-                    Image(systemName: icon)
-                        .font(.system(size: 28, weight: .medium))
-                        .foregroundColor(accent)
-                }
-                VStack(alignment: .leading, spacing: 6) {
-                    Text(title)
-                        .font(MTTypography.heading(kidMode: session.userProfile.kidMode))
-                        .foregroundColor(MTColors.text)
-                    content()
-                }
-                Spacer()
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 24))
-                    .foregroundColor(MTColors.text.opacity(0.3))
+    let difficulty: DifficultyLevel
+    let estimatedTime: String
+    let isCompleted: Bool
+    let isLocked: Bool
+    let highScore: Int
+    let color: Color
+    
+    enum DifficultyLevel {
+        case beginner
+        case intermediate
+        case advanced
+        
+        var displayName: String {
+            switch self {
+            case .beginner: return "Beginner"
+            case .intermediate: return "Intermediate"
+            case .advanced: return "Advanced"
             }
-            .padding()
-            .background(
-                RoundedRectangle(cornerRadius: 18)
-                    .fill(Color.white.opacity(0.95))
-                    .shadow(color: accent.opacity(isPressed ? 0.15 : 0.08), radius: isPressed ? 8 : 4, x: 0, y: 2)
-            )
-            .scaleEffect(isPressed ? 0.97 : 1.0)
-            .animation(.easeInOut(duration: 0.15), value: isPressed)
         }
-        .buttonStyle(.plain)
-        .padding(.horizontal)
+        
+        var color: Color {
+            switch self {
+            case .beginner: return .professionalGreen
+            case .intermediate: return .professionalOrange
+            case .advanced: return .professionalPurple
+            }
+        }
     }
 }
-// Reuse NavBarIcon from HomeView
+
+// MARK: - Professional Featured Game Card
+struct ProfessionalFeaturedGameCard: View {
+    let game: ProfessionalGame
+    
+    var body: some View {
+        ProfessionalCard(type: .hero, isInteractive: true) {
+            HStack(spacing: ProfessionalSpacing.large.value) {
+                // Game Icon
+                ZStack {
+                    Circle()
+                        .fill(game.color.opacity(0.15))
+                        .frame(width: 60, height: 60)
+                    
+                    Image(systemName: game.icon)
+                        .font(.system(size: 28, weight: .semibold))
+                        .foregroundColor(game.color)
+                }
+                
+                // Game Content
+                VStack(alignment: .leading, spacing: ProfessionalSpacing.small.value) {
+                    ProfessionalText(
+                        game.title,
+                        style: .cardTitle,
+                        color: .textPrimary
+                    )
+                    
+                    ProfessionalText(
+                        game.description,
+                        style: .bodyText,
+                        color: .textSecondary
+                    )
+                    
+                    HStack {
+                        // Difficulty Badge
+                        Text(game.difficulty.displayName)
+                            .font(.system(size: 10, weight: .semibold))
+                            .foregroundColor(game.difficulty.color)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(
+                                Capsule()
+                                    .fill(game.difficulty.color.opacity(0.15))
+                            )
+                        
+                        // Time
+                        ProfessionalText(
+                            game.estimatedTime,
+                            style: .caption,
+                            color: .textSecondary
+                        )
+                        
+                        Spacer()
+                        
+                        // High Score
+                        if game.highScore > 0 {
+                            ProfessionalText(
+                                "High: \(game.highScore)",
+                                style: .caption,
+                                color: game.color
+                            )
+                        }
+                    }
+                }
+                
+                // Arrow
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(.textSecondary)
+            }
+        }
+    }
+}
+
+// MARK: - Professional Game Card
+struct ProfessionalGameCard: View {
+    let game: ProfessionalGame
+    @State private var isPressed = false
+    
+    var body: some View {
+        ProfessionalCard(
+            type: game.isLocked ? .secondary : .interactive,
+            isInteractive: !game.isLocked
+        ) {
+            HStack(spacing: ProfessionalSpacing.medium.value) {
+                // Game Icon
+                ZStack {
+                    Circle()
+                        .fill(game.isLocked ? Color.gray.opacity(0.3) : game.color.opacity(0.15))
+                        .frame(width: 50, height: 50)
+                    
+                    if game.isLocked {
+                        Image(systemName: "lock.fill")
+                            .font(.system(size: 20, weight: .semibold))
+                            .foregroundColor(.gray)
+                    } else {
+                        Image(systemName: game.icon)
+                            .font(.system(size: 22, weight: .semibold))
+                            .foregroundColor(game.color)
+                    }
+                }
+                
+                // Game Content
+                VStack(alignment: .leading, spacing: ProfessionalSpacing.small.value) {
+                    HStack {
+                        ProfessionalText(
+                            game.title,
+                            style: .cardTitle,
+                            color: game.isLocked ? .textSecondary : .textPrimary
+                        )
+                        
+                        Spacer()
+                        
+                        // Difficulty Badge
+                        Text(game.difficulty.displayName)
+                            .font(.system(size: 10, weight: .semibold))
+                            .foregroundColor(game.difficulty.color)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(
+                                Capsule()
+                                    .fill(game.difficulty.color.opacity(0.15))
+                            )
+                    }
+                    
+                    ProfessionalText(
+                        game.description,
+                        style: .bodyText,
+                        color: game.isLocked ? .textTertiary : .textSecondary
+                    )
+                    
+                    HStack {
+                        ProfessionalText(
+                            game.estimatedTime,
+                            style: .caption,
+                            color: .textSecondary
+                        )
+                        
+                        Spacer()
+                        
+                        if game.highScore > 0 {
+                            ProfessionalText(
+                                "High: \(game.highScore)",
+                                style: .caption,
+                                color: game.color
+                            )
+                        }
+                    }
+                }
+                
+                // Arrow or Lock
+                if game.isLocked {
+                    Image(systemName: "lock.fill")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(.gray)
+                } else {
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(.textSecondary)
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Replace the original GamesHubView
+typealias GamesHubView = ProfessionalGamesHubView

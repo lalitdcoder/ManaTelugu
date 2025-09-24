@@ -8,13 +8,41 @@
 		<data>
 		N9tPqaa/KK+aOeQJjzQZKAF51RA=
 		</data>
+		<key>1024.png</key>
+		<data>
+		dbpvwdznAgGRsb4XKXhbafAz7RU=
+		</data>
+		<key>120.png</key>
+		<data>
+		th3wYEAGTA8qtAkHK735mkmrBAc=
+		</data>
+		<key>152.png</key>
+		<data>
+		B71yP5c67WT/4B3CllldAbzKTUE=
+		</data>
+		<key>152x152.png</key>
+		<data>
+		B71yP5c67WT/4B3CllldAbzKTUE=
+		</data>
 		<key>AlexSideBar.dmg</key>
 		<data>
 		I7iylcIuo58TKLEfD7PmwsUtKjQ=
 		</data>
-		<key>AppIcon60x60@2x.png</key>
+		<key>AppIcon120.png</key>
 		<data>
-		QK4M+5NCfivY+VBhvFweVfPNO+s=
+		th3wYEAGTA8qtAkHK735mkmrBAc=
+		</data>
+		<key>AppIcon152.png</key>
+		<data>
+		B71yP5c67WT/4B3CllldAbzKTUE=
+		</data>
+		<key>AppIcon60x60.png</key>
+		<data>
+		B71yP5c67WT/4B3CllldAbzKTUE=
+		</data>
+		<key>AppIcon76x76.png</key>
+		<data>
+		B71yP5c67WT/4B3CllldAbzKTUE=
 		</data>
 		<key>AppIcon76x76@2x~ipad.png</key>
 		<data>
@@ -22,11 +50,27 @@
 		</data>
 		<key>Assets.car</key>
 		<data>
-		vOez+PIo+WUJfVuRaMEJVItNI9o=
+		Fxy2FH8eeCeCKRZMgOKCNcP8P+A=
+		</data>
+		<key>Icon-152.png</key>
+		<data>
+		B71yP5c67WT/4B3CllldAbzKTUE=
+		</data>
+		<key>Icon-152@2x.png</key>
+		<data>
+		B71yP5c67WT/4B3CllldAbzKTUE=
+		</data>
+		<key>Icon-152x152.png</key>
+		<data>
+		B71yP5c67WT/4B3CllldAbzKTUE=
+		</data>
+		<key>Icon-76@2x.png</key>
+		<data>
+		B71yP5c67WT/4B3CllldAbzKTUE=
 		</data>
 		<key>Info.plist</key>
 		<data>
-		Q7Uufout+PYpLomyrg1hrkxuOVE=
+		uAAaF6kLAEUheqap9JFpp1AKz4w=
 		</data>
 		<key>PkgInfo</key>
 		<data>
@@ -42,7 +86,7 @@
 		</data>
 		<key>lessons.json</key>
 		<data>
-		JTUtp22BgvTzUqmeZZrEzEjcNAU=
+		D8DRdlP0P6yHiukDQjaHMuveaqk=
 		</data>
 		<key>letter_a.mp3</key>
 		<data>
@@ -78,6 +122,10 @@
 		</data>
 		<key>letters.json</key>
 		<data>
+		ZUAwoEjFUIVWGI/6MoL/sM4ggPQ=
+		</data>
+		<key>letters_backup.json</key>
+		<data>
 		FiF/G8ZJODDsmC7Q3oj1phrY/Ag=
 		</data>
 		<key>success.mp3</key>
@@ -90,7 +138,7 @@
 		</data>
 		<key>words.json</key>
 		<data>
-		6QWGWPJMJZKwquzFImby8KqcXsY=
+		HaYpQWUpWen6HeFGfwU1xylog7E=
 		</data>
 		<key>అ.mp3</key>
 		<data>
@@ -292,6 +340,10 @@
 		<data>
 		tbSvdo8rh4Q0ebTPePYOQaz40rk=
 		</data>
+		<key>కుందేలు.mp3</key>
+		<data>
+		hCbi8a5z8hYaZ/Q1DgpZssBiZ9k=
+		</data>
 		<key>కుక్క.mp3</key>
 		<data>
 		06UKw3E5OQRgpzIJZA5N/qkB8rI=
@@ -368,6 +420,10 @@
 		<data>
 		7KzjoZKbZdN4HY1Q5Ns56ZHEalk=
 		</data>
+		<key>గోధుమ రంగు.mp3</key>
+		<data>
+		TNK3IDYluaede9kfdw0k8HOQZJI=
+		</data>
 		<key>గోధుమ.mp3</key>
 		<data>
 		7KzjoZKbZdN4HY1Q5Ns56ZHEalk=
@@ -403,6 +459,10 @@
 		<key>చిన్ననాన్న.mp3</key>
 		<data>
 		7POl4chBQ9xTl+7a0myVY1DLPm0=
+		</data>
+		<key>చిలుక.mp3</key>
+		<data>
+		rIsU0d69mMZH2yTpxbChl86+2fI=
 		</data>
 		<key>చెల్లి.mp3</key>
 		<data>
@@ -792,6 +852,10 @@
 		<data>
 		88S8PM4stbR0Mtt7+3lbbKl+fUs=
 		</data>
+		<key>బంగారు రంగు.mp3</key>
+		<data>
+		lVQmdVSBAvYYwxPY1YyCHX71qXg=
+		</data>
 		<key>బండి.mp3</key>
 		<data>
 		W80vh0MSAAoSM0yNV7AQrLtK9GA=
@@ -868,6 +932,10 @@
 		<data>
 		0NxxogtYa6IbAKz3WJlFhX2sfV0=
 		</data>
+		<key>మీ పేరు ఏమిటి.mp3</key>
+		<data>
+		8yGhUj4ORPQJozY9MYWPDQmH9IU=
+		</data>
 		<key>మీ పేరు ఏమిటి_.mp3</key>
 		<data>
 		1LwcOnUZnBrXa962gExa6IH9ySg=
@@ -903,6 +971,10 @@
 		<key>మెలిక.mp3</key>
 		<data>
 		m5N5MKXXe7uPGWTI4d9Gl3COHUw=
+		</data>
+		<key>మేక.mp3</key>
+		<data>
+		AUOmRPcbuaIokqGBqLVdWDbXQxs=
 		</data>
 		<key>మేధ.mp3</key>
 		<data>
@@ -1066,6 +1138,34 @@
 			gZ8xvu8GgEydJYzyaVD3jgx/Y9+uHJkI4UlbVdby7po=
 			</data>
 		</dict>
+		<key>1024.png</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			AeceXSBN9zbxbuTgJe+E66nkU/do7NP8wKDqgavSAz8=
+			</data>
+		</dict>
+		<key>120.png</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			KZenj9PJxGlMQR1/NUo4+psEOClpanh/F5zzx8vdJRQ=
+			</data>
+		</dict>
+		<key>152.png</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			NMHGz9gn/gC0vgxaRufn4xDT+M2V2/1U2QMAdVnRoVU=
+			</data>
+		</dict>
+		<key>152x152.png</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			NMHGz9gn/gC0vgxaRufn4xDT+M2V2/1U2QMAdVnRoVU=
+			</data>
+		</dict>
 		<key>AlexSideBar.dmg</key>
 		<dict>
 			<key>hash2</key>
@@ -1073,11 +1173,32 @@
 			LPLXPBQHAytpU46OrimrdOpSh/FtuqGKuYo4Bhh7dT8=
 			</data>
 		</dict>
-		<key>AppIcon60x60@2x.png</key>
+		<key>AppIcon120.png</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			D1M19iOR80xHbITxpMZ+Qt9VtqfgmKq/40+lx+CTClw=
+			KZenj9PJxGlMQR1/NUo4+psEOClpanh/F5zzx8vdJRQ=
+			</data>
+		</dict>
+		<key>AppIcon152.png</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			NMHGz9gn/gC0vgxaRufn4xDT+M2V2/1U2QMAdVnRoVU=
+			</data>
+		</dict>
+		<key>AppIcon60x60.png</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			NMHGz9gn/gC0vgxaRufn4xDT+M2V2/1U2QMAdVnRoVU=
+			</data>
+		</dict>
+		<key>AppIcon76x76.png</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			NMHGz9gn/gC0vgxaRufn4xDT+M2V2/1U2QMAdVnRoVU=
 			</data>
 		</dict>
 		<key>AppIcon76x76@2x~ipad.png</key>
@@ -1091,7 +1212,35 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			wHtopztzx7/2qhniKSG0VZ4ldiEwne7awHJhzs+kIzQ=
+			c6n6B9+ePoiO2g6U8LRpHvFuR8EEt+yZHZuHkqD2wKg=
+			</data>
+		</dict>
+		<key>Icon-152.png</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			NMHGz9gn/gC0vgxaRufn4xDT+M2V2/1U2QMAdVnRoVU=
+			</data>
+		</dict>
+		<key>Icon-152@2x.png</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			NMHGz9gn/gC0vgxaRufn4xDT+M2V2/1U2QMAdVnRoVU=
+			</data>
+		</dict>
+		<key>Icon-152x152.png</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			NMHGz9gn/gC0vgxaRufn4xDT+M2V2/1U2QMAdVnRoVU=
+			</data>
+		</dict>
+		<key>Icon-76@2x.png</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			NMHGz9gn/gC0vgxaRufn4xDT+M2V2/1U2QMAdVnRoVU=
 			</data>
 		</dict>
 		<key>badges.json</key>
@@ -1112,7 +1261,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			mI2GSI5iyl6GSgeJFqT5/BkpgmoYoIm9GQhrFrVJlC4=
+			izWkbhj8DlziqzXQdy40KEVCXugNsM4WMCSWXGA8CKA=
 			</data>
 		</dict>
 		<key>letter_a.mp3</key>
@@ -1175,6 +1324,13 @@
 		<dict>
 			<key>hash2</key>
 			<data>
+			26J5TVBgVbczFcAvndFqh4lvSC27tShTJWgWan9vgCE=
+			</data>
+		</dict>
+		<key>letters_backup.json</key>
+		<dict>
+			<key>hash2</key>
+			<data>
 			hROulwjFy4wV9Oqv+RynRpo1/BECB9yq/7Ygos0GCqY=
 			</data>
 		</dict>
@@ -1196,7 +1352,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			hI4t7/YuGAJLwzdrCL8oq/hUCyMwTXLEP/O8ttB9/N8=
+			UjCnMxas7/BV8Z6c1uLTFdtAD+FarYaUFYJh4l1prfc=
 			</data>
 		</dict>
 		<key>అ.mp3</key>
@@ -1549,6 +1705,13 @@
 			2pZulZ8XHpFyd+v4VXFYArovdlNO5Cmew2GbjOQJkRA=
 			</data>
 		</dict>
+		<key>కుందేలు.mp3</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			C73Y5XNUNdRE03jiXJBuF2GSakfDd/dZ4Hp1GuKrBFU=
+			</data>
+		</dict>
 		<key>కుక్క.mp3</key>
 		<dict>
 			<key>hash2</key>
@@ -1682,6 +1845,13 @@
 			juW6r7eDEbDVLqfsiumniGCtsR3eTH5trJndmew6MdU=
 			</data>
 		</dict>
+		<key>గోధుమ రంగు.mp3</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			KB5r/5/15iTha5EtP0jxCtLeVTdjwh64EbjGlAoeFZk=
+			</data>
+		</dict>
 		<key>గోధుమ.mp3</key>
 		<dict>
 			<key>hash2</key>
@@ -1743,6 +1913,13 @@
 			<key>hash2</key>
 			<data>
 			LWI70pKHnISnzkfO7D74kwd/jJuQMR4X/NebMcjTBtg=
+			</data>
+		</dict>
+		<key>చిలుక.mp3</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			pLiCCPnqzFXMh5TR4H3oyvcpJ4duCmWVp7vlYNcaTeQ=
 			</data>
 		</dict>
 		<key>చెల్లి.mp3</key>
@@ -2424,6 +2601,13 @@
 			g5RUR8H4GCsG1GmC1zeKas8W9H8h4NisIkqaIFN+/Rw=
 			</data>
 		</dict>
+		<key>బంగారు రంగు.mp3</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			Ufy/KOlFIePkXmkG9qEdpGUnvvLo+EG5CYzbo+LxGbY=
+			</data>
+		</dict>
 		<key>బండి.mp3</key>
 		<dict>
 			<key>hash2</key>
@@ -2557,6 +2741,13 @@
 			QHeFK0ObQGGfb6JSrrDsIGNqW5C8gR5EO3+OvrUaa2M=
 			</data>
 		</dict>
+		<key>మీ పేరు ఏమిటి.mp3</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			9V+oTJsBQlkcX3FQoETsf3GJFbfuIwew2I8xrhO+q44=
+			</data>
+		</dict>
 		<key>మీ పేరు ఏమిటి_.mp3</key>
 		<dict>
 			<key>hash2</key>
@@ -2618,6 +2809,13 @@
 			<key>hash2</key>
 			<data>
 			sKTikNqlescZ+6Zkp/uS2qPg+0E5HdagQ7/i/OFiI14=
+			</data>
+		</dict>
+		<key>మేక.mp3</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			gfCfSI/mz7mqKkeQPMAXJFYioEXRc5s9KJ7K6WyUK/U=
 			</data>
 		</dict>
 		<key>మేధ.mp3</key>

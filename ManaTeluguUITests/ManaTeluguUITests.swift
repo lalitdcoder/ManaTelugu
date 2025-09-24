@@ -22,20 +22,28 @@ final class ManaTeluguUITests: XCTestCase {
         let app = XCUIApplication()
         app.launch()
         
+        // Test navigation to Home tab
+        app.tabBars.buttons["Home"].tap()
+        XCTAssertTrue(app.navigationBars["Home"].exists, "Should navigate to Home view")
+        
         // Test navigation to Alphabet tab
         app.tabBars.buttons["Alphabet"].tap()
         XCTAssertTrue(app.navigationBars["Alphabet"].exists, "Should navigate to Alphabet view")
         
-        // Test navigation to Vocabulary tab
-        app.tabBars.buttons["Vocabulary"].tap()
-        XCTAssertTrue(app.navigationBars["Vocabulary"].exists, "Should navigate to Vocabulary view")
+        // Test navigation to Lessons tab
+        app.tabBars.buttons["Lessons"].tap()
+        XCTAssertTrue(app.navigationBars["Lessons"].exists, "Should navigate to Lessons view")
+        
+        // Test navigation to Stories tab
+        app.tabBars.buttons["Stories"].tap()
+        XCTAssertTrue(app.navigationBars["Stories"].exists, "Should navigate to Stories view")
         
         // Test navigation to Games tab
-        app.tabBars.buttons["Play"].tap()
-        XCTAssertTrue(app.navigationBars["Play"].exists, "Should navigate to Games view")
+        app.tabBars.buttons["Games"].tap()
+        XCTAssertTrue(app.navigationBars["Games"].exists, "Should navigate to Games view")
         
-        // Test navigation to Settings tab
-        app.tabBars.buttons["Settings"].tap()
-        XCTAssertTrue(app.navigationBars["Settings"].exists, "Should navigate to Settings view")
+        // Test navigation to More tab
+        app.tabBars.buttons["More"].tap()
+        XCTAssertTrue(app.navigationBars["More"].exists, "Should navigate to More view")
     }
 }
