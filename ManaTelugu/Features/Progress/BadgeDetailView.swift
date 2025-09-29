@@ -261,7 +261,7 @@ struct BadgeDetailView: View {
             id: "test",
             name: "First Star!",
             criteria: .lessonsCompleted(1),
-            imageName: "star_badge.png"
+            emoji: "⭐"
         ),
         isUnlocked: false
     )

@@ -306,7 +306,7 @@ struct HelpSupportView: View {
                     Button("Send Message") {
                         sendContactMessage()
                     }
-                    .buttonStyle(ScaleButtonStyle())
+                    .buttonStyle(.borderedProminent)
                     .disabled(contactEmail.isEmpty || contactSubject.isEmpty || contactMessage.isEmpty)
                 }
                 .padding(20)

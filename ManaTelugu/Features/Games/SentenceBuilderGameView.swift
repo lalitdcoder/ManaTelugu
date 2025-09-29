@@ -316,7 +316,7 @@ struct SentenceBuilderGameView: View {
             score += currentLevel * 10
             feedbackMessage = "Excellent! Perfect sentence!"
             xpEarned = currentLevel * 5
-            session.awardXP(xpEarned)
+            session.gamificationService.awardXP(xpEarned, type: .quizCompleted, description: "Sentence builder correct")
         } else {
             session.hapticsService.warning()
             feedbackMessage = "Not quite right, but keep trying!"
@@ -351,7 +351,7 @@ struct SentenceBuilderGameView: View {
         
         // Award XP based on score
         let xpEarned = score / 2
-        session.awardXP(xpEarned)
+        session.gamificationService.awardXP(xpEarned, type: .quizCompleted, description: "Sentence builder completed")
     }
     
     private func restartGame() {

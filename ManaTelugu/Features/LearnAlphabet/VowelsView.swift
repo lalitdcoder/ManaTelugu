@@ -11,26 +11,23 @@ struct VowelsView: View {
     
     var body: some View {
         ZStack {
-            // Enhanced background gradient for Liquid Glass effect
-            Color.clear
-                .liquidGlassBackground()
-                .ignoresSafeArea()
+            ElegantGradient()
+                .ignoresSafeArea(.all, edges: .all)
             
-            EnhancedScrollView(bottomPadding: 140) {
-            VStack(spacing: MTSpacing.medium) {
-                // Removed top quiz CTA for a cleaner learning flow
-                
-                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: MTSpacing.small), count: 4), spacing: MTSpacing.small) {
-                    ForEach(Array(vowels.enumerated()), id: \.element.id) { index, letter in
-                        NavigationLink {
-                            LetterDetailView(letters: vowels, initialIndex: index)
-                        } label: {
-                            LetterCardView(letter: letter)
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 16) {
+                    LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 4), spacing: 8) {
+                        ForEach(Array(vowels.enumerated()), id: \.element.id) { index, letter in
+                            NavigationLink {
+                                LetterDetailView(letters: vowels, initialIndex: index)
+                            } label: {
+                                LetterCardView(letter: letter)
+                            }
                         }
                     }
                 }
-            }
-            .padding()
+                .padding(16)
+                .padding(.bottom, 24)
             }
         }
         .onAppear { 
@@ -42,39 +39,42 @@ struct VowelsView: View {
         .onDisappear {
             let minutes = session.sessionTimer.stop()
             if minutes > 0 {
-                session.addLearningTime(minutes: minutes)
+                session.gamificationService.awardXP(minutes * 2, type: .dailyGoal, description: "Time spent learning vowels")
             }
         }
     }
     
     private func load() async {
-        let all = await session.dataRepository.letters()
-        let filtered = all.filter { vowelOrder.contains($0.glyph) }
+        let all = session.dataRepository.letters
+        let filtered = all.filter { vowelOrder.contains($0.character) }
         vowels = filtered.sorted { a, b in
-            guard let ia = vowelOrder.firstIndex(of: a.glyph), let ib = vowelOrder.firstIndex(of: b.glyph) else { return false }
+            guard let ia = vowelOrder.firstIndex(of: a.character), let ib = vowelOrder.firstIndex(of: b.character) else { return false }
             return ia < ib
         }
     }
     
     private func quizCard(title: String, subtitle: String, icon: String) -> some View {
-        HStack(spacing: MTSpacing.medium) {
+        HStack(spacing: 16) {
             Image(systemName: icon)
                 .font(.title)
-                .foregroundColor(MTColors.primary)
-            VStack(alignment: .leading, spacing: 6) {
+                .foregroundColor(.blue)
+            VStack(alignment: .leading, spacing: 4) {
                 Text(title)
-                    .font(MTTypography.heading(kidMode: session.userProfile.kidMode))
-                    .foregroundColor(MTColors.text)
+                    .font(.callout)
+                    .foregroundColor(.primary)
                 Text(subtitle)
-                    .font(MTTypography.caption(kidMode: session.userProfile.kidMode))
-                    .foregroundColor(MTColors.text.opacity(0.7))
+                    .font(.caption)
+                    .foregroundColor(.secondary)
             }
             Spacer()
             Image(systemName: "chevron.right")
-                .foregroundColor(MTColors.text.opacity(0.5))
+                .foregroundColor(Color.secondary)
         }
         .padding(16)
-        .glassEffect(.regular, shape: .rect(cornerRadius: 16))
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color.gray.opacity(0.1))
+        )
         .frame(height: 90)
     }
 }

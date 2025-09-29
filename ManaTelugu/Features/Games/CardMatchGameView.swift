@@ -92,7 +92,7 @@ struct CardMatchGameView: View {
     }
     
     private func loadData() async {
-        words = await session.dataRepository.words().prefix(8).map { $0 }
+        words = await session.dataRepository.words.prefix(8).map { $0 }
     }
     
     private func setupGame() {
@@ -144,13 +144,13 @@ struct CardMatchGameView: View {
                     session.hapticsService.success()
                     
                     // Award XP for successful match
-                    session.awardXP(10)
+                    session.gamificationService.awardXP(10, type: .quizCompleted, description: "Card match success")
                     
                     // Check if game is completed
                     if matchedIndices.count == cards.count {
                         gameCompleted = true
                         // Award bonus XP for completing the game
-                        session.awardXP(50)
+                        session.gamificationService.awardXP(50, type: .quizCompleted, description: "Game completed")
                     }
                 } else {
                     session.hapticsService.warning()

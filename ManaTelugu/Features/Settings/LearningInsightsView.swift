@@ -32,7 +32,9 @@ struct LearningInsightsView: View {
     }
     
     private func loadInsights() {
-        insights = insightsService.generateInsights(from: session.progressTrackingService.lessonProgress)
+        // TODO: Implement proper lesson progress tracking
+        // For now, provide empty array until progress tracking is implemented
+        insights = insightsService.generateInsights(from: [])
     }
 }
 

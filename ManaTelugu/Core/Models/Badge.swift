@@ -4,7 +4,7 @@ struct Badge: Identifiable, Codable, Hashable {
     let id: String
     let name: String
     let criteria: BadgeCriteria
-    let imageName: String
+    let emoji: String
 }
 
 enum BadgeCriteria: Codable, Hashable {

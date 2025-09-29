@@ -292,16 +292,16 @@ struct LessonView: View {
             LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: MTSpacing.medium), count: 4), spacing: MTSpacing.large) {
                 ForEach(lessonLetters, id: \.self) { letter in
                     VStack(spacing: MTSpacing.small) {
-                        Text(letter.glyph)
+                        Text(letter.character)
                             .font(.system(size: 64))
                             .foregroundColor(MTColors.text)
                         
-                        Text(letter.transliteration)
+                        Text(letter.romanization)
                             .font(MTTypography.heading(kidMode: session.userProfile.kidMode))
                             .foregroundColor(MTColors.text.opacity(0.8))
                         
                 Button(action: {
-                            session.audioService.play(name: letter.audioFile, rate: 1.0)
+                            session.audioService.play(name: letter.audioFileName ?? "default_audio", rate: 1.0)
                         }) {
                             Image(systemName: "speaker.wave.2.fill")
                                 .font(.title2)
@@ -341,28 +341,28 @@ struct LessonView: View {
     }
     
     private func getLettersForLessonSync() async -> [Letter] {
-        let allLetters = await session.dataRepository.letters()
+        let allLetters = session.dataRepository.letters
         switch lesson.order {
         case 1:
-            return allLetters.filter { ["అ", "ఆ", "ఇ", "ఈ"].contains($0.glyph) }
+            return allLetters.filter { ["అ", "ఆ", "ఇ", "ఈ"].contains($0.character) }
         case 2:
-            return allLetters.filter { ["ఉ", "ఊ", "ఋ", "ఎ", "ఏ"].contains($0.glyph) }
+            return allLetters.filter { ["ఉ", "ఊ", "ఋ", "ఎ", "ఏ"].contains($0.character) }
         case 3:
-            return allLetters.filter { ["ఐ", "ఒ", "ఓ", "ఔ", "అం", "అః"].contains($0.glyph) }
+            return allLetters.filter { ["ఐ", "ఒ", "ఓ", "ఔ", "అం", "అః"].contains($0.character) }
         case 4:
-            return allLetters.filter { ["క", "ఖ", "గ", "ఘ", "ఙ"].contains($0.glyph) }
+            return allLetters.filter { ["క", "ఖ", "గ", "ఘ", "ఙ"].contains($0.character) }
         case 5:
-            return allLetters.filter { ["చ", "ఛ", "జ", "ఝ", "ఞ"].contains($0.glyph) }
+            return allLetters.filter { ["చ", "ఛ", "జ", "ఝ", "ఞ"].contains($0.character) }
         case 6:
-            return allLetters.filter { ["ట", "ఠ", "డ", "ఢ", "ణ"].contains($0.glyph) }
+            return allLetters.filter { ["ట", "ఠ", "డ", "ఢ", "ణ"].contains($0.character) }
         case 7:
-            return allLetters.filter { ["త", "థ", "ద", "ధ", "న"].contains($0.glyph) }
+            return allLetters.filter { ["త", "థ", "ద", "ధ", "న"].contains($0.character) }
         case 8:
-            return allLetters.filter { ["ప", "ఫ", "బ", "భ", "మ"].contains($0.glyph) }
+            return allLetters.filter { ["ప", "ఫ", "బ", "భ", "మ"].contains($0.character) }
         case 9:
-            return allLetters.filter { ["య", "ర", "ల", "వ", "శ", "ష", "స", "హ", "ళ", "క్ష", "ఱ"].contains($0.glyph) }
+            return allLetters.filter { ["య", "ర", "ల", "వ", "శ", "ష", "స", "హ", "ళ", "క్ష", "ఱ"].contains($0.character) }
         case 10:
-            return allLetters.filter { ["అ","ఆ","ఇ","ఈ","ఉ","ఊ","క","గ","చ","జ","త","ద"].contains($0.glyph) }
+            return allLetters.filter { ["అ","ఆ","ఇ","ఈ","ఉ","ఊ","క","గ","చ","జ","త","ద"].contains($0.character) }
         default:
             return []
         }
@@ -809,7 +809,7 @@ struct LessonView: View {
     }
     
     private func tracingView(question: ActivityQuestion) -> some View {
-        let referenceStrokes = lessonLetters.first(where: { $0.glyph == question.correctAnswer })?.strokePathPoints ?? []
+        let referenceStrokes = lessonLetters.first(where: { $0.character == question.correctAnswer })?.strokePathPoints ?? []
         return VStack(spacing: MTSpacing.large) {
             Text("Writing Practice")
                 .font(MTTypography.heading(kidMode: session.userProfile.kidMode))
@@ -838,8 +838,8 @@ struct LessonView: View {
                     selectedAnswer = isCorrect ? question.correctAnswer : ""
                     
                     // Play the letter's audio file to help with learning
-                    if let letter = lessonLetters.first(where: { $0.glyph == question.correctAnswer }) {
-                        session.audioService.play(name: letter.audioFile, rate: 1.0)
+                    if let letter = lessonLetters.first(where: { $0.character == question.correctAnswer }) {
+                        session.audioService.play(name: letter.audioFileName ?? "default_audio", rate: 1.0)
                     }
                     
                     // Create response for tracing question
@@ -1012,8 +1012,8 @@ struct LessonView: View {
             return
         }
         // 2) If we have a matching letter in the lesson letters, use its audio file
-        if let letter = lessonLetters.first(where: { $0.glyph == question.correctAnswer }) {
-            session.audioService.play(name: letter.audioFile, rate: 1.0)
+        if let letter = lessonLetters.first(where: { $0.character == question.correctAnswer }) {
+            session.audioService.play(name: letter.audioFileName ?? "default_audio", rate: 1.0)
             return
         }
         // 3) Try a file named directly after the glyph (e.g., "అ.mp3")

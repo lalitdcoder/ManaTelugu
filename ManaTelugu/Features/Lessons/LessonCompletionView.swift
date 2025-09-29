@@ -126,7 +126,8 @@ struct LessonCompletionView: View {
             .padding()
             .navigationBarHidden(true)
             .onAppear {
-                session.progressTrackingService.saveProgress(for: lesson, with: responses, timeSpent: timeSpent)
+                // TODO: Save lesson progress
+                // session.progressTrackingService.saveProgress(for: lesson, with: responses, timeSpent: timeSpent)
                 print("LessonCompletionView appeared with lesson: \(lesson.title), totalXP: \(totalXP), timeSpent: \(timeSpent)")
                 startAnimations()
             }

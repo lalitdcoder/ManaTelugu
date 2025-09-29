@@ -224,14 +224,14 @@ struct ProfessionalAlphabetHubView: View {
         
             // Mock data for demonstration
             letters = [
-                Letter(id: "te_letter_a", glyph: "అ", name: "a", transliteration: "a", audioFile: "", strokePathPoints: []),
-                Letter(id: "te_letter_aa", glyph: "ఆ", name: "aa", transliteration: "aa", audioFile: "", strokePathPoints: []),
-                Letter(id: "te_letter_i", glyph: "ఇ", name: "i", transliteration: "i", audioFile: "", strokePathPoints: []),
-                Letter(id: "te_letter_ii", glyph: "ఈ", name: "ii", transliteration: "ii", audioFile: "", strokePathPoints: []),
-                Letter(id: "te_letter_ka", glyph: "క", name: "ka", transliteration: "ka", audioFile: "", strokePathPoints: []),
-                Letter(id: "te_letter_kha", glyph: "ఖ", name: "kha", transliteration: "kha", audioFile: "", strokePathPoints: []),
-                Letter(id: "te_letter_ga", glyph: "గ", name: "ga", transliteration: "ga", audioFile: "", strokePathPoints: []),
-                Letter(id: "te_letter_gha", glyph: "ఘ", name: "gha", transliteration: "gha", audioFile: "", strokePathPoints: [])
+                Letter(id: "te_letter_a", character: "అ", romanization: "a", meaning: "a", category: .vowel),
+                Letter(id: "te_letter_aa", character: "ఆ", romanization: "aa", meaning: "aa", category: .vowel),
+                Letter(id: "te_letter_i", character: "ఇ", romanization: "i", meaning: "i", category: .vowel),
+                Letter(id: "te_letter_ii", character: "ఈ", romanization: "ii", meaning: "ii", category: .vowel),
+                Letter(id: "te_letter_ka", character: "క", romanization: "ka", meaning: "ka", category: .consonant),
+                Letter(id: "te_letter_kha", character: "ఖ", romanization: "kha", meaning: "kha", category: .consonant),
+                Letter(id: "te_letter_ga", character: "గ", romanization: "ga", meaning: "ga", category: .consonant),
+                Letter(id: "te_letter_gha", character: "ఘ", romanization: "gha", meaning: "gha", category: .consonant)
             ]
         
         await MainActor.run {
@@ -306,11 +306,11 @@ struct ProfessionalLearningModeCard: View {
         var body: some View {
             ProfessionalCard(type: .compact, isInteractive: true) {
                 VStack(spacing: ProfessionalSpacing.small.value) {
-                    Text(letter.glyph)
+                    Text(letter.character)
                         .font(.system(size: 32, weight: .bold))
                         .foregroundColor(.textPrimary)
                     
-                    Text(letter.name)
+                    Text(letter.romanization)
                         .font(.system(size: 12, weight: .medium))
                         .foregroundColor(.textSecondary)
                     
@@ -335,7 +335,7 @@ extension Letter {
     var type: LetterType {
         // Determine if it's a vowel or consonant based on the letter
         let vowelGlyphs = ["అ", "ఆ", "ఇ", "ఈ", "ఉ", "ఊ", "ఎ", "ఏ", "ఋ", "ౠ", "ఐ", "ఒ", "ఓ", "ఔ", "అం", "అః"]
-        return vowelGlyphs.contains(glyph) ? .vowel : .consonant
+        return vowelGlyphs.contains(character) ? .vowel : .consonant
     }
     
     var isLearned: Bool {

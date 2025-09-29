@@ -33,12 +33,15 @@ struct SoundMatchGameView: View {
     
     var body: some View {
         ZStack {
-            // Enhanced background gradient for Liquid Glass effect
-            Color.clear
-                .liquidGlassBackground()
-                .ignoresSafeArea()
+            // Enhanced background gradient
+            LinearGradient(
+                colors: [Color.blue.opacity(0.1), Color.purple.opacity(0.1)],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .ignoresSafeArea()
             
-            VStack(spacing: MTSpacing.large) {
+            VStack(spacing: 20) {
             // Header with score and timer
             HStack {
                 HStack {
@@ -63,10 +66,10 @@ struct SoundMatchGameView: View {
             
             if let quizItem = currentQuizItem {
                 // Question area
-                VStack(spacing: MTSpacing.medium) {
+                VStack(spacing: 16) {
                     Text("What sound did you hear?")
-                        .font(MTTypography.heading(kidMode: session.userProfile.kidMode))
-                        .foregroundColor(MTColors.text)
+                        .font(.title2)
+                        .foregroundColor(.primary)
                     
                     Button(action: {
                         isPlaying = true
@@ -79,9 +82,9 @@ struct SoundMatchGameView: View {
                     }) {
                         Image(systemName: isPlaying ? "stop.fill" : "speaker.wave.2.fill")
                             .font(.system(size: 50))
-                            .foregroundColor(MTColors.primary)
+                            .foregroundColor(.blue)
                             .frame(width: 100, height: 100)
-                            .background(MTColors.surfaceAlt)
+                            .background(Color.gray.opacity(0.1))
                             .clipShape(Circle())
                     }
                     .buttonStyle(.plain)
@@ -89,7 +92,7 @@ struct SoundMatchGameView: View {
                 .padding()
                 
                 // Options
-                LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 2), spacing: MTSpacing.medium) {
+                LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 2), spacing: 16) {
                     ForEach(quizItem.options, id: \.self) { optionId in
                         let (displayText, isCorrect) = displayTextAndCorrectness(for: optionId, quizItem: quizItem)
                         
@@ -97,16 +100,16 @@ struct SoundMatchGameView: View {
                             handleOptionSelection(optionId: optionId, isCorrect: isCorrect)
                         }) {
                             Text(displayText)
-                                .font(MTTypography.body(kidMode: session.userProfile.kidMode))
+                                .font(.body)
                                 .multilineTextAlignment(.center)
                                 .padding()
                                 .frame(maxWidth: .infinity)
                                 .background(
                                     selectedOption == optionId ?
-                                    (isCorrect ? MTColors.success : MTColors.warning) :
-                                    MTColors.surfaceAlt
+                                    (isCorrect ? Color.green : Color.orange) :
+                                    Color.gray.opacity(0.1)
                                 )
-                                .foregroundColor(MTColors.text)
+                                .foregroundColor(.primary)
                                 .cornerRadius(12)
                         }
                         .disabled(selectedOption != nil)
@@ -116,8 +119,8 @@ struct SoundMatchGameView: View {
                 .padding(.horizontal)
             } else {
                 Text("Loading quiz...")
-                    .font(MTTypography.body())
-                    .foregroundColor(MTColors.text)
+                    .font(.body)
+                    .foregroundColor(.primary)
             }
             
             // Standardized feedback
@@ -155,8 +158,8 @@ struct SoundMatchGameView: View {
     }
     
     private func loadData() async {
-        letters = await session.dataRepository.letters()
-        words = await session.dataRepository.words()
+        letters = await session.dataRepository.letters
+        words = await session.dataRepository.words
         
         // Create sample quiz items
         createQuizItems()
@@ -377,7 +380,7 @@ struct SoundMatchGameView: View {
         
         // Fallback to original logic for backward compatibility
         if let letter = letters.first(where: { $0.id == optionId }) {
-            return ("\(letter.glyph)\n(\(letter.transliteration))", isCorrect)
+            return ("\(letter.character)\n(\(letter.romanization))", isCorrect)
         } else if let word = words.first(where: { $0.id == optionId }) {
             return ("\(word.telugu)\n(\(word.english))", isCorrect)
         }
@@ -394,7 +397,7 @@ struct SoundMatchGameView: View {
             feedbackMessage = "Correct! Well done!"
             xpEarned = 5
             session.hapticsService.success()
-            session.awardXP(5)
+            session.gamificationService.awardXP(5, type: .quizCompleted, description: "Sound match correct answer")
         } else {
             feedbackMessage = "Not quite right, but keep trying!"
             xpEarned = 0

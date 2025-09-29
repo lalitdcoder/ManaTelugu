@@ -13,7 +13,7 @@ struct BadgeUnlockedView: View {
                 .fontWeight(.bold)
             
             VStack {
-                Text(badge.icon)
+                Text(badge.emoji)
                     .font(.system(size: 80))
                 Text(badge.name)
                     .font(.title)

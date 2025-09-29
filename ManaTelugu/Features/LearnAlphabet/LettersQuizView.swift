@@ -95,7 +95,8 @@ struct LettersQuizView: View {
         .onDisappear {
             let minutes = session.sessionTimer.stop()
             if minutes > 0 {
-                session.addLearningTime(minutes: minutes)
+                // TODO: Add learning time tracking
+                // session.addLearningTime(minutes: minutes)
             }
         }
     }
@@ -111,33 +112,33 @@ struct LettersQuizView: View {
     private func buildQuestions() async {
         let vowels = ["అ","ఆ","ఇ","ఈ","ఉ","ఊ","ఋ","ౠ","ఎ","ఏ","ఐ","ఒ","ఓ","ఔ","అం","అః"]
         let consonants = ["క","ఖ","గ","ఘ","ఙ","చ","ఛ","జ","ఝ","ఞ","ట","ఠ","డ","ఢ","ణ","త","థ","ద","ధ","న","ప","ఫ","బ","భ","మ","య","ర","ల","వ","శ","ష","స","హ","ళ","క్ష","ఱ"]
-        let all = await session.dataRepository.letters()
+        let all = session.dataRepository.letters
         let pool: [Letter]
         let questionCount: Int
         
         switch scope {
         case .vowels:
-            pool = all.filter { vowels.contains($0.glyph) }
+            pool = all.filter { vowels.contains($0.character) }
             questionCount = min(12, pool.count) // Up to 12 vowel questions
         case .consonants:
-            pool = all.filter { consonants.contains($0.glyph) }
+            pool = all.filter { consonants.contains($0.character) }
             questionCount = 12 // Always 12 consonant questions
         case .all:
             pool = all
             questionCount = 12 // 12 mixed questions
         }
         
-        let translits = Set(pool.map { $0.transliteration })
+        let translits = Set(pool.map { $0.romanization })
         var qs: [Question] = []
         
         // Shuffle the pool and take questions, allowing repeats if needed for consonants
         let shuffledPool = pool.shuffled()
         for i in 0..<questionCount {
             let letter = shuffledPool[i % shuffledPool.count] // Cycle through if needed
-            let correct = letter.transliteration
+            let correct = letter.romanization
             let others = translits.subtracting([correct]).shuffled().prefix(3)
             let opts = ([correct] + others).shuffled()
-            qs.append(Question(glyph: letter.glyph, correct: correct, options: opts))
+            qs.append(Question(glyph: letter.character, correct: correct, options: opts))
         }
         
         // Final shuffle to randomize question order
@@ -153,11 +154,13 @@ struct LettersQuizView: View {
         if answer == q.correct {
             correctCount += 1
             session.hapticsService.success()
-            session.awardXP(2)
+            // TODO: Award XP for correct answer
+            // session.awardXP(2)
         } else {
             session.hapticsService.warning()
         }
-        session.touchStreak()
+        // TODO: Update touch streak
+        // session.touchStreak()
     }
     
     private func nextQuestion() {

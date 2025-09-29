@@ -7,12 +7,12 @@ struct AlphabetGridView: View {
     // MARK: - Letter Categorization
     private var vowels: [Letter] {
         let vowelGlyphs = ["అ", "ఆ", "ఇ", "ఈ", "ఉ", "ఊ", "ఎ", "ఏ", "ఋ", "ౠ", "ఐ", "ఒ", "ఓ", "ఔ", "అం", "అః"]
-        return letters.filter { vowelGlyphs.contains($0.glyph) }
+        return letters.filter { vowelGlyphs.contains($0.character) }
     }
     
     private var consonants: [Letter] {
         let vowelGlyphs = ["అ", "ఆ", "ఇ", "ఈ", "ఉ", "ఊ", "ఎ", "ఏ", "ఋ", "ౠ", "ఐ", "ఒ", "ఓ", "ఔ", "అం", "అః"]
-        return letters.filter { !vowelGlyphs.contains($0.glyph) }
+        return letters.filter { !vowelGlyphs.contains($0.character) }
     }
     
     var body: some View {
@@ -48,8 +48,7 @@ struct AlphabetGridView: View {
                         .padding(.horizontal, MTSpacing.medium)
                         
                         LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: MTSpacing.medium), count: 4), spacing: MTSpacing.medium) {
-                            ForEach(vowels.indices, id: \.self) { index in
-                                let letter = vowels[index]
+                            ForEach(Array(vowels), id: \.id) { letter in
                                 let originalIndex = letters.firstIndex(where: { $0.id == letter.id }) ?? 0
                                 NavigationLink {
                                     LetterDetailView(letters: letters, initialIndex: originalIndex)
@@ -64,11 +63,11 @@ struct AlphabetGridView: View {
                                             impactFeedback.impactOccurred()
                                             
                                             // Audio feedback
-                                            session.audioService.play(name: letter.audioFile, rate: 1.0)
+                                            session.audioService.play(name: letter.audioFileName ?? "default_audio", rate: 1.0)
                                         }
                                 )
                             .frame(minWidth: MTSpacing.minimumTouchTarget, minHeight: MTSpacing.minimumTouchTarget)
-                            .accessibilityLabel("Telugu vowel \(letter.glyph)")
+                            .accessibilityLabel("Telugu vowel \(letter.character)")
                             .accessibilityHint("Double tap to learn more about this vowel")
                             .accessibilityAddTraits(.isButton)
                             }
@@ -106,11 +105,11 @@ struct AlphabetGridView: View {
                                             impactFeedback.impactOccurred()
                                             
                                             // Audio feedback
-                                            session.audioService.play(name: letter.audioFile, rate: 1.0)
+                                            session.audioService.play(name: letter.audioFileName ?? "default_audio", rate: 1.0)
                                         }
                                 )
                             .frame(minWidth: MTSpacing.minimumTouchTarget, minHeight: MTSpacing.minimumTouchTarget)
-                            .accessibilityLabel("Telugu consonant \(letter.glyph)")
+                            .accessibilityLabel("Telugu consonant \(letter.character)")
                             .accessibilityHint("Double tap to learn more about this consonant")
                             .accessibilityAddTraits(.isButton)
                             }
@@ -123,14 +122,14 @@ struct AlphabetGridView: View {
         }
         .onAppear {
             Task {
-                letters = await session.dataRepository.letters()
+                letters = await session.dataRepository.letters
                 if letters.isEmpty {
                     // Fallback test letters if data loading fails
                     letters = [
-                        Letter(id: "test_a", glyph: "అ", name: "a", transliteration: "a", audioFile: "letter_a.mp3", strokePathPoints: []),
-                        Letter(id: "test_aa", glyph: "ఆ", name: "aa", transliteration: "aa", audioFile: "letter_aa.mp3", strokePathPoints: []),
-                        Letter(id: "test_i", glyph: "ఇ", name: "i", transliteration: "i", audioFile: "letter_i.mp3", strokePathPoints: []),
-                        Letter(id: "test_ii", glyph: "ఈ", name: "ii", transliteration: "ii", audioFile: "letter_ii.mp3", strokePathPoints: [])
+                        Letter(id: "test_a", character: "అ", romanization: "a", meaning: "a", category: .vowel, audioFileName: "letter_a.mp3"),
+                        Letter(id: "test_aa", character: "ఆ", romanization: "aa", meaning: "aa", category: .vowel, audioFileName: "letter_aa.mp3"),
+                        Letter(id: "test_i", character: "ఇ", romanization: "i", meaning: "i", category: .vowel, audioFileName: "letter_i.mp3"),
+                        Letter(id: "test_ii", character: "ఈ", romanization: "ii", meaning: "ii", category: .vowel, audioFileName: "letter_ii.mp3")
                     ]
                 }
             }
@@ -150,7 +149,7 @@ struct ModernLetterCardView: View {
     // MARK: - Letter Type Detection
     private var isVowel: Bool {
         let vowelGlyphs = ["అ", "ఆ", "ఇ", "ఈ", "ఉ", "ఊ", "ఎ", "ఏ", "ఋ", "ౠ", "ఐ", "ఒ", "ఓ", "ఔ", "అం", "అః"]
-        return vowelGlyphs.contains(letter.glyph)
+        return vowelGlyphs.contains(letter.character)
     }
     
     private var cardColor: Color {
@@ -181,13 +180,13 @@ struct ModernLetterCardView: View {
                     )
                 
                 // Letter Glyph with enhanced styling
-                Text(letter.glyph)
+                Text(letter.character)
                     .font(.system(size: 36, weight: .bold, design: .rounded))
                     .foregroundColor(cardColor)
             }
             
             // Transliteration with better styling
-            (Text(letter.transliteration) as Text)
+            (Text(letter.romanization) as Text)
                 .font(MTTypography.caption(kidMode: session.userProfile.kidMode))
                 .foregroundColor(MTColors.text)
                 .multilineTextAlignment(.center)
@@ -227,7 +226,7 @@ struct ModernLetterCardView: View {
             }
             
             // Audio feedback
-            session.audioService.play(name: letter.audioFile, rate: 1.0)
+            session.audioService.play(name: letter.audioFileName ?? "default_audio", rate: 1.0)
             
             // Reset states
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {

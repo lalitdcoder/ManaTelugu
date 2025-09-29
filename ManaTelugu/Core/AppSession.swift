@@ -1,15 +1,13 @@
 import SwiftUI
 import Combine
 
+@MainActor
 class AppSession: ObservableObject {
-    @Published var userProfile: UserProfile = UserProfile(
-        name: "Learner",
-        kidMode: false
-    )
-    @Published var awardedLetterIds: Set<String> = []
+    @Published var userProfile: UserProfile = UserProfile(name: "Student", kidMode: true)
     
     let audioService: AudioServiceProtocol = AudioService()
-    let dataRepository: DataRepository = DataRepository.shared
+    let audioFeedback: AudioFeedbackService = AudioFeedbackService()
+    let dataRepository = DataRepository()
     let hapticsService: HapticsService = HapticsService.shared
     let sessionTimer: SessionTimer = SessionTimer()
     let lessonsRepository: LessonsRepository = LessonsRepository()
@@ -17,71 +15,59 @@ class AppSession: ObservableObject {
     let storyService: StoryService = StoryService()
     let dailyMissionsService = DailyMissionsService()
     let stickerService = StickerService()
-    let progressTrackingService = ProgressTrackingService()
-    let notificationService: NotificationServiceProtocol = NotificationService.shared
     
+    // MARK: - Initialization
     init() {
-        // Load user profile from storage if exists
         loadUserProfile()
-        // Schedule default daily reminder at 7 PM if authorized
-        notificationService.requestAuthorization { granted in
-            if granted {
-                self.notificationService.scheduleDailyReminder(
-                    hour: 19,
-                    minute: 0,
-                    title: "Keep your Telugu streak going!",
-                    body: "Practice a quick lesson to maintain your streak and level up."
-                )
-            }
-        }
+        setupBindings()
     }
-
+    
+    // MARK: - Data Loading
     func preloadData() async {
         // This function will be called from the splash screen
         // to warm up the data caches in the background.
-        _ = await dataRepository.letters()
-        _ = await dataRepository.words()
-        _ = await dataRepository.lessons()
-        _ = await dataRepository.badges()
+        dataRepository.loadData()
     }
     
     private func loadUserProfile() {
         // In a real app, we would load from Core Data or UserDefaults
-        // For now we'll use default values
-        DispatchQueue.main.async {
-            self.gamificationService.gamificationState.checkBadgeUnlocks()
-        }
-    }
-
-
-    // MARK: - Progress Helpers
-    func awardXP(_ points: Int) {
-        gamificationService.awardXP(points, type: .quizCompleted)
+        // For now, we'll use mock data
+        userProfile = UserProfile(name: "Student", kidMode: true)
     }
     
-    func touchStreak() {
-        gamificationService.gamificationState.updateStreak()
-    }
-
-    func awardLetterView(letterId: String) {
-        if !awardedLetterIds.contains(letterId) {
-            awardedLetterIds.insert(letterId)
-            awardXP(1)
-            touchStreak()
-            
-            // Integrate with gamification system
-            // We'll create a dummy Word object for now.
-            let dummyWord = Word(id: "letter_\(letterId)", telugu: letterId, transliteration: "", english: "", imageName: "", audioFile: "", theme: "Alphabet")
-            gamificationService.onWordLearned(dummyWord)
-        }
+    private func setupBindings() {
+        // Set up any necessary bindings between services
+        // Gamification service will be configured separately
     }
     
-    // MARK: - Learning Time Tracking
-    func addLearningTime(minutes: Int) {
-        // This logic can be moved to a dedicated service in the future
+    // MARK: - Session Management
+    func startSession() {
+        sessionTimer.start()
+        // Check daily missions if method exists
     }
-
-    func saveLearningTime() {
-        // This logic can be moved to a dedicated service in the future
+    
+    func endSession() {
+        sessionTimer.stop()
+        saveUserProgress()
+    }
+    
+    private func saveUserProgress() {
+        // Save user progress to persistent storage
+        // This would typically involve Core Data or UserDefaults
+    }
+    
+    // MARK: - Convenience Methods
+    func playAudio(for item: String) {
+        audioService.play(name: item, rate: 1.0)
+    }
+    
+    func provideFeedback(correct: Bool) {
+        if correct {
+            audioFeedback.playSuccess()
+            hapticsService.lightImpact()
+        } else {
+            audioFeedback.playTryAgain()
+            hapticsService.mediumImpact()
+        }
     }
 }

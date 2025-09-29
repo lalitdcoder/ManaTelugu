@@ -30,7 +30,7 @@ struct GamificationDashboardView: View {
                             .padding(.horizontal)
                         
                         // Streak Card
-                        StreakCard(gamification: gamification)
+                        StreakCard(title: "Streak", value: "\(gamification.streakCount)", icon: "flame.fill", color: MTColors.funYellow)
                             .padding(.horizontal)
                         
                         // Recent Badges
@@ -52,11 +52,11 @@ struct GamificationDashboardView: View {
                             
                             ScrollView(.horizontal, showsIndicators: false) {
                                 HStack(spacing: 12) {
-                                    ForEach(gamification.badges.prefix(5)) { badge in
+                                    ForEach(Array(gamification.badges.prefix(5).enumerated()), id: \.offset) { index, badge in
                                         VStack {
-                                            Image(systemName: badge.icon)
+                                            Text(badge.emoji)
                                                 .font(.title2)
-                                                .foregroundColor(Color(badge.color))
+                                                .foregroundColor(ElegantDesign.Colors.primary)
                                             Text(badge.name)
                                                 .font(.caption)
                                                 .multilineTextAlignment(.center)
@@ -216,51 +216,7 @@ struct DailyGoalCard: View {
     }
 }
 
-// MARK: - Streak Card
-struct StreakCard: View {
-    @ObservedObject var gamification: GamificationState
-    
-    var body: some View {
-        HStack(spacing: MTSpacing.medium) {
-            Image(systemName: "flame.fill")
-                .font(.system(size: 32))
-                .foregroundColor(MTColors.funYellow)
-                .shadow(color: MTColors.funYellow.opacity(0.3), radius: 4, x: 0, y: 2)
-            
-            VStack(alignment: .leading, spacing: 4) {
-                Text("\(gamification.streakCount) Day Streak")
-                    .font(MTTypography.heading())
-                    .foregroundColor(.primary)
-                
-                Text(getStreakMilestoneName())
-                    .font(MTTypography.body())
-                    .foregroundColor(.secondary)
-            }
-            
-            Spacer()
-            
-            VStack(alignment: .trailing, spacing: 4) {
-                Text("+\(gamification.streakCount * 5) XP")
-                    .font(MTTypography.heading())
-                    .foregroundColor(MTColors.funYellow)
-                Text("Today's Bonus")
-                    .font(MTTypography.caption())
-                    .foregroundColor(.secondary)
-            }
-        }
-        .padding(MTSpacing.medium)
-        .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(Color(.secondarySystemGroupedBackground))
-                .shadow(color: .black.opacity(0.05), radius: 2, x: 0, y: 1)
-        )
-    }
-    
-    private func getStreakMilestoneName() -> String {
-        let milestone = StreakMilestone.milestones.last { $0.days <= gamification.streakCount }
-        return milestone?.teluguName ?? "Getting Started"
-    }
-}
+// StreakCard is defined in EnhancedProgressView.swift
 
 // MARK: - Recent Badges Card
 struct RecentBadgesCard: View {
@@ -389,7 +345,7 @@ struct BadgeIconView: View {
                     .frame(width: size, height: size)
                     .shadow(color: Color(badge.color).opacity(0.3), radius: 4, x: 0, y: 2)
                 
-                Image(systemName: badge.icon)
+                Text(badge.emoji)
                     .font(.system(size: size * 0.4, weight: .medium))
                     .foregroundColor(.white)
             }

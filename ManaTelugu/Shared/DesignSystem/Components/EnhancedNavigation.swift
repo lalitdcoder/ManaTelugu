@@ -316,7 +316,7 @@ struct EnhancedRootTabView: View {
         TabItem(title: "Lessons", icon: "book.fill", view: AnyView(LessonsHubView())),
         TabItem(title: "Stories", icon: "books.vertical.fill", view: AnyView(StorybookHubView())),
         TabItem(title: "Games", icon: "gamecontroller.fill", view: AnyView(GamesHubView())),
-        TabItem(title: "More", icon: "ellipsis.circle.fill", view: AnyView(MoreView()))
+        TabItem(title: "More", icon: "ellipsis.circle.fill", view: AnyView(ProfessionalMoreView()))
     ]
     
     var body: some View {

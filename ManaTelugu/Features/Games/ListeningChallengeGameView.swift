@@ -188,9 +188,9 @@ struct ListeningChallengeGameView: View {
     }
     
     private func loadNextQuestion() async {
-        let animalWords = await session.dataRepository.words(theme: "Animals")
-        let colorWords = await session.dataRepository.words(theme: "Colors")
-        let numberWords = await session.dataRepository.words(theme: "Numbers")
+        let animalWords = await session.dataRepository.words.filter { $0.theme == "Animals" }
+        let colorWords = await session.dataRepository.words.filter { $0.theme == "Colors" }
+        let numberWords = await session.dataRepository.words.filter { $0.theme == "Numbers" }
         let allWords = animalWords + colorWords + numberWords
         
         guard let randomWord = allWords.randomElement() else { return }
@@ -240,7 +240,7 @@ struct ListeningChallengeGameView: View {
             streak += 1
             feedbackMessage = "Correct! Well done!"
             xpEarned = 5 + (streak * 2)
-            session.awardXP(xpEarned)
+            session.gamificationService.awardXP(xpEarned, type: .quizCompleted, description: "Listening challenge correct")
         } else {
             session.hapticsService.warning()
             streak = 0
@@ -274,7 +274,7 @@ struct ListeningChallengeGameView: View {
         
         // Award XP based on score
         let xpEarned = score / 2
-        session.awardXP(xpEarned)
+        session.gamificationService.awardXP(xpEarned, type: .quizCompleted, description: "Listening challenge completed")
     }
     
     private func restartGame() async {

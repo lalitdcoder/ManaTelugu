@@ -244,7 +244,7 @@ struct BadgePopupView: View {
                     .frame(width: 100, height: 100)
                     .shadow(color: Color(data.badge.color).opacity(0.3), radius: 12, x: 0, y: 6)
                 
-                Image(systemName: data.badge.icon)
+                Text(data.badge.emoji)
                     .font(.system(size: 40, weight: .medium))
                     .foregroundColor(.white)
             }

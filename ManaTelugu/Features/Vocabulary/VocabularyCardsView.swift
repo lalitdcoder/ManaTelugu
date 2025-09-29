@@ -189,7 +189,8 @@ struct VocabularyCardsView: View {
         }
         .onAppear {
             Task {
-                words = await session.dataRepository.words(theme: theme)
+                // Filter words by theme from the data repository
+                words = session.dataRepository.words.filter { $0.theme == theme }
                 if words.isEmpty {
                     // Fallback test words if data loading fails
                     words = [
@@ -206,14 +207,14 @@ struct VocabularyCardsView: View {
         if currentIndex < words.count - 1 {
             currentIndex += 1
             showingTranslation = true
-            // Award XP for learning a new word
-            session.awardXP(3)
+            // TODO: Award XP for learning a new word
+            // session.awardXP(3)
         } else {
             // Reset to first word if at end
             currentIndex = 0
             showingTranslation = true
-            // Award XP for completing the vocabulary set
-            session.awardXP(20)
+            // TODO: Award XP for completing the vocabulary set
+            // session.awardXP(20)
         }
     }
     

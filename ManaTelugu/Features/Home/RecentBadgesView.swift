@@ -6,119 +6,55 @@ struct RecentBadgesView: View {
     private var recentBadges: [GamificationBadge] {
         session.gamificationService.gamificationState.badges
             .filter { $0.isUnlocked }
-            .sorted { $0.unlockedAt ?? Date.distantPast > $1.unlockedAt ?? Date.distantPast }
-            .prefix(3)
-            .map { $0 }
+            .suffix(3)
+            .reversed()
     }
-
+    
     var body: some View {
-        VStack(alignment: .leading, spacing: 20) {
-            HStack {
-                PulsingIcon(iconName: "rosette", color: RefinedColors.warmYellow, size: 24)
-                Text("Recent Badges")
-                    .font(EnhancedTypography.sectionTitle)
-                    .foregroundColor(RefinedColors.charcoal)
-                Spacer()
-            }
+        VStack(alignment: .leading, spacing: ElegantDesign.Spacing.md) {
+            Text("Recent Badges")
+                .font(ElegantDesign.Typography.headline)
+                .foregroundColor(ElegantDesign.Colors.textPrimary)
             
             if recentBadges.isEmpty {
-                VStack(spacing: 16) {
-                    ZStack {
-                        Circle()
-                            .fill(.ultraThinMaterial)
-                            .opacity(0.6)
-                            .frame(width: 80, height: 80)
-                            .overlay(
-                                Circle()
-                                    .stroke(
-                                        LinearGradient(
-                                            colors: [
-                                                RefinedColors.warmYellow.opacity(0.4),
-                                                RefinedColors.warmYellow.opacity(0.1)
-                                            ],
-                                            startPoint: .topLeading,
-                                            endPoint: .bottomTrailing
-                                        ),
-                                        lineWidth: 2
-                                    )
-                            )
-                        
-                        Image(systemName: "rosette")
-                            .font(.system(size: 36, weight: .medium))
-                            .foregroundColor(RefinedColors.warmYellow)
-                    }
+                VStack(spacing: ElegantDesign.Spacing.md) {
+                    Text("🏆")
+                        .font(.system(size: 40))
                     
-                    Text("Start learning to earn your first badge!")
-                        .font(EnhancedTypography.bodyText)
-                        .foregroundColor(RefinedColors.mediumGray)
+                    Text("No badges yet")
+                        .font(ElegantDesign.Typography.body)
+                        .foregroundColor(ElegantDesign.Colors.textSecondary)
+                    
+                    Text("Complete lessons to earn your first badge!")
+                        .font(ElegantDesign.Typography.caption)
+                        .foregroundColor(ElegantDesign.Colors.textTertiary)
                         .multilineTextAlignment(.center)
-                        .padding(.horizontal, 20)
                 }
-                .padding(32)
                 .frame(maxWidth: .infinity)
+                .padding(ElegantDesign.Spacing.lg)
             } else {
-                HStack(spacing: 20) {
-                    ForEach(recentBadges) { badge in
-                        VStack(spacing: 16) {
-                            // Enhanced liquid glass badge icon
-                            ZStack {
-                                Circle()
-                                    .fill(.ultraThinMaterial)
-                                    .opacity(0.8)
-                                    .frame(width: 70, height: 70)
-                                    .overlay(
-                                        Circle()
-                                            .stroke(
-                                                LinearGradient(
-                                                    colors: [
-                                                        Color(badge.color).opacity(0.6),
-                                                        Color(badge.color).opacity(0.2)
-                                                    ],
-                                                    startPoint: .topLeading,
-                                                    endPoint: .bottomTrailing
-                                                ),
-                                                lineWidth: 2
-                                            )
-                                    )
-                                
-                                Image(systemName: badge.icon)
-                                    .font(.system(size: 28, weight: .bold))
-                                    .foregroundColor(Color(badge.color))
-                                
-                                // Sparkle effect for unlocked badges
-                                Circle()
-                                    .stroke(Color(badge.color).opacity(0.6), lineWidth: 1)
-                                    .frame(width: 85, height: 85)
-                                    .scaleEffect(1.1)
-                                    .opacity(0.3)
-                                    .animation(.easeInOut(duration: 2.0).repeatForever(autoreverses: true), value: true)
-                            }
+                HStack(spacing: ElegantDesign.Spacing.md) {
+                    ForEach(Array(recentBadges.enumerated()), id: \.offset) { index, badge in
+                        VStack(spacing: ElegantDesign.Spacing.sm) {
+                            Text(badge.emoji)
+                                .font(.system(size: 30))
+                                .frame(width: 50, height: 50)
+                                .background(
+                                    Circle()
+                                        .fill(ElegantDesign.Colors.primary.opacity(0.1))
+                                )
                             
                             Text(badge.name)
-                                .font(EnhancedTypography.caption)
-                                .fontWeight(.semibold)
-                                .foregroundColor(RefinedColors.charcoal)
+                                .font(ElegantDesign.Typography.caption)
+                                .foregroundColor(ElegantDesign.Colors.textSecondary)
                                 .lineLimit(2)
                                 .multilineTextAlignment(.center)
-                                .minimumScaleFactor(0.8)
                         }
                         .frame(maxWidth: .infinity)
-                        .padding(.vertical, 8)
-                        .background(
-                            LinearGradient(
-                                colors: [
-                                    Color(badge.color).opacity(0.05),
-                                    Color(badge.color).opacity(0.02)
-                                ],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                            .glassEffect(.subtle, shape: .rect(cornerRadius: 16))
-                        )
                     }
                 }
-                .padding(24)
             }
         }
+        .elegantCard()
     }
 }

@@ -214,17 +214,17 @@ struct PracticeView: View {
     
     private func loadPracticeItems() async {
         // Load a mix of letters and words for practice
-        let letters = await session.dataRepository.letters().prefix(5)
-        let words = await session.dataRepository.words().prefix(5)
+        let letters = await session.dataRepository.letters.prefix(5)
+        let words = await session.dataRepository.words.prefix(5)
         
         var items: [PracticeItem] = []
         
         for letter in letters {
             items.append(PracticeItem(
-                telugu: letter.glyph,
-                transliteration: letter.transliteration,
-                english: letter.name,
-                audioFile: letter.audioFile
+                telugu: letter.character,
+                transliteration: letter.romanization,
+                english: letter.meaning,
+                audioFile: letter.audioFileName ?? ""
             ))
         }
         

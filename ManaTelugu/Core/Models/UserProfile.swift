@@ -14,4 +14,7 @@ struct UserProfile: Codable {
     var unlockedBadges: [String] = []
     var streakDays: Int = 0
     var parentPin: String? = nil
+    var currentStreak: Int = 0
+    var totalXP: Int = 0
+    var level: Int = 1
 }

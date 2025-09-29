@@ -1,9 +1,6 @@
 import SwiftUI
 
-// MARK: - Professional Progress Dashboard View
-// Clean, professional layout with proper progress tracking
-
-struct ProfessionalProgressDashboardView: View {
+struct ProgressDashboardView: View {
     @EnvironmentObject var session: AppSession
     @State private var weeklyData: [ProgressDataPoint] = []
     
@@ -17,214 +14,147 @@ struct ProfessionalProgressDashboardView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                // Professional gradient background
-                LinearGradient(
-                    colors: [
-                        Color(red: 0.2, green: 0.4, blue: 0.9),
-                        Color(red: 0.4, green: 0.2, blue: 0.8),
-                        Color(red: 0.8, green: 0.3, blue: 0.6)
-                    ],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-                .ignoresSafeArea(.all, edges: .all)
+                ElegantGradient()
+                    .ignoresSafeArea(.all, edges: .all)
                 
-                ScrollView {
-                    LazyVStack(spacing: ProfessionalSpacing.large.value) {
-                        // Hero Header
-                        ProfessionalCard(type: .hero) {
-                            VStack(alignment: .leading, spacing: ProfessionalSpacing.large.value) {
-                                ProfessionalText(
-                                    "Your Progress",
-                                    style: .heroTitle,
-                                    color: .textPrimary
-                                )
-                                
-                                ProfessionalText(
-                                    "Track your learning journey and achievements",
-                                    style: .bodyText,
-                                    color: .textSecondary
-                                )
-                            }
-                        }
-                        .padding(.top, ProfessionalSpacing.extraLarge.value)
+                ScrollView(showsIndicators: false) {
+                    VStack(spacing: ElegantDesign.Spacing.xl) {
+                        // Header
+                        headerSection
+                            .padding(.top, ElegantDesign.Spacing.xl)
                         
                         // Stats Overview
-                        statsOverviewSection
+                        statsOverview
                         
-                        // Weekly Progress Chart
-                        weeklyProgressSection
+                        // Weekly Progress
+                        weeklyProgress
                         
-                        // Badges Section
-                        badgesSection
-                        
-                        // Stickers Section
-                        stickersSection
-                        
-                        // Bottom padding for tab bar
-                        Color.clear
-                            .frame(height: 120)
+                        // Achievements
+                        achievementsSection
                     }
-                    .padding(.horizontal, ProfessionalSpacing.medium.value)
+                    .padding(.horizontal, ElegantDesign.Spacing.md)
+                    .padding(.bottom, ElegantDesign.Spacing.xl)
                 }
-                .scrollIndicators(.hidden)
             }
-            .navigationBarHidden(true)
+            .navigationTitle("Progress")
+            .navigationBarTitleDisplayMode(.large)
         }
         .onAppear {
             loadWeeklyData()
         }
     }
     
-    // MARK: - Stats Overview Section
-    private var statsOverviewSection: some View {
-        VStack(alignment: .leading, spacing: ProfessionalSpacing.medium.value) {
-            ProfessionalSectionHeader(
-                title: "Overview",
-                subtitle: "Your learning statistics"
-            )
-            
-            HStack(spacing: ProfessionalSpacing.medium.value) {
-                ProfessionalStatCard(
-                    icon: "star.fill",
-                    value: "\(session.gamificationService.gamificationState.totalXP)",
-                    label: "Total XP",
-                    color: .professionalBlue
-                )
-                
-                ProfessionalStatCard(
-                    icon: "trophy.fill",
-                    value: "\(session.gamificationService.gamificationState.currentLevel.level)",
-                    label: "Level",
-                    color: .professionalOrange
-                )
-                
-                ProfessionalStatCard(
-                    icon: "flame.fill",
-                    value: "\(session.gamificationService.gamificationState.streakCount)",
-                    label: "Streak",
-                    color: .professionalGreen
-                )
-            }
+    private var headerSection: some View {
+        VStack(alignment: .leading, spacing: ElegantDesign.Spacing.xs) {
+            Text("Track your Telugu learning journey")
+                .font(ElegantDesign.Typography.body)
+                .foregroundColor(ElegantDesign.Colors.textSecondary)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .elegantCard()
+    }
+    
+    private var statsOverview: some View {
+        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: ElegantDesign.Spacing.md), count: 2), spacing: ElegantDesign.Spacing.md) {
+            statCard("Total XP", "1,250", "star.fill", ElegantDesign.Colors.accent)
+            statCard("Streak", "5 days", "flame.fill", ElegantDesign.Colors.primary)
+            statCard("Lessons", "8/12", "book.fill", ElegantDesign.Colors.secondary)
+            statCard("Accuracy", "85%", "target", ElegantDesign.Colors.success)
         }
     }
     
-    // MARK: - Weekly Progress Section
-    private var weeklyProgressSection: some View {
-        VStack(alignment: .leading, spacing: ProfessionalSpacing.medium.value) {
-            ProfessionalSectionHeader(
-                title: "This Week",
-                subtitle: "Your daily learning progress"
-            )
+    private var weeklyProgress: some View {
+        VStack(alignment: .leading, spacing: ElegantDesign.Spacing.md) {
+            Text("This Week")
+                .font(ElegantDesign.Typography.headline)
+                .foregroundColor(ElegantDesign.Colors.textPrimary)
             
-            ProfessionalCard(type: .primary) {
-                VStack(alignment: .leading, spacing: ProfessionalSpacing.medium.value) {
-                    ProfessionalText(
-                        "Weekly Progress Chart",
-                        style: .cardTitle,
-                        color: .textPrimary
-                    )
-                    
-                    // Placeholder for chart
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(Color.professionalBlue.opacity(0.1))
-                        .frame(height: 200)
-                        .overlay(
-                            ProfessionalText(
-                                "Chart would go here",
-                                style: .bodyText,
-                                color: .textSecondary,
-                                alignment: .center
-                            )
-                        )
-                }
-            }
-        }
-    }
-    
-    // MARK: - Badges Section
-    private var badgesSection: some View {
-        VStack(alignment: .leading, spacing: ProfessionalSpacing.medium.value) {
-            ProfessionalSectionHeader(
-                title: "Recent Badges",
-                subtitle: "Your latest achievements"
-            )
-            
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: ProfessionalSpacing.medium.value) {
-                    ForEach(session.gamificationService.gamificationState.badges.prefix(5)) { badge in
-                        ProfessionalBadgeCard(badge: badge)
+            HStack {
+                ForEach(weeklyData) { data in
+                    VStack(spacing: ElegantDesign.Spacing.xs) {
+                        Text(data.day)
+                            .font(ElegantDesign.Typography.caption)
+                            .foregroundColor(ElegantDesign.Colors.textSecondary)
+                        
+                        RoundedRectangle(cornerRadius: 4)
+                            .fill(ElegantDesign.Colors.primary)
+                            .frame(width: 20, height: CGFloat(data.minutes * 2))
+                        
+                        Text("\(data.minutes)")
+                            .font(ElegantDesign.Typography.caption)
+                            .foregroundColor(ElegantDesign.Colors.textTertiary)
                     }
                 }
-                .padding(.horizontal, ProfessionalSpacing.medium.value)
             }
+            .frame(maxWidth: .infinity)
         }
+        .elegantCard()
     }
     
-    // MARK: - Stickers Section
-    private var stickersSection: some View {
-        VStack(alignment: .leading, spacing: ProfessionalSpacing.medium.value) {
-            ProfessionalSectionHeader(
-                title: "Stickers",
-                subtitle: "Collect and use fun stickers"
-            )
+    private var achievementsSection: some View {
+        VStack(alignment: .leading, spacing: ElegantDesign.Spacing.md) {
+            Text("Recent Achievements")
+                .font(ElegantDesign.Typography.headline)
+                .foregroundColor(ElegantDesign.Colors.textPrimary)
             
-            ProfessionalCard(type: .primary) {
-                VStack(alignment: .leading, spacing: ProfessionalSpacing.medium.value) {
-                    ProfessionalText(
-                        "Sticker Collection",
-                        style: .cardTitle,
-                        color: .textPrimary
-                    )
-                    
-                    ProfessionalText(
-                        "You have collected \(session.gamificationService.gamificationState.collectedStickerIDs.count) stickers!",
-                        style: .bodyText,
-                        color: .textSecondary
-                    )
-                }
-            }
+            achievementRow("First Lesson", "Completed your first lesson", "checkmark.circle.fill", ElegantDesign.Colors.success)
+            achievementRow("5-Day Streak", "Learned for 5 days in a row", "flame.fill", ElegantDesign.Colors.primary)
+            achievementRow("Vowel Master", "Mastered all vowel letters", "star.fill", ElegantDesign.Colors.accent)
         }
+        .elegantCard()
     }
     
-    // MARK: - Data Loading
-    private func loadWeeklyData() {
-        let calendar = Calendar.current
-        let formatter = DateFormatter()
-        formatter.dateFormat = "EEE"
-        let today = Date()
-        
-        weeklyData = (0..<7).map { i in
-            let date = calendar.date(byAdding: .day, value: -i, to: today)!
-            let day = formatter.string(from: date)
-            let minutes = i == 0 ? max(1, session.gamificationService.gamificationState.totalXP / 60) : max(0, (session.gamificationService.gamificationState.totalXP / 60) - i)
-            return ProgressDataPoint(day: day, minutes: minutes, accuracy: 0.9)
-        }.reversed()
+    private func statCard(_ title: String, _ value: String, _ icon: String, _ color: Color) -> some View {
+        VStack(spacing: ElegantDesign.Spacing.sm) {
+            Image(systemName: icon)
+                .font(.title2)
+                .foregroundColor(color)
+            
+            Text(value)
+                .font(ElegantDesign.Typography.title3)
+                .fontWeight(.bold)
+                .foregroundColor(ElegantDesign.Colors.textPrimary)
+            
+            Text(title)
+                .font(ElegantDesign.Typography.caption)
+                .foregroundColor(ElegantDesign.Colors.textSecondary)
+        }
+        .frame(height: 100)
+        .frame(maxWidth: .infinity)
+        .elegantCard()
     }
-}
-
-// MARK: - Professional Badge Card
-struct ProfessionalBadgeCard: View {
-    let badge: GamificationBadge
     
-    var body: some View {
-        ProfessionalCard(type: .compact, isInteractive: true) {
-            VStack(spacing: ProfessionalSpacing.small.value) {
-                Image(systemName: badge.icon)
-                    .font(.system(size: 32, weight: .semibold))
-                    .foregroundColor(Color(badge.color))
+    private func achievementRow(_ title: String, _ description: String, _ icon: String, _ color: Color) -> some View {
+        HStack(spacing: ElegantDesign.Spacing.md) {
+            Image(systemName: icon)
+                .font(.title3)
+                .foregroundColor(color)
+                .frame(width: 24)
+            
+            VStack(alignment: .leading, spacing: ElegantDesign.Spacing.xs) {
+                Text(title)
+                    .font(ElegantDesign.Typography.callout)
+                    .fontWeight(.semibold)
+                    .foregroundColor(ElegantDesign.Colors.textPrimary)
                 
-                ProfessionalText(
-                    badge.name,
-                    style: .caption,
-                    color: .textPrimary,
-                    alignment: .center
-                )
+                Text(description)
+                    .font(ElegantDesign.Typography.caption)
+                    .foregroundColor(ElegantDesign.Colors.textSecondary)
             }
-            .frame(width: 100)
+            
+            Spacer()
         }
     }
+    
+    private func loadWeeklyData() {
+        weeklyData = [
+            ProgressDataPoint(day: "Mon", minutes: 15, accuracy: 0.85),
+            ProgressDataPoint(day: "Tue", minutes: 20, accuracy: 0.90),
+            ProgressDataPoint(day: "Wed", minutes: 10, accuracy: 0.75),
+            ProgressDataPoint(day: "Thu", minutes: 25, accuracy: 0.95),
+            ProgressDataPoint(day: "Fri", minutes: 18, accuracy: 0.88),
+            ProgressDataPoint(day: "Sat", minutes: 0, accuracy: 0.0),
+            ProgressDataPoint(day: "Sun", minutes: 12, accuracy: 0.82)
+        ]
+    }
 }
-
-// MARK: - Replace the original ProgressDashboardView
-typealias ProgressDashboardView = ProfessionalProgressDashboardView

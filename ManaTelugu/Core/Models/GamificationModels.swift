@@ -75,7 +75,7 @@ struct GamificationBadge: Codable, Identifiable {
     let name: String
     let teluguName: String
     let description: String
-    let icon: String
+    let emoji: String
     let color: String
     let xpReward: Int
     let requirement: BadgeRequirement
@@ -83,11 +83,11 @@ struct GamificationBadge: Codable, Identifiable {
     let unlockedAt: Date?
     let rarity: BadgeRarity
     
-    init(name: String, teluguName: String, description: String, icon: String, color: String, xpReward: Int, requirement: BadgeRequirement, isUnlocked: Bool = false, unlockedAt: Date? = nil, rarity: BadgeRarity = .common) {
+    init(name: String, teluguName: String, description: String, emoji: String, color: String, xpReward: Int, requirement: BadgeRequirement, isUnlocked: Bool = false, unlockedAt: Date? = nil, rarity: BadgeRarity = .common) {
         self.name = name
         self.teluguName = teluguName
         self.description = description
-        self.icon = icon
+        self.emoji = emoji
         self.color = color
         self.xpReward = xpReward
         self.requirement = requirement
@@ -285,36 +285,36 @@ class GamificationState: ObservableObject, Codable {
     private func loadInitialBadges() {
         badges = [
             // Common Badges
-            GamificationBadge(name: "First Word", teluguName: "మొదటి పదం", description: "Learn your first Telugu word", icon: "star.fill", color: "funBlue", xpReward: 50, requirement: .wordsLearned(1), rarity: .common),
-            GamificationBadge(name: "Streak Starter", teluguName: "చిన్న చిన్న అడుగులు", description: "3-day streak", icon: "flame.fill", color: "funBlue", xpReward: 75, requirement: .streakDays(3), rarity: .common),
-            GamificationBadge(name: "First Quiz", teluguName: "మొదటి ప్రశ్న", description: "Complete your first quiz", icon: "questionmark.circle.fill", color: "funBlue", xpReward: 25, requirement: .quizzesCompleted(1), rarity: .common),
+            GamificationBadge(name: "First Word", teluguName: "మొదటి పదం", description: "Learn your first Telugu word", emoji: "⭐", color: "funBlue", xpReward: 50, requirement: .wordsLearned(1), rarity: .common),
+            GamificationBadge(name: "Streak Starter", teluguName: "చిన్న చిన్న అడుగులు", description: "3-day streak", emoji: "🔥", color: "funBlue", xpReward: 75, requirement: .streakDays(3), rarity: .common),
+            GamificationBadge(name: "First Quiz", teluguName: "మొదటి ప్రశ్న", description: "Complete your first quiz", emoji: "❓", color: "funBlue", xpReward: 25, requirement: .quizzesCompleted(1), rarity: .common),
             
             // Uncommon Badges
-            GamificationBadge(name: "Word Learner", teluguName: "శబ్ద శిక్షక", description: "Learn 50 words", icon: "book.fill", color: "funGreen", xpReward: 100, requirement: .wordsLearned(50), rarity: .uncommon),
-            GamificationBadge(name: "Week Warrior", teluguName: "సప్త విద్యార్థి", description: "7-day streak", icon: "calendar", color: "funGreen", xpReward: 150, requirement: .streakDays(7), rarity: .uncommon),
-            GamificationBadge(name: "Quiz Enthusiast", teluguName: "ప్రశ్న ప్రియుడు", description: "Complete 5 quizzes", icon: "brain.head.profile", color: "funGreen", xpReward: 100, requirement: .quizzesCompleted(5), rarity: .uncommon),
-            GamificationBadge(name: "Daily Learner", teluguName: "నిత్య విద్యార్థి", description: "Be active for 7 days", icon: "calendar.badge.checkmark", color: "funGreen", xpReward: 125, requirement: .daysActive(7), rarity: .uncommon),
+            GamificationBadge(name: "Word Learner", teluguName: "శబ్ద శిక్షక", description: "Learn 50 words", emoji: "📚", color: "funGreen", xpReward: 100, requirement: .wordsLearned(50), rarity: .uncommon),
+            GamificationBadge(name: "Week Warrior", teluguName: "సప్త విద్యార్థి", description: "7-day streak", emoji: "📅", color: "funGreen", xpReward: 150, requirement: .streakDays(7), rarity: .uncommon),
+            GamificationBadge(name: "Quiz Enthusiast", teluguName: "ప్రశ్న ప్రియుడు", description: "Complete 5 quizzes", emoji: "🧠", color: "funGreen", xpReward: 100, requirement: .quizzesCompleted(5), rarity: .uncommon),
+            GamificationBadge(name: "Daily Learner", teluguName: "నిత్య విద్యార్థి", description: "Be active for 7 days", emoji: "✅", color: "funGreen", xpReward: 125, requirement: .daysActive(7), rarity: .uncommon),
             
             // Rare Badges
-            GamificationBadge(name: "Language Expert", teluguName: "మన భాషా నిపుణుడు", description: "Learn 100 words", icon: "graduationcap.fill", color: "funYellow", xpReward: 200, requirement: .wordsLearned(100), rarity: .rare),
-            GamificationBadge(name: "Month Master", teluguName: "సహస యాత్రి", description: "30-day streak", icon: "crown.fill", color: "funYellow", xpReward: 300, requirement: .streakDays(30), rarity: .rare),
-            GamificationBadge(name: "Quiz Master", teluguName: "ప్రమాణ పండిత", description: "Complete 10 quizzes", icon: "brain.head.profile", color: "funYellow", xpReward: 200, requirement: .quizzesCompleted(10), rarity: .rare),
-            GamificationBadge(name: "Perfect Score", teluguName: "సంపూర్ణ స్కోరు", description: "Get perfect score in 5 quizzes", icon: "checkmark.seal.fill", color: "funYellow", xpReward: 250, requirement: .perfectQuizzes(5), rarity: .rare),
-            GamificationBadge(name: "XP Collector", teluguName: "XP సేకరకుడు", description: "Earn 1000 XP", icon: "star.circle.fill", color: "funYellow", xpReward: 150, requirement: .xpEarned(1000), rarity: .rare),
+            GamificationBadge(name: "Language Expert", teluguName: "మన భాషా నిపుణుడు", description: "Learn 100 words", emoji: "🎓", color: "funYellow", xpReward: 200, requirement: .wordsLearned(100), rarity: .rare),
+            GamificationBadge(name: "Month Master", teluguName: "సహస యాత్రి", description: "30-day streak", emoji: "👑", color: "funYellow", xpReward: 300, requirement: .streakDays(30), rarity: .rare),
+            GamificationBadge(name: "Quiz Master", teluguName: "ప్రమాణ పండిత", description: "Complete 10 quizzes", emoji: "🧠", color: "funYellow", xpReward: 200, requirement: .quizzesCompleted(10), rarity: .rare),
+            GamificationBadge(name: "Perfect Score", teluguName: "సంపూర్ణ స్కోరు", description: "Get perfect score in 5 quizzes", emoji: "💯", color: "funYellow", xpReward: 250, requirement: .perfectQuizzes(5), rarity: .rare),
+            GamificationBadge(name: "XP Collector", teluguName: "XP సేకరకుడు", description: "Earn 1000 XP", emoji: "⭐", color: "funYellow", xpReward: 150, requirement: .xpEarned(1000), rarity: .rare),
             
             // Epic Badges
-            GamificationBadge(name: "Vocabulary Master", teluguName: "శబ్దకోశ మాస్టర్", description: "Learn 250 words", icon: "book.closed.fill", color: "funPink", xpReward: 400, requirement: .wordsLearned(250), rarity: .epic),
-            GamificationBadge(name: "Streak Legend", teluguName: "స్ట్రీక్ లెజెండ్", description: "60-day streak", icon: "flame.circle.fill", color: "funPink", xpReward: 500, requirement: .streakDays(60), rarity: .epic),
-            GamificationBadge(name: "Quiz Champion", teluguName: "ప్రశ్న ఛాంపియన్", description: "Complete 25 quizzes", icon: "trophy.fill", color: "funPink", xpReward: 400, requirement: .quizzesCompleted(25), rarity: .epic),
-            GamificationBadge(name: "Perfect Master", teluguName: "పర్ఫెక్ట్ మాస్టర్", description: "Get perfect score in 15 quizzes", icon: "checkmark.seal.fill", color: "funPink", xpReward: 500, requirement: .perfectQuizzes(15), rarity: .epic),
-            GamificationBadge(name: "Level 5 Achiever", teluguName: "లెవెల్ 5 అచీవర్", description: "Reach level 5", icon: "5.circle.fill", color: "funPink", xpReward: 300, requirement: .levelReached(5), rarity: .epic),
+            GamificationBadge(name: "Vocabulary Master", teluguName: "శబ్దకోశ మాస్టర్", description: "Learn 250 words", emoji: "📖", color: "funPink", xpReward: 400, requirement: .wordsLearned(250), rarity: .epic),
+            GamificationBadge(name: "Streak Legend", teluguName: "స్ట్రీక్ లెజెండ్", description: "60-day streak", emoji: "🔥", color: "funPink", xpReward: 500, requirement: .streakDays(60), rarity: .epic),
+            GamificationBadge(name: "Quiz Champion", teluguName: "ప్రశ్న ఛాంపియన్", description: "Complete 25 quizzes", emoji: "🏆", color: "funPink", xpReward: 400, requirement: .quizzesCompleted(25), rarity: .epic),
+            GamificationBadge(name: "Perfect Master", teluguName: "పర్ఫెక్ట్ మాస్టర్", description: "Get perfect score in 15 quizzes", emoji: "💯", color: "funPink", xpReward: 500, requirement: .perfectQuizzes(15), rarity: .epic),
+            GamificationBadge(name: "Level 5 Achiever", teluguName: "లెవెల్ 5 అచీవర్", description: "Reach level 5", emoji: "5️⃣", color: "funPink", xpReward: 300, requirement: .levelReached(5), rarity: .epic),
             
             // Legendary Badges
-            GamificationBadge(name: "Eternal Student", teluguName: "నిత్య విద్యార్థి", description: "90-day streak", icon: "infinity", color: "primary", xpReward: 1000, requirement: .streakDays(90), rarity: .legendary),
-            GamificationBadge(name: "Telugu Scholar", teluguName: "తెలుగు పండితుడు", description: "Learn 500 words", icon: "graduationcap.circle.fill", color: "primary", xpReward: 1000, requirement: .wordsLearned(500), rarity: .legendary),
-            GamificationBadge(name: "Quiz Grandmaster", teluguName: "ప్రశ్న గ్రాండ్ మాస్టర్", description: "Complete 50 quizzes", icon: "brain.head.profile", color: "primary", xpReward: 800, requirement: .quizzesCompleted(50), rarity: .legendary),
-            GamificationBadge(name: "Perfect Legend", teluguName: "పర్ఫెక్ట్ లెజెండ్", description: "Get perfect score in 30 quizzes", icon: "checkmark.seal.fill", color: "primary", xpReward: 1000, requirement: .perfectQuizzes(30), rarity: .legendary),
-            GamificationBadge(name: "Ultimate Achiever", teluguName: "అల్టిమేట్ అచీవర్", description: "Earn 5000 XP", icon: "star.circle.fill", color: "primary", xpReward: 500, requirement: .xpEarned(5000), rarity: .legendary)
+            GamificationBadge(name: "Eternal Student", teluguName: "నిత్య విద్యార్థి", description: "90-day streak", emoji: "♾️", color: "primary", xpReward: 1000, requirement: .streakDays(90), rarity: .legendary),
+            GamificationBadge(name: "Telugu Scholar", teluguName: "తెలుగు పండితుడు", description: "Learn 500 words", emoji: "🎓", color: "primary", xpReward: 1000, requirement: .wordsLearned(500), rarity: .legendary),
+            GamificationBadge(name: "Quiz Grandmaster", teluguName: "ప్రశ్న గ్రాండ్ మాస్టర్", description: "Complete 50 quizzes", emoji: "🧠", color: "primary", xpReward: 800, requirement: .quizzesCompleted(50), rarity: .legendary),
+            GamificationBadge(name: "Perfect Legend", teluguName: "పర్ఫెక్ట్ లెజెండ్", description: "Get perfect score in 30 quizzes", emoji: "💯", color: "primary", xpReward: 1000, requirement: .perfectQuizzes(30), rarity: .legendary),
+            GamificationBadge(name: "Ultimate Achiever", teluguName: "అల్టిమేట్ అచీవర్", description: "Earn 5000 XP", emoji: "⭐", color: "primary", xpReward: 500, requirement: .xpEarned(5000), rarity: .legendary)
         ]
     }
     
@@ -342,7 +342,7 @@ class GamificationState: ObservableObject, Codable {
                     name: badges[i].name,
                     teluguName: badges[i].teluguName,
                     description: badges[i].description,
-                    icon: badges[i].icon,
+                    emoji: badges[i].emoji,
                     color: badges[i].color,
                     xpReward: badges[i].xpReward,
                     requirement: badges[i].requirement,

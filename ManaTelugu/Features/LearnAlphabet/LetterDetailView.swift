@@ -15,13 +15,8 @@ struct LetterDetailView: View {
     
     var body: some View {
         ZStack {
-            // Dynamic animated background
-            LinearGradient(
-                colors: [RefinedColors.background, RefinedColors.secondaryBackground],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            .ignoresSafeArea()
+            ElegantGradient()
+                .ignoresSafeArea(.all, edges: .all)
             
             VStack(spacing: 0) {
                 // Enhanced Liquid Glass Header
@@ -51,14 +46,14 @@ struct LetterDetailView: View {
                     // Main letter display with enhanced styling
                     ZStack {
                         // Glow effect behind letter
-                        Text(letter.glyph)
+                        Text(letter.character)
                             .font(.system(size: 160, weight: .bold, design: .rounded))
                             .foregroundColor(letterTypeColor.opacity(0.3))
                             .blur(radius: 20)
                             .scaleEffect(1.1)
                         
                         // Main letter
-                        Text(letter.glyph)
+                        Text(letter.character)
                             .font(.system(size: 140, weight: .bold, design: .rounded))
                             .foregroundColor(MTColors.text)
                             .scaleEffect(isGlowing ? 1.05 : 1.0)
@@ -115,7 +110,7 @@ struct LetterDetailView: View {
                                             .font(MTTypography.body(kidMode: session.userProfile.kidMode))
                                             .fontWeight(.semibold)
                                         
-                                        Text(letter.transliteration)
+                                        Text(letter.romanization)
                                             .font(MTTypography.caption(kidMode: session.userProfile.kidMode))
                                             .foregroundColor(MTColors.secondaryText)
                                     }
@@ -144,14 +139,14 @@ struct LetterDetailView: View {
                             .buttonStyle(.plain)
                             .simultaneousGesture(LongPressGesture(minimumDuration: 0.5)
                                 .onEnded { _ in
-                                    session.audioService.play(name: letter.audioFile, rate: 0.75)
+                                    session.audioService.play(name: letter.audioFileName ?? "default_audio", rate: 0.75)
                                 }
                             )
                             
                             // Letter Information
                             VStack(spacing: 12) {
-                                LetterInfoRow(title: "Transliteration", value: letter.transliteration, color: letterTypeColor)
-                                LetterInfoRow(title: "Name", value: letter.name, color: MTColors.funYellow)
+                                LetterInfoRow(title: "Transliteration", value: letter.romanization, color: letterTypeColor)
+                                LetterInfoRow(title: "Name", value: letter.character, color: MTColors.funYellow)
                             }
                         }
                         .padding(24)
@@ -261,12 +256,12 @@ struct LetterDetailView: View {
     // MARK: - Computed Properties
     private var letterTypeIndicator: String {
         let vowelGlyphs = ["అ", "ఆ", "ఇ", "ఈ", "ఉ", "ఊ", "ఎ", "ఏ", "ఋ", "ౠ", "ఐ", "ఒ", "ఓ", "ఔ", "అం", "అః"]
-        return vowelGlyphs.contains(letter.glyph) ? "Vowel (అచ్చు)" : "Consonant (హల్లు)"
+        return vowelGlyphs.contains(letter.character) ? "Vowel (అచ్చు)" : "Consonant (హల్లు)"
     }
     
     private var letterTypeColor: Color {
         let vowelGlyphs = ["అ", "ఆ", "ఇ", "ఈ", "ఉ", "ఊ", "ఎ", "ఏ", "ఋ", "ౠ", "ఐ", "ఒ", "ఓ", "ఔ", "అం", "అః"]
-        return vowelGlyphs.contains(letter.glyph) ? MTColors.funBlue : MTColors.funGreen
+        return vowelGlyphs.contains(letter.character) ? MTColors.funBlue : MTColors.funGreen
     }
     
     // MARK: - Actions
@@ -281,7 +276,7 @@ struct LetterDetailView: View {
         
         // Audio playback
         isPlaying = true
-        session.audioService.play(name: letter.audioFile, rate: 1.0)
+        session.audioService.play(name: letter.audioFileName ?? "", rate: 1.0)
         
         // Reset states
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
@@ -298,8 +293,8 @@ struct LetterDetailView: View {
     private func nextAction() {
         session.hapticsService.lightImpact()
         if hasNext {
-            withAnimation(.easeInOut(duration: 0.3)) {
-                index += 1
+            withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
+                index = min(index + 1, letters.count - 1)
             }
         } else {
             dismiss()
@@ -308,8 +303,8 @@ struct LetterDetailView: View {
     
     private func previousLetter() {
         session.hapticsService.lightImpact()
-        withAnimation(.easeInOut(duration: 0.3)) {
-            index -= 1
+        withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
+            index = max(index - 1, 0)
         }
     }
 }

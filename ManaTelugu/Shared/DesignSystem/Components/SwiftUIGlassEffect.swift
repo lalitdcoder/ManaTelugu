@@ -1,5 +1,8 @@
 import SwiftUI
 
+// Import MTColors for consistent theming
+extension MTColors {}
+
 // MARK: - SwiftUI Glass Effect
 // High-quality glass effects that actually render in SwiftUI
 
@@ -273,6 +276,37 @@ extension Color {
     static let premiumGreen = Color(red: 0.1, green: 0.6, blue: 0.3)
     static let premiumOrange = Color(red: 0.9, green: 0.5, blue: 0.1)
     static let premiumPink = Color(red: 0.8, green: 0.3, blue: 0.5)
+}
+
+// MARK: - Liquid Glass Background Extension
+extension View {
+    func liquidGlassBackground() -> some View {
+        self.background(
+            LinearGradient(
+                colors: [
+                    Color(.systemBackground),
+                    Color(.systemBackground).opacity(0.8),
+                    Color(.systemGray6).opacity(0.3)
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        )
+    }
+    
+    func softGradientBackground() -> some View {
+        self.background(
+            LinearGradient(
+                colors: [
+                    Color(red: 0.1, green: 0.4, blue: 0.8).opacity(0.08), // teluguBlue
+                    Color(red: 0.9, green: 0.6, blue: 0.1).opacity(0.04), // teluguSaffron
+                    Color(red: 0.1, green: 0.6, blue: 0.3).opacity(0.03)  // teluguGreen
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        )
+    }
 }
 
 // MARK: - Premium Text View

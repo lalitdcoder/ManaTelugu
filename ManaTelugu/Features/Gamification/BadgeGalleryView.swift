@@ -118,7 +118,7 @@ struct BadgeCardView: View {
                         radius: 8, x: 0, y: 4
                     )
                 
-                Image(systemName: badge.icon)
+                Text(badge.emoji)
                     .font(.system(size: 32, weight: .medium))
                     .foregroundColor(badge.isUnlocked ? .white : .secondary)
                 
@@ -295,7 +295,7 @@ private func convertToBadge(gamificationBadge: GamificationBadge) -> Badge {
         id: gamificationBadge.id.uuidString,
         name: gamificationBadge.name,
         criteria: criteria,
-        imageName: gamificationBadge.icon
+        emoji: gamificationBadge.emoji
     )
 }
 
