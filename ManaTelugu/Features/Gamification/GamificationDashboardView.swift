@@ -6,11 +6,11 @@ struct GamificationDashboardView: View {
     @State private var showingXPHistory = false
     @State private var animateXP = false
     @State private var animateBadge = false
-    
+
     var gamification: GamificationState {
         session.gamificationService.gamificationState
     }
-    
+
     var body: some View {
         NavigationStack {
             ZStack {
@@ -18,41 +18,67 @@ struct GamificationDashboardView: View {
                 Color.clear
                     .liquidGlassBackground()
                     .ignoresSafeArea()
-                
+
                 EnhancedScrollView {
                     VStack(spacing: ModernDesignSystem.Spacing.lg) {
+                        // Hearts Display
+                        HStack {
+                            Spacer()
+                            HStack(spacing: 4) {
+                                Image(systemName: "heart.fill")
+                                    .foregroundColor(.red)
+                                Text("\(session.hearts)")
+                                    .font(ModernDesignSystem.Typography.headline)
+                                    .foregroundColor(.primary)
+                            }
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
+                            .background(Capsule().fill(Color.red.opacity(0.1)))
+                        }
+                        .padding(.horizontal)
+
                         // Header with level and XP
                         LevelProgressCard(gamification: gamification, animateXP: $animateXP)
                             .padding(.horizontal)
-                        
+
                         // Daily Goal Card
                         DailyGoalCard(gamification: gamification)
                             .padding(.horizontal)
-                        
+
                         // Streak Card
-                        StreakCard(title: "Streak", value: "\(gamification.streakCount)", icon: "flame.fill", color: ModernDesignSystem.Colors.funYellow)
+                        StreakCard(
+                            title: "Streak", value: "\(gamification.streakCount)",
+                            icon: "flame.fill", color: ModernDesignSystem.Colors.funYellow
+                        )
+                        .padding(.horizontal)
+
+                        // Leaderboard Card
+                        LeaderboardCard(leaderboard: session.leaderboardService.leaderboard)
                             .padding(.horizontal)
-                        
+
                         // Recent Badges
                         RecentBadgesCard(gamification: gamification, animateBadge: $animateBadge)
                             .padding(.horizontal)
-                        
+
                         // Quick Actions
                         QuickActionsCard(
                             showingBadgeGallery: $showingBadgeGallery,
                             showingXPHistory: $showingXPHistory
                         )
                         .padding(.horizontal)
-                        
+
                         // Badges Section
                         VStack(alignment: .leading, spacing: 12) {
                             Text("Recent Badges")
                                 .font(.headline)
                                 .fontWeight(.semibold)
-                            
+
                             ScrollView(.horizontal, showsIndicators: false) {
                                 HStack(spacing: 12) {
-                                    ForEach(Array(gamification.badges.prefix(5).enumerated()), id: \.offset) { index, badge in
+                                    ForEach(
+                                        Array(gamification.badges.prefix(5).enumerated()),
+                                        id: \.offset
+                                    ) { index, badge in
                                         VStack {
                                             Text(badge.emoji)
                                                 .font(.title2)
@@ -70,7 +96,7 @@ struct GamificationDashboardView: View {
                             }
                         }
                         .padding(.horizontal)
-                        
+
                         // Sticker Album Section
                         NavigationLink(destination: StickerAlbumView()) {
                             HStack {
@@ -109,7 +135,7 @@ struct GamificationDashboardView: View {
 struct LevelProgressCard: View {
     @ObservedObject var gamification: GamificationState
     @Binding var animateXP: Bool
-    
+
     var body: some View {
         VStack(spacing: ModernDesignSystem.Spacing.md) {
             HStack {
@@ -121,9 +147,9 @@ struct LevelProgressCard: View {
                         .font(ModernDesignSystem.Typography.body)
                         .foregroundColor(.secondary)
                 }
-                
+
                 Spacer()
-                
+
                 VStack(alignment: .trailing, spacing: 4) {
                     Text("\(gamification.totalXP) XP")
                         .font(ModernDesignSystem.Typography.headline)
@@ -135,7 +161,7 @@ struct LevelProgressCard: View {
                         .foregroundColor(.secondary)
                 }
             }
-            
+
             // Progress Bar
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
@@ -150,9 +176,11 @@ struct LevelProgressCard: View {
                             .foregroundColor(.accentColor)
                     }
                 }
-                
+
                 ProgressView(value: gamification.progressToNextLevel)
-                    .progressViewStyle(LinearProgressViewStyle(tint: ModernDesignSystem.Colors.primary))
+                    .progressViewStyle(
+                        LinearProgressViewStyle(tint: ModernDesignSystem.Colors.primary)
+                    )
                     .scaleEffect(x: 1, y: 2, anchor: .center)
             }
         }
@@ -168,14 +196,14 @@ struct LevelProgressCard: View {
 // MARK: - Daily Goal Card
 struct DailyGoalCard: View {
     @ObservedObject var gamification: GamificationState
-    
+
     var body: some View {
         VStack(spacing: ModernDesignSystem.Spacing.md) {
             HStack {
                 Image(systemName: "target")
                     .font(.title2)
                     .foregroundColor(ModernDesignSystem.Colors.funGreen)
-                
+
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Daily Goal")
                         .font(ModernDesignSystem.Typography.headline)
@@ -184,9 +212,9 @@ struct DailyGoalCard: View {
                         .font(ModernDesignSystem.Typography.body)
                         .foregroundColor(.secondary)
                 }
-                
+
                 Spacer()
-                
+
                 VStack(alignment: .trailing, spacing: 4) {
                     Text("\(gamification.dailyGoal.xpTarget) XP")
                         .font(ModernDesignSystem.Typography.headline)
@@ -196,7 +224,7 @@ struct DailyGoalCard: View {
                         .foregroundColor(.secondary)
                 }
             }
-            
+
             // Progress indicator
             HStack {
                 ForEach(0..<gamification.dailyGoal.wordsToLearn, id: \.self) { index in
@@ -222,27 +250,27 @@ struct DailyGoalCard: View {
 struct RecentBadgesCard: View {
     @ObservedObject var gamification: GamificationState
     @Binding var animateBadge: Bool
-    
+
     var recentBadges: [GamificationBadge] {
         gamification.badges.filter { $0.isUnlocked }.suffix(3).reversed()
     }
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: ModernDesignSystem.Spacing.md) {
             HStack {
                 Text("Recent Badges")
                     .font(ModernDesignSystem.Typography.headline)
                     .foregroundColor(.primary)
-                
+
                 Spacer()
-                
+
                 Button("View All") {
                     // Show badge gallery
                 }
                 .font(ModernDesignSystem.Typography.caption)
                 .foregroundColor(.accentColor)
             }
-            
+
             if recentBadges.isEmpty {
                 HStack {
                     Image(systemName: "star")
@@ -259,7 +287,8 @@ struct RecentBadgesCard: View {
                     ForEach(recentBadges) { badge in
                         BadgeIconView(badge: badge, size: 60)
                             .scaleEffect(animateBadge ? 1.1 : 1.0)
-                            .animation(.spring(response: 0.3, dampingFraction: 0.6), value: animateBadge)
+                            .animation(
+                                .spring(response: 0.3, dampingFraction: 0.6), value: animateBadge)
                     }
                 }
             }
@@ -277,14 +306,14 @@ struct RecentBadgesCard: View {
 struct QuickActionsCard: View {
     @Binding var showingBadgeGallery: Bool
     @Binding var showingXPHistory: Bool
-    
+
     var body: some View {
         VStack(spacing: ModernDesignSystem.Spacing.md) {
             Text("Quick Actions")
                 .font(ModernDesignSystem.Typography.headline)
                 .foregroundColor(.primary)
                 .frame(maxWidth: .infinity, alignment: .leading)
-            
+
             HStack(spacing: ModernDesignSystem.Spacing.md) {
                 Button(action: { showingBadgeGallery = true }) {
                     VStack(spacing: 8) {
@@ -303,7 +332,7 @@ struct QuickActionsCard: View {
                     )
                 }
                 .buttonStyle(.plain)
-                
+
                 Button(action: { showingXPHistory = true }) {
                     VStack(spacing: 8) {
                         Image(systemName: "chart.line.uptrend.xyaxis")
@@ -332,11 +361,81 @@ struct QuickActionsCard: View {
     }
 }
 
+// MARK: - Leaderboard Card
+struct LeaderboardCard: View {
+    let leaderboard: [LeaderboardEntry]
+
+    var body: some View {
+        VStack(spacing: ModernDesignSystem.Spacing.md) {
+            HStack {
+                Text("Leaderboard")
+                    .font(ModernDesignSystem.Typography.headline)
+                    .foregroundColor(.primary)
+
+                Spacer()
+
+                Text("Bronze League")
+                    .font(ModernDesignSystem.Typography.caption)
+                    .foregroundColor(ModernDesignSystem.Colors.culturalOrange)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(ModernDesignSystem.Colors.culturalOrange.opacity(0.1))
+                    .cornerRadius(8)
+            }
+
+            VStack(spacing: 0) {
+                ForEach(leaderboard.prefix(5)) { entry in
+                    HStack {
+                        Text("\(entry.rank)")
+                            .font(.subheadline)
+                            .fontWeight(.bold)
+                            .foregroundColor(.secondary)
+                            .frame(width: 24)
+
+                        Text(entry.name)
+                            .font(.body)
+                            .fontWeight(entry.isCurrentUser ? .bold : .regular)
+                            .foregroundColor(
+                                entry.isCurrentUser ? ModernDesignSystem.Colors.funBlue : .primary)
+
+                        if entry.isCurrentUser {
+                            Text("(You)")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+
+                        Spacer()
+
+                        Text("\(entry.score) XP")
+                            .font(.subheadline)
+                            .fontWeight(.medium)
+                            .foregroundColor(.secondary)
+                    }
+                    .padding(.vertical, 12)
+                    .background(
+                        entry.isCurrentUser
+                            ? ModernDesignSystem.Colors.funBlue.opacity(0.05) : Color.clear)
+
+                    if entry.id != leaderboard.prefix(5).last?.id {
+                        Divider()
+                    }
+                }
+            }
+        }
+        .padding(ModernDesignSystem.Spacing.md)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color(.secondarySystemGroupedBackground))
+                .shadow(color: .black.opacity(0.05), radius: 2, x: 0, y: 1)
+        )
+    }
+}
+
 // MARK: - Badge Icon View
 struct BadgeIconView: View {
     let badge: GamificationBadge
     let size: CGFloat
-    
+
     var body: some View {
         VStack(spacing: 4) {
             ZStack {
@@ -344,12 +443,12 @@ struct BadgeIconView: View {
                     .fill(Color(badge.color))
                     .frame(width: size, height: size)
                     .shadow(color: Color(badge.color).opacity(0.3), radius: 4, x: 0, y: 2)
-                
+
                 Text(badge.emoji)
                     .font(.system(size: size * 0.4, weight: .medium))
                     .foregroundColor(.white)
             }
-            
+
             Text(badge.name)
                 .font(ModernDesignSystem.Typography.caption2)
                 .foregroundColor(.primary)

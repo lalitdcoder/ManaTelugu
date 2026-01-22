@@ -100,11 +100,12 @@ struct GamificationBadge: Codable, Identifiable {
     let isUnlocked: Bool
     let unlockedAt: Date?
     let rarity: BadgeRarity
+    let hasSeenPopup: Bool
 
     init(
         name: String, teluguName: String, description: String, emoji: String, color: String,
         xpReward: Int, requirement: BadgeRequirement, isUnlocked: Bool = false,
-        unlockedAt: Date? = nil, rarity: BadgeRarity = .common
+        unlockedAt: Date? = nil, rarity: BadgeRarity = .common, hasSeenPopup: Bool = false
     ) {
         self.name = name
         self.teluguName = teluguName
@@ -116,6 +117,30 @@ struct GamificationBadge: Codable, Identifiable {
         self.isUnlocked = isUnlocked
         self.unlockedAt = unlockedAt
         self.rarity = rarity
+        self.hasSeenPopup = hasSeenPopup
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case id, name, teluguName, description, emoji, color, xpReward, requirement, isUnlocked,
+            unlockedAt, rarity, hasSeenPopup
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(UUID.self, forKey: .id)
+        name = try container.decode(String.self, forKey: .name)
+        teluguName = try container.decode(String.self, forKey: .teluguName)
+        description = try container.decode(String.self, forKey: .description)
+        emoji = try container.decode(String.self, forKey: .emoji)
+        color = try container.decode(String.self, forKey: .color)
+        xpReward = try container.decode(Int.self, forKey: .xpReward)
+        requirement = try container.decode(BadgeRequirement.self, forKey: .requirement)
+        isUnlocked = try container.decode(Bool.self, forKey: .isUnlocked)
+        unlockedAt = try container.decodeIfPresent(Date.self, forKey: .unlockedAt)
+        rarity = try container.decode(BadgeRarity.self, forKey: .rarity)
+        // If hasSeenPopup is missing (migrating from an older version), default to true for already unlocked badges
+        // so they don't pop up again.
+        hasSeenPopup = try container.decodeIfPresent(Bool.self, forKey: .hasSeenPopup) ?? isUnlocked
     }
 }
 
@@ -311,7 +336,6 @@ class GamificationState: ObservableObject, Codable {
             try container.decodeIfPresent([String].self, forKey: .collectedStickerIDs) ?? []
         treasureChestProgress =
             try container.decodeIfPresent(Int.self, forKey: .treasureChestProgress) ?? 0
-        loadInitialBadges()
     }
 
     func encode(to encoder: Encoder) throws {
@@ -531,23 +555,45 @@ class GamificationState: ObservableObject, Codable {
         }
     }
 
-    func updateStreak() {
+    func updateStreak(doingActivity: Bool = false) {
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: Date())
         let lastActivity = calendar.startOfDay(for: lastActivityDate)
 
-        if today > lastActivity {
-            if calendar.dateInterval(of: .day, for: lastActivity)?.end == today {
-                // Consecutive day
-                streakCount += 1
-                addXP(
-                    5, type: .streakMaintained,
-                    description: "Streak maintained: \(streakCount) days")
-            } else {
-                // Streak broken
+        if doingActivity {
+            if streakCount == 0 {
+                // First ever activity or restarting from 0
                 streakCount = 1
+                lastActivityDate = Date()
+                addXP(5, type: .streakMaintained, description: "Started your first Telugu streak!")
+            } else if today > lastActivity {
+                if let yesterday = calendar.date(byAdding: .day, value: -1, to: today),
+                    calendar.isDate(lastActivity, inSameDayAs: yesterday)
+                {
+                    // Consecutive day
+                    streakCount += 1
+                    lastActivityDate = Date()
+                    addXP(
+                        5, type: .streakMaintained,
+                        description: "Streak maintained: \(streakCount) days")
+                } else {
+                    // Streak was broken, restart from 1
+                    streakCount = 1
+                    lastActivityDate = Date()
+                }
             }
-            lastActivityDate = Date()
+        } else {
+            // Just checking for streak breakage on launch
+            if today > lastActivity {
+                if let yesterday = calendar.date(byAdding: .day, value: -1, to: today),
+                    !calendar.isDate(lastActivity, inSameDayAs: yesterday)
+                {
+                    // More than one day passed since last activity, streak is broken
+                    if streakCount > 0 {
+                        streakCount = 0
+                    }
+                }
+            }
         }
     }
 

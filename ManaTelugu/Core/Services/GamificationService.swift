@@ -7,6 +7,7 @@ class GamificationService: ObservableObject {
     @Published var gamificationState = GamificationState()
     @Published var newlyUnlockedBadges: [GamificationBadge] = []
     @Published var treasureChestReward: (sticker: Sticker, xp: Int)? = nil
+    @Published var lastXPChange: Int? = nil
 
     private let treasureChestWordGoal = 10  // Every 10 words, a treasure chest is awarded
 
@@ -18,23 +19,33 @@ class GamificationService: ObservableObject {
     init() {
         loadState()
         gamificationState.objectWillChange.sink { [weak self] _ in
-            self?.objectWillChange.send()
-            self?.saveGamificationState()
-            self?.syncWidgetSnapshot()
+            guard let self = self else { return }
+            self.objectWillChange.send()
+            self.saveGamificationState()
+            self.syncWidgetSnapshot()
 
-            // Check for newly unlocked badges
-            if let self = self {
-                let unlockedAndUnseen = self.gamificationState.badges.filter { badge in
-                    badge.isUnlocked
-                        && !self.newlyUnlockedBadges.contains(where: { $0.name == badge.name })
-                        && !self.wasBadgeSeen(badge)
-                }
-                if !unlockedAndUnseen.isEmpty {
-                    self.newlyUnlockedBadges.append(contentsOf: unlockedAndUnseen)
-                }
+            // Check for newly unlocked badges on the next run loop to ensure state has changed
+            DispatchQueue.main.async {
+                self.checkForNewBadges()
             }
-
         }.store(in: &cancellables)
+    }
+
+    private func checkForNewBadges() {
+        let unlockedAndUnseen = gamificationState.badges.filter { badge in
+            badge.isUnlocked
+                && !newlyUnlockedBadges.contains(where: { $0.name == badge.name })
+                && !wasBadgeSeen(badge)
+        }
+
+        if !unlockedAndUnseen.isEmpty {
+            // Cap to at most 2 badges in the queue to show popups for
+            let currentCount = newlyUnlockedBadges.count
+            let availableSlots = max(0, 2 - currentCount)
+            if availableSlots > 0 {
+                newlyUnlockedBadges.append(contentsOf: unlockedAndUnseen.prefix(availableSlots))
+            }
+        }
     }
 
     func dismissNewlyUnlockedBadge() {
@@ -45,13 +56,27 @@ class GamificationService: ObservableObject {
     }
 
     private func wasBadgeSeen(_ badge: GamificationBadge) -> Bool {
-        // In a real app, you'd persist this 'seen' state.
-        // For now, we'll just check if it's not in the newly unlocked list.
-        return false  // A simple implementation for now
+        return badge.hasSeenPopup
     }
 
     private func markBadgeAsSeen(_ badge: GamificationBadge) {
-        // In a real app, you'd persist this 'seen' state.
+        if let index = gamificationState.badges.firstIndex(where: { $0.name == badge.name }) {
+            let current = gamificationState.badges[index]
+            gamificationState.badges[index] = GamificationBadge(
+                name: current.name,
+                teluguName: current.teluguName,
+                description: current.description,
+                emoji: current.emoji,
+                color: current.color,
+                xpReward: current.xpReward,
+                requirement: current.requirement,
+                isUnlocked: current.isUnlocked,
+                unlockedAt: current.unlockedAt,
+                rarity: current.rarity,
+                hasSeenPopup: true
+            )
+            saveGamificationState()
+        }
     }
 
     // MARK: - Parent Dashboard Stats
@@ -113,14 +138,17 @@ class GamificationService: ObservableObject {
         gamificationState.addXP(
             amount, type: type, description: description, associatedData: associatedData)
 
+        // Update lastXPChange for UI observation
+        lastXPChange = amount
+
         // Subtle success haptic on XP gain
-        HapticsManager.shared.notification(.success)
+        HapticsManager.shared.trigger(.success)
 
         // Check for level up
         if gamificationState.currentLevel.level > previousLevel {
             // Satisfying level-up feedback
-            HapticsManager.shared.impact(.heavy)
-            HapticsManager.shared.notification(.success)
+            HapticsManager.shared.trigger(.heavy)
+            HapticsManager.shared.trigger(.success)
         }
 
         saveGamificationState()
@@ -282,7 +310,7 @@ extension GamificationService {
         gamificationState.treasureChestProgress += 1
         awardTreasureChestIfNeeded()
         updateDailyGoal()
-        gamificationState.updateStreak()
+        gamificationState.updateStreak(doingActivity: true)
     }
 
     func onQuizCompleted(score: Double, totalQuestions: Int) {
@@ -292,12 +320,12 @@ extension GamificationService {
     }
 
     func onActivityCompleted() {
-        gamificationState.updateStreak()
+        gamificationState.updateStreak(doingActivity: true)
         awardStreakMaintained()
     }
 
     func onAppLaunch() {
-        gamificationState.updateStreak()
+        gamificationState.updateStreak(doingActivity: false)
         updateDailyGoal()
     }
 }

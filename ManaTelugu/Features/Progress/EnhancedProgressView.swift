@@ -90,12 +90,29 @@ struct EnhancedProgressView: View {
     private var progressOverview: some View {
         ScrollView(showsIndicators: false) {
             VStack(spacing: 24) {
+                // Hearts Display
+                HStack {
+                    Spacer()
+                    HStack(spacing: 4) {
+                        Image(systemName: "heart.fill")
+                            .foregroundColor(.red)
+                        Text("\(session.hearts)")
+                            .font(.headline)
+                            .foregroundColor(.primary)
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(Capsule().fill(Color.red.opacity(0.1)))
+                }
+                .padding(.top, 8)
+
                 statsGrid
                 weeklyProgressChart
                 recentActivity
+                LeaderboardCard(leaderboard: session.leaderboardService.leaderboard)
             }
             .padding(.horizontal, 20)
-            .padding(.vertical, 20)
+            .padding(.bottom, 20)
         }
     }
 

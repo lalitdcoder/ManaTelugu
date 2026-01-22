@@ -33,4 +33,25 @@ final class HapticsManager {
         generator.prepare()
         generator.selectionChanged()
     }
+
+    enum HapticStyle {
+        case light
+        case medium
+        case heavy
+        case success
+        case error
+        case warning
+    }
+
+    func trigger(_ style: HapticStyle) {
+        guard service.isEnabled else { return }
+        switch style {
+        case .light: impact(.light)
+        case .medium: impact(.medium)
+        case .heavy: impact(.heavy)
+        case .success: notification(.success)
+        case .error: notification(.error)
+        case .warning: notification(.warning)
+        }
+    }
 }

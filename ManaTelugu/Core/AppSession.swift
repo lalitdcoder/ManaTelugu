@@ -95,7 +95,14 @@ class AppSession: ObservableObject {
             .store(in: &cancellables)
 
         gamificationService.objectWillChange
-            .sink { [weak self] _ in self?.objectWillChange.send() }
+            .sink { [weak self] _ in
+                guard let self = self else { return }
+                self.currentStreak = self.gamificationService.gamificationState.streakCount
+                self.totalXP = self.gamificationService.gamificationState.totalXP
+                self.level = self.gamificationService.gamificationState.currentLevel.level
+                self.updateStreakReminder()
+                self.objectWillChange.send()
+            }
             .store(in: &cancellables)
 
         dataRepository.objectWillChange
@@ -109,6 +116,21 @@ class AppSession: ObservableObject {
         dailyMissionsService.objectWillChange
             .sink { [weak self] _ in self?.objectWillChange.send() }
             .store(in: &cancellables)
+    }
+
+    private func updateStreakReminder() {
+        let streak = gamificationService.gamificationState.streakCount
+        let message =
+            streak > 0
+            ? "Remember to practice! Don't lose your \(streak) day streak!"
+            : "Time for your daily Telugu lesson! Start your streak today!"
+
+        NotificationService.shared.scheduleDailyReminder(
+            hour: 19,  // 7 PM
+            minute: 0,
+            title: "Mana Telugu Reminder",
+            body: message
+        )
     }
 
     // MARK: - Preloading
@@ -191,9 +213,7 @@ class AppSession: ObservableObject {
     // MARK: - Progress Updates
     func updateProgress(xp: Int = 0, letters: Int = 0, words: Int = 0, lessons: Int = 0) {
         if xp > 0 {
-            totalXP += xp
-            todayXP += xp
-            checkForLevelUp()
+            awardXP(xp, type: .quizCompleted)  // Default to quiz completed for updateProgress
         }
 
         if letters > 0 {
@@ -211,11 +231,27 @@ class AppSession: ObservableObject {
         saveAllProgress()
     }
 
+    func awardXP(_ amount: Int, type: XPEventType = .quizCompleted) {
+        totalXP += amount
+        todayXP += amount
+        gamificationService.awardXP(amount, type: type)
+        checkForLevelUp()
+    }
+
+    func addLearningTime(minutes: Int) {
+        guard minutes > 0 else { return }
+        // For every 5 minutes of learning, award 10 XP
+        let xpReward = (minutes / 5) * 10
+        if xpReward > 0 {
+            awardXP(xpReward, type: .wordLearned)  // Using wordLearned as a proxy for generic activity
+        }
+    }
+
     private func checkForLevelUp() {
         let newLevel = (totalXP / 500) + 1
         if newLevel > level {
             level = newLevel
-            // Could trigger a notification or animation here
+            hapticsService.success()
         }
     }
 
@@ -242,4 +278,162 @@ class AppSession: ObservableObject {
     private func saveAppearancePreference() {
         UserDefaults.standard.set(darkModeEnabled, forKey: appearanceKey)
     }
+
+    // MARK: - Feature 5: Haptics Settings
+    @Published var isHapticsEnabled: Bool = true {
+        didSet {
+            UserDefaults.standard.set(isHapticsEnabled, forKey: "isHapticsEnabled")
+            hapticsService.isEnabled = isHapticsEnabled
+        }
+    }
+
+    private func loadHapticsPreference() {
+        if UserDefaults.standard.object(forKey: "isHapticsEnabled") != nil {
+            isHapticsEnabled = UserDefaults.standard.bool(forKey: "isHapticsEnabled")
+        }
+        hapticsService.isEnabled = isHapticsEnabled
+    }
+
+    // MARK: - Feature 3: Favorites System
+    @Published var favoriteWordIDs: Set<String> = [] {
+        didSet {
+            saveFavorites()
+        }
+    }
+    private let favoritesKey = "favoriteWordIDs"
+
+    private func loadFavorites() {
+        if let data = UserDefaults.standard.data(forKey: favoritesKey),
+            let favorites = try? JSONDecoder().decode(Set<String>.self, from: data)
+        {
+            self.favoriteWordIDs = favorites
+        }
+    }
+
+    private func saveFavorites() {
+        if let data = try? JSONEncoder().encode(favoriteWordIDs) {
+            UserDefaults.standard.set(data, forKey: favoritesKey)
+        }
+    }
+
+    func toggleFavorite(wordID: String) {
+        if favoriteWordIDs.contains(wordID) {
+            favoriteWordIDs.remove(wordID)
+        } else {
+            favoriteWordIDs.insert(wordID)
+        }
+    }
+
+    func isFavorite(wordID: String) -> Bool {
+        favoriteWordIDs.contains(wordID)
+    }
+
+    // MARK: - Feature 2: Word of the Day
+    @Published var wordOfTheDay: Word?
+
+    func checkWordOfTheDay() {
+        guard !dataRepository.words.isEmpty else { return }
+
+        let lastDate = UserDefaults.standard.double(forKey: "lastWordOfTheDayDate")
+        let lastID = UserDefaults.standard.string(forKey: "lastWordOfTheDayID") ?? ""
+
+        let calendar = Calendar.current
+        let savedDate = Date(timeIntervalSince1970: lastDate)
+
+        if !calendar.isDateInToday(savedDate) || lastID.isEmpty {
+            // New day, new word
+            if let newWord = dataRepository.words.randomElement() {
+                setWordOfTheDay(newWord)
+            }
+        } else {
+            // Same day, try to load existing
+            if let existingWord = dataRepository.words.first(where: { $0.id == lastID }) {
+                wordOfTheDay = existingWord
+            } else {
+                // Fallback if ID not found
+                if let newWord = dataRepository.words.randomElement() {
+                    setWordOfTheDay(newWord)
+                }
+            }
+        }
+    }
+
+    private func setWordOfTheDay(_ word: Word) {
+        wordOfTheDay = word
+        UserDefaults.standard.set(word.id, forKey: "lastWordOfTheDayID")
+        UserDefaults.standard.set(Date().timeIntervalSince1970, forKey: "lastWordOfTheDayDate")
+    }
+
+    // MARK: - Game-Juice: Heart System
+    @Published var hearts: Int = 5 {
+        didSet {
+            UserDefaults.standard.set(hearts, forKey: "userHearts")
+        }
+    }
+
+    let maxHearts = 5
+    let heartRegenInterval: TimeInterval = 7200  // 2 hours
+
+    var nextHeartRegenTime: Date? {
+        guard hearts < maxHearts else { return nil }
+        let lastRegen = UserDefaults.standard.double(forKey: "lastHeartRegenTime")
+        if lastRegen == 0 { return nil }
+        return Date(timeIntervalSince1970: lastRegen + heartRegenInterval)
+    }
+
+    func loadHearts() {
+        // Load hearts
+        if UserDefaults.standard.object(forKey: "userHearts") != nil {
+            hearts = UserDefaults.standard.integer(forKey: "userHearts")
+        } else {
+            hearts = maxHearts
+        }
+
+        // Check regeneration
+        regenerateHeartsIfNeeded()
+    }
+
+    func regenerateHeartsIfNeeded() {
+        guard hearts < maxHearts else { return }
+
+        let lastRegen = UserDefaults.standard.double(forKey: "lastHeartRegenTime")
+        let now = Date().timeIntervalSince1970
+
+        if lastRegen == 0 {
+            // First time tracking, set timestamp
+            UserDefaults.standard.set(now, forKey: "lastHeartRegenTime")
+            return
+        }
+
+        let timePassed = now - lastRegen
+        if timePassed >= heartRegenInterval {
+            let heartsToRecover = Int(timePassed / heartRegenInterval)
+            let newHearts = min(maxHearts, hearts + heartsToRecover)
+
+            if newHearts > hearts {
+                hearts = newHearts
+                // Reset timer to remainder or now if full
+                if newHearts == maxHearts {
+                    UserDefaults.standard.set(0, forKey: "lastHeartRegenTime")
+                } else {
+                    let remainder = timePassed.truncatingRemainder(dividingBy: heartRegenInterval)
+                    UserDefaults.standard.set(now - remainder, forKey: "lastHeartRegenTime")
+                }
+            }
+        }
+    }
+
+    func deductHeart() {
+        if hearts > 0 {
+            hearts -= 1
+            // If we just dropped below max, start the timer if not already running effectively
+            if hearts == maxHearts - 1 {
+                UserDefaults.standard.set(
+                    Date().timeIntervalSince1970, forKey: "lastHeartRegenTime")
+            }
+        }
+    }
+
+    // MARK: - Game-Juice: Leaderboard Interaction
+    let leaderboardService = LocalLeaderboardService()
 }

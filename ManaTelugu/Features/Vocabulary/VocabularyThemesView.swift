@@ -3,81 +3,98 @@ import SwiftUI
 struct VocabularyThemesView: View {
     @EnvironmentObject var session: AppSession
     @Environment(\.dismiss) private var dismiss
+    @State private var searchText = ""
     @State private var themes: [String] = []
-    
+
+    var filteredThemes: [String] {
+        if searchText.isEmpty { return themes }
+        return themes.filter { theme in
+            if theme.localizedCaseInsensitiveContains(searchText) { return true }
+            return session.dataRepository.words.filter({ $0.theme == theme }).contains { word in
+                word.telugu.contains(searchText)
+                    || word.transliteration.localizedCaseInsensitiveContains(searchText)
+                    || word.english.localizedCaseInsensitiveContains(searchText)
+            }
+        }
+    }
+
     var body: some View {
         ZStack {
             // Stronger gradient background
             LinearGradient(
                 colors: [
                     Color(red: 0.4, green: 0.5, blue: 0.9).opacity(0.3),
-                    Color(red: 0.46, green: 0.29, blue: 0.64).opacity(0.2)
+                    Color(red: 0.46, green: 0.29, blue: 0.64).opacity(0.2),
                 ],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
             .ignoresSafeArea()
-            
+
             EnhancedScrollView {
-            VStack(alignment: .leading, spacing: 28) {
-                // Header
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Vocabulary Quest")
-                        .font(ModernDesignSystem.Typography.title1)
-                        .foregroundColor(.primary)
-                    Text("Explore different themes to expand your vocabulary")
-                        .font(ModernDesignSystem.Typography.body)
-                        .foregroundColor(.secondary)
-                }
-                .padding(.horizontal)
-                .padding(.top, -20)
-                
-                // Theme Grid
-                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 16), count: 2), spacing: 16) {
-                    ForEach(themes, id: \.self) { theme in
-                        NavigationLink {
-                            VocabularyCardsView(theme: theme)
-                        } label: {
-                            ModernThemeCardView(theme: theme)
-                        }
-                        .buttonStyle(HapticButtonStyle())
+                VStack(alignment: .leading, spacing: 28) {
+                    // Header
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Vocabulary Quest")
+                            .font(ModernDesignSystem.Typography.title1)
+                            .foregroundColor(.primary)
+                        Text("Explore different themes to expand your vocabulary")
+                            .font(ModernDesignSystem.Typography.body)
+                            .foregroundColor(.secondary)
                     }
+                    .padding(.horizontal)
+                    .padding(.top, -20)
+
+                    // Theme Grid
+                    LazyVGrid(
+                        columns: Array(repeating: GridItem(.flexible(), spacing: 16), count: 2),
+                        spacing: 16
+                    ) {
+                        ForEach(filteredThemes, id: \.self) { theme in
+                            NavigationLink {
+                                VocabularyCardsView(theme: theme)
+                            } label: {
+                                ModernThemeCardView(theme: theme)
+                            }
+                            .buttonStyle(HapticButtonStyle())
+                        }
+                    }
+                    .padding(.horizontal)
                 }
-                .padding(.horizontal)
+                .padding(.vertical)
             }
-            .padding(.vertical)
-        }
-        .softGradientBackground()
-        .onAppear {
-            DebugLogger.log("VocabularyThemesView appeared")
-            // Load themes dynamically from actual data
-            let allThemes = Set(session.dataRepository.words.map { $0.theme })
-            themes = Array(allThemes).sorted()
-            DebugLogger.log("Available vocabulary themes: \(themes)")
-        }
-        .navigationTitle("Vocabulary")
-        .navigationBarTitleDisplayMode(.inline)
-        .navigationBarBackButtonHidden(true)
-        .toolbarBackground(
-            LinearGradient(
-                colors: [
-                    Color(red: 0.4, green: 0.5, blue: 0.9).opacity(0.1),
-                    Color(red: 0.46, green: 0.29, blue: 0.64).opacity(0.08)
-                ],
-                startPoint: .leading,
-                endPoint: .trailing
-            ),
-            for: .navigationBar
-        )
-        .toolbarBackground(.visible, for: .navigationBar)
-        .toolbar {
-            ToolbarItem(placement: .navigationBarLeading) {
-                Button("Back") {
-                    dismiss()
+            .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always))
+            .softGradientBackground()
+            .onAppear {
+                DebugLogger.log("VocabularyThemesView appeared")
+                // Load themes dynamically from actual data
+                let allThemes = Set(session.dataRepository.words.map { $0.theme })
+                themes = Array(allThemes).sorted()
+                DebugLogger.log("Available vocabulary themes: \(themes)")
+            }
+            .navigationTitle("Vocabulary")
+            .navigationBarTitleDisplayMode(.inline)
+            .navigationBarBackButtonHidden(true)
+            .toolbarBackground(
+                LinearGradient(
+                    colors: [
+                        Color(red: 0.4, green: 0.5, blue: 0.9).opacity(0.1),
+                        Color(red: 0.46, green: 0.29, blue: 0.64).opacity(0.08),
+                    ],
+                    startPoint: .leading,
+                    endPoint: .trailing
+                ),
+                for: .navigationBar
+            )
+            .toolbarBackground(.visible, for: .navigationBar)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("Back") {
+                        dismiss()
+                    }
+                    .foregroundColor(.blue)
                 }
-                .foregroundColor(.blue)
             }
-        }
         }
     }
 }
@@ -110,7 +127,7 @@ struct ModernThemeCardView: View {
         .cornerRadius(16)
         .shadow(color: .black.opacity(0.1), radius: 4)
     }
-    
+
     func iconForTheme(_ theme: String) -> String {
         switch theme {
         case "Numbers": return "number"
@@ -127,3 +144,4 @@ struct ModernThemeCardView: View {
         }
     }
 }
+

@@ -2,13 +2,11 @@ import Foundation
 
 enum FeedbackCenter {
     static func correct() {
-        HapticsManager.shared.notification(.success)
+        HapticsManager.shared.trigger(.success)
         AudioFeedbackService.shared.playSuccess()
     }
     static func wrong() {
-        HapticsManager.shared.notification(.error)
+        HapticsManager.shared.trigger(.error)
         AudioFeedbackService.shared.playTryAgain()
     }
 }
-
-

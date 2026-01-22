@@ -5,7 +5,7 @@ import SwiftUI
 struct AccessibleTabView: View {
     @Binding var selectedTab: Int
     @EnvironmentObject var session: AppSession
-    
+
     var body: some View {
         TabView(selection: $selectedTab) {
             HomeView()
@@ -16,17 +16,19 @@ struct AccessibleTabView: View {
                 .tag(0)
                 .accessibilityLabel("Home")
                 .accessibilityHint("View your learning progress and continue lessons")
-            
-            ModernAlphabetView()
+
+            AlphabetHubView()
                 .tabItem {
-                    Image(systemName: selectedTab == 1 ? "textformat.abc" : "textformat.abc")
+                    Image(
+                        systemName: selectedTab == 1
+                            ? "character.book.closed.fill" : "character.book.closed")
                     Text("Learn")
                 }
                 .tag(1)
                 .accessibilityLabel("Learn")
                 .accessibilityHint("Learn Telugu alphabet and characters")
-            
-            ModernGamesView()
+
+            GamesHubView()
                 .tabItem {
                     Image(systemName: selectedTab == 2 ? "gamecontroller.fill" : "gamecontroller")
                     Text("Practice")
@@ -34,8 +36,8 @@ struct AccessibleTabView: View {
                 .tag(2)
                 .accessibilityLabel("Practice")
                 .accessibilityHint("Play games to practice Telugu skills")
-            
-            ModernMoreView()
+
+            ProfessionalMoreView()
                 .tabItem {
                     Image(systemName: selectedTab == 3 ? "ellipsis.circle.fill" : "ellipsis.circle")
                     Text("More")

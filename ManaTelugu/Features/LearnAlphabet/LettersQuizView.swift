@@ -98,8 +98,7 @@ struct LettersQuizView: View {
         .onDisappear {
             let minutes = session.sessionTimer.stop()
             if minutes > 0 {
-                // TODO: Add learning time tracking
-                // session.addLearningTime(minutes: minutes)
+                session.addLearningTime(minutes: minutes)
             }
         }
         .navigationTitle(title)
@@ -173,13 +172,9 @@ struct LettersQuizView: View {
         if answer == q.correct {
             correctCount += 1
             FeedbackCenter.correct()
-            // TODO: Award XP for correct answer
-            // session.awardXP(2)
         } else {
             FeedbackCenter.wrong()
         }
-        // TODO: Update touch streak
-        // session.touchStreak()
     }
 
     private func nextQuestion() {

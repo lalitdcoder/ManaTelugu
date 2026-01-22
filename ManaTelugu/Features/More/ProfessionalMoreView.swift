@@ -37,7 +37,7 @@ struct ProfessionalMoreView: View {
 
                         // Cards
                         VStack(spacing: 16) {
-                            NavigationLink(destination: EnhancedProgressView()) {
+                            NavigationLink(destination: GamificationDashboardView()) {
                                 MoreCard(
                                     icon: "📊",
                                     title: "Progress Dashboard",
@@ -55,6 +55,16 @@ struct ProfessionalMoreView: View {
                                     title: "Parent Mode",
                                     subtitle: "Parental controls and settings",
                                     color: .professionalPurple
+                                )
+                            }
+                            .buttonStyle(PlainButtonStyle())
+
+                            NavigationLink(destination: SettingsView()) {
+                                MoreCard(
+                                    icon: "⚙️",
+                                    title: "General Settings",
+                                    subtitle: "Audio, appearance, and data",
+                                    color: .gray
                                 )
                             }
                             .buttonStyle(PlainButtonStyle())

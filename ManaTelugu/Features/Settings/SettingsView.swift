@@ -8,21 +8,21 @@ struct SettingsView: View {
     @State private var showingExportSheet = false
     @State private var showingResetConfirmation = false
     @State private var isParentalGateUnlocked = false
-    
+
     // Settings state
     @State private var soundEffectsEnabled = true
     @State private var hapticFeedbackEnabled = true
     @State private var showingExportSuccess = false
     @State private var exportedFileURL: URL? = nil
     @State private var showDocumentPreview = false
-    
+
     var body: some View {
         ZStack {
             // Stronger gradient background
             LinearGradient(
                 colors: [
                     Color(red: 0.4, green: 0.5, blue: 0.9).opacity(0.3),
-                    Color(red: 0.46, green: 0.29, blue: 0.64).opacity(0.2)
+                    Color(red: 0.46, green: 0.29, blue: 0.64).opacity(0.2),
                 ],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
@@ -35,6 +35,7 @@ struct SettingsView: View {
                     audioSection
                     appSection
                     dataSection
+                    aboutSection
                 }
                 .padding(.horizontal, ModernDesignSystem.Spacing.md)
                 .padding(.bottom, ModernDesignSystem.Spacing.xl)
@@ -99,7 +100,7 @@ struct SettingsView: View {
             Text("Are you sure you want to reset all progress? This cannot be undone.")
         }
     }
-    
+
     private var headerSection: some View {
         VStack(alignment: .leading, spacing: ModernDesignSystem.Spacing.xs) {
             Text("Customize your learning experience")
@@ -109,19 +110,20 @@ struct SettingsView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .modernCard()
     }
-    
+
     private var audioSection: some View {
         VStack(alignment: .leading, spacing: ModernDesignSystem.Spacing.md) {
             Text("Audio & Feedback")
                 .font(ModernDesignSystem.Typography.headline)
                 .foregroundColor(ModernDesignSystem.Colors.textPrimary)
-            
+
             settingToggle("Sound Effects", $soundEffectsEnabled, "speaker.wave.2.fill")
-            settingToggle("Haptic Feedback", $hapticFeedbackEnabled, "iphone.radiowaves.left.and.right")
+            settingToggle(
+                "Haptic Feedback", $session.isHapticsEnabled, "iphone.radiowaves.left.and.right")
         }
         .modernCard()
     }
-    
+
     private var appSection: some View {
         VStack(alignment: .leading, spacing: ModernDesignSystem.Spacing.md) {
             Text("Appearance")
@@ -145,54 +147,82 @@ struct SettingsView: View {
         }
         .modernCard()
     }
-    
+
     private var dataSection: some View {
         VStack(alignment: .leading, spacing: ModernDesignSystem.Spacing.md) {
             Text("Data Management")
                 .font(ModernDesignSystem.Typography.headline)
                 .foregroundColor(ModernDesignSystem.Colors.textPrimary)
-            
-            Button(action: { 
+
+            Button(action: {
                 HapticsService.shared.buttonTap()
-                showingExportSheet = true 
+                showingExportSheet = true
             }) {
-                settingButton("Export Progress", "square.and.arrow.up", ModernDesignSystem.Colors.primary)
+                settingButton(
+                    "Export Progress", "square.and.arrow.up", ModernDesignSystem.Colors.primary)
             }
-            
-            Button(action: { 
+
+            Button(action: {
                 HapticsService.shared.warning()
-                showingResetConfirmation = true 
+                showingResetConfirmation = true
             }) {
                 settingButton("Reset Progress", "trash.fill", .red)
             }
         }
         .modernCard()
     }
-    
-    private func settingToggle(_ title: String, _ binding: Binding<Bool>, _ icon: String) -> some View {
+
+    private var aboutSection: some View {
+        VStack(alignment: .leading, spacing: ModernDesignSystem.Spacing.md) {
+            Text("About the Developer")
+                .font(ModernDesignSystem.Typography.headline)
+                .foregroundColor(ModernDesignSystem.Colors.textPrimary)
+
+            HStack(alignment: .top, spacing: ModernDesignSystem.Spacing.md) {
+                Image(systemName: "heart.text.square.fill")
+                    .font(.title2)
+                    .foregroundColor(.red)
+
+                VStack(alignment: .leading, spacing: ModernDesignSystem.Spacing.xs) {
+                    Text("ManaTelugu Version 3.0")
+                        .font(ModernDesignSystem.Typography.subheadline)
+                        .fontWeight(.bold)
+                    Text(
+                        "Built with ❤️ by a 12-year-old developer in England. Dedicated to preserving the Telugu language for the next generation."
+                    )
+                    .font(ModernDesignSystem.Typography.caption)
+                    .foregroundColor(ModernDesignSystem.Colors.textSecondary)
+                }
+            }
+            .padding(.top, ModernDesignSystem.Spacing.xs)
+        }
+        .modernCard()
+    }
+
+    private func settingToggle(_ title: String, _ binding: Binding<Bool>, _ icon: String)
+        -> some View
+    {
         HStack {
             Image(systemName: icon)
                 .font(.title3)
                 .foregroundColor(ModernDesignSystem.Colors.primary)
                 .frame(width: 24)
-            
+
             Text(title)
                 .font(ModernDesignSystem.Typography.body)
                 .foregroundColor(ModernDesignSystem.Colors.textPrimary)
-            
+
             Spacer()
-            
+
             Toggle("", isOn: binding)
                 .tint(ModernDesignSystem.Colors.primary)
-.onChange(of: binding.wrappedValue) { _, newValue in
+                .onChange(of: binding.wrappedValue) { _, newValue in
                     // Use selection feedback for toggles per HIG
                     HapticsManager.shared.selection()
                     if title == "Sound Effects" {
                         session.audioFeedback.isEnabled = newValue
                     } else if title == "Haptic Feedback" {
-                        // Keep app-wide setting in sync
-                        session.hapticsService.isEnabled = newValue
-                        HapticsManager.shared.isEnabled = newValue
+                        // Synced handled via AppSession didSet binding
                     } else if title == "Dark Mode" {
                         // Already provided selection feedback above
                     }
@@ -200,27 +230,27 @@ struct SettingsView: View {
         }
         .padding(.vertical, ModernDesignSystem.Spacing.xs)
     }
-    
+
     private func settingButton(_ title: String, _ icon: String, _ color: Color) -> some View {
         HStack {
             Image(systemName: icon)
                 .font(.title3)
                 .foregroundColor(color)
                 .frame(width: 24)
-            
+
             Text(title)
                 .font(ModernDesignSystem.Typography.body)
                 .foregroundColor(ModernDesignSystem.Colors.textPrimary)
-            
+
             Spacer()
-            
+
             Image(systemName: "chevron.right")
                 .font(.caption)
                 .foregroundColor(ModernDesignSystem.Colors.textTertiary)
         }
         .padding(.vertical, ModernDesignSystem.Spacing.xs)
     }
-    
+
     private func exportProgress() {
         let lessonProgress = session.progressTrackingService.lessonProgress
         let storiesLearned = lessonProgress.filter { $0.isCompleted }.count
@@ -229,11 +259,13 @@ struct SettingsView: View {
             "storiesLearned": storiesLearned,
             "wordsLearned": wordsLearned,
             "totalLessons": lessonProgress.count,
-            "rawProgress": lessonProgress.map { $0.dictionary }
+            "rawProgress": lessonProgress.map { $0.dictionary },
         ]
-        if let data = try? JSONSerialization.data(withJSONObject: summary, options: .prettyPrinted) {
+        if let data = try? JSONSerialization.data(withJSONObject: summary, options: .prettyPrinted)
+        {
             let fileName = "ManaTelugu_Progress_Export_\(Date().timeIntervalSince1970).json"
-            let url = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent(fileName)
+            let url = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+                .appendingPathComponent(fileName)
             do {
                 try data.write(to: url)
                 exportedFileURL = url
@@ -258,10 +290,13 @@ struct DocumentPreviewController: UIViewControllerRepresentable {
     func makeUIViewController(context: Context) -> UIDocumentInteractionControllerView {
         UIDocumentInteractionControllerView(url: url)
     }
-    func updateUIViewController(_ uiViewController: UIDocumentInteractionControllerView, context: Context) {}
+    func updateUIViewController(
+        _ uiViewController: UIDocumentInteractionControllerView, context: Context
+    ) {}
 }
 
-class UIDocumentInteractionControllerView: UIViewController, UIDocumentInteractionControllerDelegate {
+class UIDocumentInteractionControllerView: UIViewController, UIDocumentInteractionControllerDelegate
+{
     let url: URL
     var docController: UIDocumentInteractionController?
     init(url: URL) {
@@ -275,7 +310,9 @@ class UIDocumentInteractionControllerView: UIViewController, UIDocumentInteracti
         docController?.delegate = self
         docController?.presentPreview(animated: true)
     }
-    func documentInteractionControllerViewControllerForPreview(_ controller: UIDocumentInteractionController) -> UIViewController {
+    func documentInteractionControllerViewControllerForPreview(
+        _ controller: UIDocumentInteractionController
+    ) -> UIViewController {
         return self
     }
 }
@@ -290,7 +327,7 @@ extension LessonProgress {
             "correctAnswers": correctAnswers,
             "totalQuestions": totalQuestions,
             "timeSpent": timeSpent,
-            "attempts": attempts
+            "attempts": attempts,
         ]
     }
 }

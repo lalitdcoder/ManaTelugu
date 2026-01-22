@@ -84,27 +84,65 @@ class DataRepository: ObservableObject {
 
         Task {
             do {
-                async let lettersTask = loadLetters()
-                async let wordsTask = loadWords()
-                async let lessonsTask = loadLessons()
+                // Sequential loading to ensure specific error context
+                do {
+                    self.letters = try await loadLetters()
+                } catch {
+                    print("⚠️ Letters load failed, using fallbacks: \(error.localizedDescription)")
+                    self.letters = fallbackLetters()
+                }
 
-                let (loadedLetters, loadedWords, loadedLessons) = try await (
-                    lettersTask, wordsTask, lessonsTask
-                )
+                do {
+                    self.words = try await loadWords()
+                } catch {
+                    print("⚠️ Words load failed, using fallbacks: \(error.localizedDescription)")
+                    self.words = EmbeddedWordsData.words
+                }
+
+                do {
+                    self.lessons = try await loadLessons()
+                } catch {
+                    print("⚠️ Lessons load failed, using fallbacks: \(error.localizedDescription)")
+                    self.lessons = fallbackLessons()
+                }
 
                 await MainActor.run {
-                    self.letters = loadedLetters
-                    self.words = loadedWords
-                    self.lessons = loadedLessons
                     self.isLoading = false
                 }
             } catch {
                 await MainActor.run {
-                    self.error = .loadingFailed("data")
+                    self.error = .loadingFailed(
+                        "Essential data is missing or corrupted. Please restart the app.")
                     self.isLoading = false
                 }
             }
         }
+    }
+
+    private func fallbackLetters() -> [Letter] {
+        return [
+            Letter(
+                id: "1", character: "అ", romanization: "a", meaning: "vowel a", category: .vowel),
+            Letter(
+                id: "2", character: "ఆ", romanization: "aa", meaning: "vowel aa", category: .vowel),
+            Letter(
+                id: "3", character: "ఇ", romanization: "i", meaning: "vowel i", category: .vowel),
+            Letter(
+                id: "4", character: "ఈ", romanization: "ee", meaning: "vowel ee", category: .vowel),
+        ]
+    }
+
+    private func fallbackLessons() -> [Lesson] {
+        return [
+            Lesson(
+                id: "1", title: "Telugu Vowels", description: "Learn basic vowel sounds",
+                levelId: "beginner", order: 1, difficulty: 1, xpReward: 50, estimatedMinutes: 10,
+                activities: []),
+            Lesson(
+                id: "2", title: "Basic Consonants", description: "Learn consonant sounds",
+                levelId: "beginner", order: 2, difficulty: 2, xpReward: 75, estimatedMinutes: 15,
+                activities: []),
+        ]
     }
 
     private func loadLetters() async throws -> [Letter] {

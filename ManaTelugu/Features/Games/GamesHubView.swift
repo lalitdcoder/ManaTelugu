@@ -4,7 +4,7 @@ struct GamesHubView: View {
     @EnvironmentObject var session: AppSession
     @Environment(\.dismiss) private var dismiss
     @State private var selectedGame: String? = nil
-    
+
     private let games: [GameInfo] = [
         GameInfo(
             id: "1",
@@ -17,7 +17,7 @@ struct GamesHubView: View {
             isRecommended: false
         ),
         GameInfo(
-            id: "2", 
+            id: "2",
             title: "Listening Challenge",
             description: "Listen and choose the correct meaning",
             icon: "ear.fill",
@@ -41,35 +41,35 @@ struct GamesHubView: View {
             title: "Sound Match",
             description: "Match sounds with their letters",
             icon: "waveform",
-            difficulty: "Intermediate", 
+            difficulty: "Intermediate",
             estimatedTime: "6 min",
             color: .green,
             isRecommended: false
-        )
+        ),
     ]
-    
+
     var body: some View {
         ZStack {
             // Stronger gradient background
             LinearGradient(
                 colors: [
                     Color(red: 0.4, green: 0.5, blue: 0.9).opacity(0.3),
-                    Color(red: 0.46, green: 0.29, blue: 0.64).opacity(0.2)
+                    Color(red: 0.46, green: 0.29, blue: 0.64).opacity(0.2),
                 ],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
             .ignoresSafeArea()
-            
+
             ScrollView {
                 LazyVStack(spacing: 24) {
                     // Header
                     headerSection
                         .padding(.top, -20)
-                    
+
                     // Games Grid
                     gamesGrid
-                    
+
                     // Bottom padding
                     Color.clear.frame(height: 100)
                 }
@@ -84,7 +84,7 @@ struct GamesHubView: View {
             LinearGradient(
                 colors: [
                     Color(red: 0.4, green: 0.5, blue: 0.9).opacity(0.1),
-                    Color(red: 0.46, green: 0.29, blue: 0.64).opacity(0.08)
+                    Color(red: 0.46, green: 0.29, blue: 0.64).opacity(0.08),
                 ],
                 startPoint: .leading,
                 endPoint: .trailing
@@ -100,23 +100,25 @@ struct GamesHubView: View {
                 .foregroundColor(.blue)
             }
         }
-        .fullScreenCover(item: Binding<GameInfo?>(
-            get: { games.first { $0.id == selectedGame } },
-            set: { _ in selectedGame = nil }
-        )) { game in
+        .fullScreenCover(
+            item: Binding<GameInfo?>(
+                get: { games.first { $0.id == selectedGame } },
+                set: { _ in selectedGame = nil }
+            )
+        ) { game in
             NavigationStack {
                 gameDestination(for: game.id)
             }
         }
     }
-    
+
     // MARK: - Header Section
     private var headerSection: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text("Practice Games")
                 .font(.title2.bold())
                 .foregroundColor(.primary)
-            
+
             Text("Practice Telugu through fun interactive games")
                 .font(.subheadline)
                 .foregroundColor(.secondary)
@@ -124,20 +126,20 @@ struct GamesHubView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.vertical, 12)
     }
-    
+
     // MARK: - Games Grid
     private var gamesGrid: some View {
         LazyVGrid(
             columns: [
                 GridItem(.flexible(), spacing: 16),
-                GridItem(.flexible(), spacing: 16)
+                GridItem(.flexible(), spacing: 16),
             ],
             spacing: 16
         ) {
             ForEach(Array(games.enumerated()), id: \.element.id) { index, game in
                 Button {
                     print("🎮 Game tapped: \(game.title)")
-                    HapticsService.shared.buttonTap()
+                    HapticsManager.shared.trigger(.medium)
                     selectedGame = game.id
                 } label: {
                     ModernGameCard(game: game)
@@ -147,7 +149,7 @@ struct GamesHubView: View {
             }
         }
     }
-    
+
     @ViewBuilder
     private func gameDestination(for gameId: String) -> some View {
         switch gameId {
@@ -168,7 +170,7 @@ struct GamesHubView: View {
 // MARK: - Modern Game Card
 struct ModernGameCard: View {
     let game: GameInfo
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             // Top row: Icon and Time badge
@@ -176,9 +178,9 @@ struct ModernGameCard: View {
                 Image(systemName: game.icon)
                     .font(.system(size: 36, weight: .semibold))
                     .foregroundColor(game.color)
-                
+
                 Spacer()
-                
+
                 // Time badge
                 Text(game.estimatedTime)
                     .font(.caption.bold())
@@ -190,22 +192,22 @@ struct ModernGameCard: View {
                             .fill(.secondary.opacity(0.15))
                     )
             }
-            
+
             // Title
             Text(game.title)
                 .font(.headline.bold())
                 .foregroundColor(.primary)
                 .lineLimit(1)
-            
+
             // Description
             Text(game.description)
                 .font(.subheadline)
                 .foregroundColor(.secondary)
                 .lineLimit(2)
                 .fixedSize(horizontal: false, vertical: true)
-            
+
             Spacer()
-            
+
             // Level tag
             HStack {
                 Text(game.difficulty)
@@ -217,7 +219,7 @@ struct ModernGameCard: View {
                         Capsule()
                             .fill(levelColor.opacity(0.15))
                     )
-                
+
                 Spacer()
             }
         }
@@ -247,7 +249,7 @@ struct ModernGameCard: View {
         )
         .foregroundColor(.primary)
     }
-    
+
     private var levelColor: Color {
         game.difficulty == "Beginner" ? .green : .orange
     }

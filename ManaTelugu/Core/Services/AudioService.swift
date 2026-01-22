@@ -7,14 +7,22 @@ protocol AudioServiceProtocol {
     func isPlaying() -> Bool
 }
 
-class AudioService: AudioServiceProtocol {
+class AudioService: NSObject, AudioServiceProtocol, AVAudioPlayerDelegate {
     private var audioPlayer: AVAudioPlayer?
 
-    init() {
-        // Configure audio session for playback
-        let session = AVAudioSession.sharedInstance()
-        try? session.setCategory(.playback, mode: .default, options: [.mixWithOthers])
-        try? session.setActive(true, options: [])
+    override init() {
+        super.init()
+        configureAudioSession()
+    }
+
+    private func configureAudioSession() {
+        do {
+            let session = AVAudioSession.sharedInstance()
+            try session.setCategory(.playback, mode: .default, options: [.mixWithOthers])
+            try session.setActive(true)
+        } catch {
+            print("❌ Failed to configure audio session: \(error.localizedDescription)")
+        }
     }
 
     func play(name: String, rate: Float = 1.0) {
@@ -50,6 +58,7 @@ class AudioService: AudioServiceProtocol {
 
         do {
             audioPlayer = try AVAudioPlayer(contentsOf: audioURL)
+            audioPlayer?.delegate = self
             audioPlayer?.enableRate = true
             audioPlayer?.rate = rate
             audioPlayer?.prepareToPlay()
@@ -67,5 +76,13 @@ class AudioService: AudioServiceProtocol {
 
     func isPlaying() -> Bool {
         return audioPlayer?.isPlaying ?? false
+    }
+
+    // MARK: - AVAudioPlayerDelegate
+    func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) {
+        print("🏁 Audio playback finished")
+        if player === audioPlayer {
+            audioPlayer = nil
+        }
     }
 }

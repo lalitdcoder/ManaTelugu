@@ -44,12 +44,36 @@ struct VocabularyCardsView: View {
                 if let word = currentWord {
                     // Word card - Made bigger and more prominent
                     VStack(spacing: 24) {
+                        // Favorites Button
+                        HStack {
+                            Spacer()
+                            Button(action: {
+                                session.toggleFavorite(wordID: word.id)
+                                HapticsService.shared.selection()
+                            }) {
+                                Image(
+                                    systemName: session.isFavorite(wordID: word.id)
+                                        ? "heart.fill" : "heart"
+                                )
+                                .font(.title2)
+                                .foregroundColor(
+                                    session.isFavorite(wordID: word.id)
+                                        ? ModernDesignSystem.Colors.funPink : .gray
+                                )
+                                .padding(8)
+                                .background(Material.thin)
+                                .clipShape(Circle())
+                            }
+                            .padding(.top, -10)
+                            .padding(.trailing, -10)
+                        }
+
                         // Telugu word - Larger and more prominent
                         Text(word.telugu)
                             .font(.system(size: 64, weight: .bold, design: .rounded))
                             .foregroundColor(ModernDesignSystem.Colors.textPrimary)
                             .multilineTextAlignment(.center)
-                            .padding(.top, 20)
+                            .padding(.top, 0)
 
                         // Transliteration
                         Text(word.transliteration)
