@@ -82,7 +82,7 @@ struct EnhancedButton<Content: View>: View {
                 }
             }
         }
-        .buttonStyle(PlainButtonStyle())
+.buttonStyle(HapticPlainButtonStyle())
         .disabled(!isEnabled || state.isLoading)
         .animation(.spring(response: 0.3, dampingFraction: 0.6), value: state.scale)
         .animation(.easeOut(duration: 0.6), value: state.rippleOpacity)
@@ -251,6 +251,13 @@ enum MTButtonStyles {
                 )
                 .scaleEffect(configuration.isPressed ? 0.98 : 1.0)
                 .animation(.easeInOut(duration: 0.1), value: configuration.isPressed)
+                .onChange(of: configuration.isPressed) { _, isPressed in
+                    if isPressed {
+                        let impactFeedback = UIImpactFeedbackGenerator(style: .heavy)
+                        impactFeedback.prepare()
+                        impactFeedback.impactOccurred()
+                    }
+                }
         }
     }
     
@@ -277,6 +284,13 @@ enum MTButtonStyles {
                 )
                 .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
                 .animation(.easeInOut(duration: 0.1), value: configuration.isPressed)
+                .onChange(of: configuration.isPressed) { _, isPressed in
+                    if isPressed {
+                        let impactFeedback = UIImpactFeedbackGenerator(style: .light)
+                        impactFeedback.prepare()
+                        impactFeedback.impactOccurred()
+                    }
+                }
         }
     }
     

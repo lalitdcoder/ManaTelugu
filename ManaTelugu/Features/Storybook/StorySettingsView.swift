@@ -22,6 +22,9 @@ struct StorySettingsView: View {
                         }
                     }
                     .pickerStyle(SegmentedPickerStyle())
+                    .onChange(of: tempSettings.fontSize) { _, _ in
+                        HapticsManager.shared.selection()
+                    }
                 }
                 
                 // Background Theme Section
@@ -33,17 +36,24 @@ struct StorySettingsView: View {
                         }
                     }
                     .pickerStyle(SegmentedPickerStyle())
+                    .onChange(of: tempSettings.backgroundTheme) { _, _ in
+                        HapticsManager.shared.selection()
+                    }
                 }
                 
                 // Reading Options Section
                 Section("చదవడం ఎంపికలు") {
                     Toggle("ఆంగ్ల అనువాదం చూపించు", isOn: $tempSettings.showEnglishTranslation)
+                        .onChange(of: tempSettings.showEnglishTranslation) { _, _ in HapticsManager.shared.selection() }
                     
-                    Toggle("ఆడియో స్వయంచాలకంగా ప్లే చేయు", isOn: $tempSettings.autoPlayAudio)
-                    
+                    Toggle("ఆడియో స్వయచాలకంగా ప్లే చేయు", isOn: $tempSettings.autoPlayAudio)
+                        .onChange(of: tempSettings.autoPlayAudio) { _, _ in HapticsManager.shared.selection() }
+
                     Toggle("సాంస్కృతిక గమనికలు చూపించు", isOn: $tempSettings.showCulturalNotes)
-                    
+                        .onChange(of: tempSettings.showCulturalNotes) { _, _ in HapticsManager.shared.selection() }
+
                     Toggle("నిఘంటువు చూపించు", isOn: $tempSettings.showGlossary)
+                        .onChange(of: tempSettings.showGlossary) { _, _ in HapticsManager.shared.selection() }
                 }
                 
                 // Preview Section
@@ -82,12 +92,14 @@ struct StorySettingsView: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("రద్దు చేయి") {
+                        HapticsService.shared.navigationTap()
                         dismiss()
                     }
                 }
                 
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("సేవ్ చేయి") {
+                        HapticsService.shared.success()
                         saveSettings()
                     }
                     .fontWeight(.semibold)

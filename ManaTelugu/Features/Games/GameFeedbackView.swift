@@ -11,71 +11,74 @@ struct GameFeedbackView: View {
     @EnvironmentObject var session: AppSession
     
     var body: some View {
-        VStack(spacing: MTSpacing.medium) {
-            HStack {
-                Image(systemName: isCorrect ? "checkmark.circle.fill" : "xmark.circle.fill")
-                    .font(.title2)
-                    .foregroundColor(isCorrect ? .green : .red)
+        ZStack {
+            (session.isDarkModeActive ? Color.adaptiveBackground.opacity(0.7) : Color(.systemBackground).opacity(0.7))
+                .ignoresSafeArea()
+                .zIndex(1)
+            VStack(spacing: ModernDesignSystem.Spacing.md) {
+                HStack {
+                    Image(systemName: isCorrect ? "checkmark.circle.fill" : "xmark.circle.fill")
+                        .font(.title2)
+                        .foregroundColor(isCorrect ? (session.isDarkModeActive ? Color.teluguAccent : .green) : (session.isDarkModeActive ? Color.teluguAccent : .red))
+                    
+                    Text(isCorrect ? "Correct!" : "Incorrect")
+                        .font(ModernDesignSystem.Typography.headline)
+                        .foregroundColor(isCorrect ? (session.isDarkModeActive ? Color.teluguAccent : .green) : (session.isDarkModeActive ? Color.teluguAccent : .red))
+                    
+                    Spacer()
+                    
+                    if isCorrect && xpEarned > 0 {
+                        Text("+\(xpEarned) XP")
+                            .font(ModernDesignSystem.Typography.body)
+                            .foregroundColor(session.isDarkModeActive ? Color.teluguAccent : .green)
+                            .fontWeight(.medium)
+                    }
+                }
                 
-                Text(isCorrect ? "Correct!" : "Incorrect")
-                    .font(MTTypography.heading(kidMode: session.userProfile.kidMode))
-                    .foregroundColor(isCorrect ? .green : .red)
+                // Custom message
+                Text(message)
+                    .font(ModernDesignSystem.Typography.body)
+                    .foregroundColor(ModernDesignSystem.Colors.textPrimary.opacity(0.8))
+                    .multilineTextAlignment(.leading)
                 
-                Spacer()
+                // Explanation if provided
+                if let explanation = explanation {
+                    Text(explanation)
+                        .font(ModernDesignSystem.Typography.body)
+                        .foregroundColor(ModernDesignSystem.Colors.textPrimary.opacity(0.8))
+                        .multilineTextAlignment(.leading)
+                }
                 
-                if isCorrect && xpEarned > 0 {
-                    Text("+\(xpEarned) XP")
-                        .font(MTTypography.body(kidMode: session.userProfile.kidMode))
+                // Show correct answer if incorrect
+                if !isCorrect, let correctAnswer = correctAnswer {
+                    Text("Correct answer: \(correctAnswer)")
+                        .font(ModernDesignSystem.Typography.body)
                         .foregroundColor(.green)
                         .fontWeight(.medium)
                 }
+                
+                // Continue button
+                Button(action: {
+                    HapticsService.shared.importantAction()
+                    onContinue()
+                }) {
+                    Text("Continue")
+                        .font(ModernDesignSystem.Typography.body)
+                        .fontWeight(.bold)
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(ModernDesignSystem.Colors.primary)
+                        .cornerRadius(12)
+                }
             }
-            
-            // Custom message
-            Text(message)
-                .font(MTTypography.body(kidMode: session.userProfile.kidMode))
-                .foregroundColor(MTColors.text.opacity(0.8))
-                .multilineTextAlignment(.leading)
-            
-            // Explanation if provided
-            if let explanation = explanation {
-                Text(explanation)
-                    .font(MTTypography.body(kidMode: session.userProfile.kidMode))
-                    .foregroundColor(MTColors.text.opacity(0.8))
-                    .multilineTextAlignment(.leading)
-            }
-            
-            // Show correct answer if incorrect
-            if !isCorrect, let correctAnswer = correctAnswer {
-                Text("Correct answer: \(correctAnswer)")
-                    .font(MTTypography.body(kidMode: session.userProfile.kidMode))
-                    .foregroundColor(.green)
-                    .fontWeight(.medium)
-            }
-            
-            // Continue button
-            Button(action: onContinue) {
-                Text("Continue")
-                    .font(MTTypography.body(kidMode: session.userProfile.kidMode))
-                    .fontWeight(.bold)
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(MTColors.primary)
-                    .cornerRadius(12)
-            }
+            .padding()
+            .frame(maxWidth: 400)
+            .background(Color(.systemBackground))
+            .cornerRadius(16)
+            .shadow(radius: 12)
+            .zIndex(2)
         }
-        .padding()
-        .background(
-            LiquidGlassView(
-                intensity: isCorrect ? 0.15 : 0.1,
-                cornerRadius: 12,
-                padding: 0
-            ) {
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(isCorrect ? Color.green.opacity(0.2) : Color.red.opacity(0.2))
-            }
-        )
         .padding(.horizontal)
     }
 }

@@ -6,19 +6,19 @@ struct VisualHierarchy {
     static func primaryContent<Content: View>(@ViewBuilder content: () -> Content) -> some View {
         content()
             .font(Font.system(size: 24, weight: .bold))
-            .foregroundColor(MTColors.text)
+            .foregroundColor(ModernDesignSystem.Colors.textPrimary)
     }
     
     static func secondaryContent<Content: View>(@ViewBuilder content: () -> Content) -> some View {
         content()
             .font(Font.system(size: 18, weight: .medium))
-            .foregroundColor(MTColors.secondaryText)
+            .foregroundColor(ModernDesignSystem.Colors.secondaryText)
     }
     
     static func supportingContent<Content: View>(@ViewBuilder content: () -> Content) -> some View {
         content()
             .font(Font.system(size: 14, weight: .regular))
-            .foregroundColor(MTColors.tertiaryText)
+            .foregroundColor(ModernDesignSystem.Colors.tertiaryText)
     }
 }
 
@@ -46,17 +46,17 @@ enum CardPriority {
     
     var padding: CGFloat {
         switch self {
-        case .primary: return MTSpacing.large
-        case .normal: return MTSpacing.medium
-        case .subtle: return MTSpacing.small
+        case .primary: return ModernDesignSystem.Spacing.lg
+        case .normal: return ModernDesignSystem.Spacing.md
+        case .subtle: return ModernDesignSystem.Spacing.sm
         }
     }
     
     var background: Color {
         switch self {
-        case .primary: return MTColors.surface
-        case .normal: return MTColors.surfaceAlt
-        case .subtle: return MTColors.background
+        case .primary: return ModernDesignSystem.Colors.surface
+        case .normal: return ModernDesignSystem.Colors.surfaceSecondary
+        case .subtle: return ModernDesignSystem.Colors.background
         }
     }
     

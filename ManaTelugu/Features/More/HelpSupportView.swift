@@ -2,60 +2,67 @@ import SwiftUI
 
 struct HelpSupportView: View {
     @EnvironmentObject var session: AppSession
+    @Environment(\.dismiss) private var dismiss
     @State private var showingContactForm = false
     @State private var contactSubject = ""
     @State private var contactMessage = ""
     @State private var contactEmail = ""
     
     var body: some View {
-        NavigationStack {
+        ZStack {
+            // Beautiful gradient background (static version of original animated background)
             ZStack {
-                // Beautiful gradient background (static version of original animated background)
-                ZStack {
-                    // Base gradient
-                    LinearGradient(
-                        colors: [
-                            RefinedColors.gradientBlue,
-                            RefinedColors.gradientPurple,
-                            RefinedColors.gradientPink,
-                            RefinedColors.gradientOrange
-                        ],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                    .ignoresSafeArea(.all, edges: .all)
-                    
-                    // Subtle overlay for depth
-                    LinearGradient(
-                        colors: [
-                            RefinedColors.gradientPurple.opacity(0.3),
-                            RefinedColors.gradientBlue.opacity(0.3)
-                        ],
-                        startPoint: .topTrailing,
-                        endPoint: .bottomLeading
-                    )
-                    .ignoresSafeArea(.all, edges: .all)
-                }
+                // Base gradient
+                LinearGradient(
+                    colors: [
+                        RefinedColors.gradientBlue,
+                        RefinedColors.gradientPurple,
+                        RefinedColors.gradientPink,
+                        RefinedColors.gradientOrange
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                .ignoresSafeArea(.all, edges: .all)
                 
-                EnhancedScrollView(bottomPadding: 140) {
-                    VStack(spacing: 32) {
-                        // Header Section
-                        headerSection
-                        
-                        // Quick Help Section
-                        quickHelpSection
-                        
-                        // FAQ Section
-                        faqSection
-                        
-                        // Contact Section
-                        contactSection
-                    }
-                    .padding(.horizontal, 20)
+                // Subtle overlay for depth
+                LinearGradient(
+                    colors: [
+                        RefinedColors.gradientPurple.opacity(0.3),
+                        RefinedColors.gradientBlue.opacity(0.3)
+                    ],
+                    startPoint: .topTrailing,
+                    endPoint: .bottomLeading
+                )
+                .ignoresSafeArea(.all, edges: .all)
+            }
+            
+            EnhancedScrollView(bottomPadding: 140) {
+                VStack(spacing: 32) {
+                    // Header Section
+                    headerSection
+                    
+                    // Quick Help Section
+                    quickHelpSection
+                    
+                    // FAQ Section
+                    faqSection
+                    
+                    // Contact Section
+                    contactSection
+                }
+                .padding(.horizontal, 20)
+            }
+        }
+        .navigationTitle("Help & Support")
+        .navigationBarTitleDisplayMode(.large)
+        .navigationBarBackButtonHidden(true)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                BackButton {
+                    dismiss()
                 }
             }
-            .navigationTitle("Help & Support")
-            .navigationBarTitleDisplayMode(.large)
         }
         .sheet(isPresented: $showingContactForm) {
             contactFormSheet
@@ -71,7 +78,7 @@ struct HelpSupportView: View {
                 title: "Help & Support",
                 subtitle: "Get the help you need to learn Telugu effectively",
                 iconName: "questionmark.circle.fill",
-                iconColor: MTColors.funBlue,
+                iconColor: ModernDesignSystem.Colors.funBlue,
                 layer: .content
             )
             
@@ -80,10 +87,10 @@ struct HelpSupportView: View {
                 VStack(spacing: 4) {
                     Text("24/7")
                         .font(.system(size: 20, weight: .bold, design: .rounded))
-                        .foregroundColor(MTColors.primaryText)
+                        .foregroundColor(ModernDesignSystem.Colors.primaryText)
                     Text("Support")
                         .font(.caption)
-                        .foregroundColor(MTColors.secondaryText)
+                        .foregroundColor(ModernDesignSystem.Colors.secondaryText)
                 }
                 
                 Divider()
@@ -92,10 +99,10 @@ struct HelpSupportView: View {
                 VStack(spacing: 4) {
                     Text("< 2hrs")
                         .font(.system(size: 20, weight: .bold, design: .rounded))
-                        .foregroundColor(MTColors.primaryText)
+                        .foregroundColor(ModernDesignSystem.Colors.primaryText)
                     Text("Response")
                         .font(.caption)
-                        .foregroundColor(MTColors.secondaryText)
+                        .foregroundColor(ModernDesignSystem.Colors.secondaryText)
                 }
                 
                 Divider()
@@ -104,10 +111,10 @@ struct HelpSupportView: View {
                 VStack(spacing: 4) {
                     Text("100%")
                         .font(.system(size: 20, weight: .bold, design: .rounded))
-                        .foregroundColor(MTColors.primaryText)
+                        .foregroundColor(ModernDesignSystem.Colors.primaryText)
                     Text("Free")
                         .font(.caption)
-                        .foregroundColor(MTColors.secondaryText)
+                        .foregroundColor(ModernDesignSystem.Colors.secondaryText)
                 }
             }
             .padding(.horizontal, 20)
@@ -120,7 +127,7 @@ struct HelpSupportView: View {
             LiquidGlassSectionHeader(
                 title: "Quick Help",
                 iconName: "lightbulb.fill",
-                iconColor: MTColors.funYellow
+                iconColor: ModernDesignSystem.Colors.funYellow
             )
             
             VStack(spacing: 16) {
@@ -128,7 +135,7 @@ struct HelpSupportView: View {
                     title: "Getting Started",
                     description: "Learn the basics of using ManaTelugu",
                     icon: "play.circle.fill",
-                    color: MTColors.funGreen
+                    color: ModernDesignSystem.Colors.funGreen
                 ) {
                     // Navigate to getting started guide
                 }
@@ -137,7 +144,7 @@ struct HelpSupportView: View {
                     title: "Alphabet Learning",
                     description: "Master Telugu letters and pronunciation",
                     icon: "textformat.abc",
-                    color: MTColors.funBlue
+                    color: ModernDesignSystem.Colors.funBlue
                 ) {
                     // Navigate to alphabet guide
                 }
@@ -146,7 +153,7 @@ struct HelpSupportView: View {
                     title: "Progress Tracking",
                     description: "Understand your learning journey",
                     icon: "chart.bar.fill",
-                    color: MTColors.funPurple
+                    color: ModernDesignSystem.Colors.funPurple
                 ) {
                     // Navigate to progress guide
                 }
@@ -155,7 +162,7 @@ struct HelpSupportView: View {
                     title: "Parental Controls",
                     description: "Set up safe learning environment",
                     icon: "shield.fill",
-                    color: MTColors.funPink
+                    color: ModernDesignSystem.Colors.funPink
                 ) {
                     // Navigate to parental controls
                 }
@@ -169,7 +176,7 @@ struct HelpSupportView: View {
             LiquidGlassSectionHeader(
                 title: "Frequently Asked Questions",
                 iconName: "questionmark.circle.fill",
-                iconColor: MTColors.funPink
+                iconColor: ModernDesignSystem.Colors.funPink
             )
             
             VStack(spacing: 12) {
@@ -202,7 +209,7 @@ struct HelpSupportView: View {
             LiquidGlassSectionHeader(
                 title: "Contact Us",
                 iconName: "envelope.fill",
-                iconColor: MTColors.funPink
+                iconColor: ModernDesignSystem.Colors.funPink
             )
             
             VStack(spacing: 16) {
@@ -210,7 +217,7 @@ struct HelpSupportView: View {
                     title: "Email Support",
                     subtitle: "manateluguhelp@gmail.com",
                     icon: "envelope.fill",
-                    color: MTColors.funBlue
+                    color: ModernDesignSystem.Colors.funBlue
                 ) {
                     showingContactForm = true
                 }
@@ -219,7 +226,7 @@ struct HelpSupportView: View {
                     title: "Response Time",
                     subtitle: "We typically respond within 2 hours",
                     icon: "clock.fill",
-                    color: MTColors.funGreen
+                    color: ModernDesignSystem.Colors.funGreen
                 ) {
                     // Show response time info
                 }
@@ -228,7 +235,7 @@ struct HelpSupportView: View {
                     title: "Feedback",
                     subtitle: "Help us improve ManaTelugu",
                     icon: "heart.fill",
-                    color: MTColors.funPink
+                    color: ModernDesignSystem.Colors.funPink
                 ) {
                     showingContactForm = true
                 }
@@ -269,12 +276,12 @@ struct HelpSupportView: View {
                 VStack(spacing: 24) {
                     VStack(alignment: .leading, spacing: 16) {
                         Text("Contact Us")
-                            .font(MTTypography.title(kidMode: session.userProfile.kidMode))
-                            .foregroundColor(MTColors.primaryText)
+                            .font(ModernDesignSystem.Typography.title1)
+                            .foregroundColor(ModernDesignSystem.Colors.primaryText)
                         
                         Text("We'd love to hear from you! Send us your questions, feedback, or suggestions.")
-                            .font(MTTypography.body(kidMode: session.userProfile.kidMode))
-                            .foregroundColor(MTColors.secondaryText)
+                            .font(ModernDesignSystem.Typography.body)
+                            .foregroundColor(ModernDesignSystem.Colors.secondaryText)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     
@@ -287,8 +294,8 @@ struct HelpSupportView: View {
                         
                         VStack(alignment: .leading, spacing: 8) {
                             Text("Message")
-                                .font(MTTypography.caption(kidMode: session.userProfile.kidMode))
-                                .foregroundColor(MTColors.secondaryText)
+                                .font(ModernDesignSystem.Typography.caption)
+                                .foregroundColor(ModernDesignSystem.Colors.secondaryText)
                             
                             TextEditor(text: $contactMessage)
                                 .frame(minHeight: 120)
@@ -304,6 +311,7 @@ struct HelpSupportView: View {
                     Spacer()
                     
                     Button("Send Message") {
+                        HapticsService.shared.importantAction()
                         sendContactMessage()
                     }
                     .buttonStyle(.borderedProminent)
@@ -316,6 +324,7 @@ struct HelpSupportView: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("Cancel") {
+                        HapticsService.shared.navigationTap()
                         showingContactForm = false
                     }
                 }
@@ -343,12 +352,15 @@ struct HelpCard: View {
     let action: () -> Void
     
     var body: some View {
-        Button(action: action) {
+        Button(action: {
+            HapticsService.shared.buttonTap()
+            action()
+        }) {
             HStack(spacing: 16) {
                 Image(systemName: icon)
                     .font(.system(size: 24, weight: .medium))
                     .foregroundColor(color)
-                    .frame(width: MTSpacing.minimumTouchTarget, height: MTSpacing.minimumTouchTarget)
+                    .frame(width: ModernDesignSystem.Spacing.minimumTouchTarget, height: ModernDesignSystem.Spacing.minimumTouchTarget)
                     .background(
                         Circle()
                             .fill(color.opacity(0.1))
@@ -356,13 +368,13 @@ struct HelpCard: View {
                 
                 VStack(alignment: .leading, spacing: 4) {
                     Text(title)
-                        .font(MTTypography.heading(kidMode: false))
-                        .foregroundColor(MTColors.primaryText)
+                        .font(ModernDesignSystem.Typography.headline)
+                        .foregroundColor(ModernDesignSystem.Colors.primaryText)
                         .multilineTextAlignment(.leading)
                     
                     Text(description)
-                        .font(MTTypography.body(kidMode: false))
-                        .foregroundColor(MTColors.secondaryText)
+                        .font(ModernDesignSystem.Typography.body)
+                        .foregroundColor(ModernDesignSystem.Colors.secondaryText)
                         .multilineTextAlignment(.leading)
                 }
                 
@@ -370,7 +382,7 @@ struct HelpCard: View {
                 
                 Image(systemName: "chevron.right")
                     .font(.system(size: 16, weight: .medium))
-                    .foregroundColor(MTColors.tertiaryText)
+                    .foregroundColor(ModernDesignSystem.Colors.tertiaryText)
             }
             .padding(16)
             .background(
@@ -378,7 +390,7 @@ struct HelpCard: View {
                 .glassEffect(.regular, shape: .rect(cornerRadius: 16))
             )
         }
-        .buttonStyle(PlainButtonStyle())
+.buttonStyle(HapticPlainButtonStyle())
     }
 }
 
@@ -390,26 +402,29 @@ struct FAQItem: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Button(action: { isExpanded.toggle() }) {
+            Button(action: { 
+                HapticsService.shared.buttonTap()
+                isExpanded.toggle() 
+            }) {
                 HStack {
                     Text(question)
-                        .font(MTTypography.heading(kidMode: false))
-                        .foregroundColor(MTColors.primaryText)
+                        .font(ModernDesignSystem.Typography.headline)
+                        .foregroundColor(ModernDesignSystem.Colors.primaryText)
                         .multilineTextAlignment(.leading)
                     
                     Spacer()
                     
                     Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
                         .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(MTColors.tertiaryText)
+                        .foregroundColor(ModernDesignSystem.Colors.tertiaryText)
                 }
             }
             .buttonStyle(PlainButtonStyle())
             
             if isExpanded {
                 Text(answer)
-                    .font(MTTypography.body(kidMode: false))
-                    .foregroundColor(MTColors.secondaryText)
+                    .font(ModernDesignSystem.Typography.body)
+                    .foregroundColor(ModernDesignSystem.Colors.secondaryText)
                     .multilineTextAlignment(.leading)
                     .transition(.opacity.combined(with: .move(edge: .top)))
             }
@@ -432,12 +447,15 @@ struct ContactCard: View {
     let action: () -> Void
     
     var body: some View {
-        Button(action: action) {
+        Button(action: {
+            HapticsService.shared.buttonTap()
+            action()
+        }) {
             HStack(spacing: 16) {
                 Image(systemName: icon)
                     .font(.system(size: 20, weight: .medium))
                     .foregroundColor(color)
-                    .frame(width: MTSpacing.minimumTouchTarget, height: MTSpacing.minimumTouchTarget)
+                    .frame(width: ModernDesignSystem.Spacing.minimumTouchTarget, height: ModernDesignSystem.Spacing.minimumTouchTarget)
                     .background(
                         Circle()
                             .fill(color.opacity(0.1))
@@ -445,13 +463,13 @@ struct ContactCard: View {
                 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(title)
-                        .font(MTTypography.heading(kidMode: false))
-                        .foregroundColor(MTColors.primaryText)
+                        .font(ModernDesignSystem.Typography.headline)
+                        .foregroundColor(ModernDesignSystem.Colors.primaryText)
                         .multilineTextAlignment(.leading)
                     
                     Text(subtitle)
-                        .font(MTTypography.body(kidMode: false))
-                        .foregroundColor(MTColors.secondaryText)
+                        .font(ModernDesignSystem.Typography.body)
+                        .foregroundColor(ModernDesignSystem.Colors.secondaryText)
                         .multilineTextAlignment(.leading)
                 }
                 
@@ -459,7 +477,7 @@ struct ContactCard: View {
                 
                 Image(systemName: "chevron.right")
                     .font(.system(size: 16, weight: .medium))
-                    .foregroundColor(MTColors.tertiaryText)
+                    .foregroundColor(ModernDesignSystem.Colors.tertiaryText)
             }
             .padding(16)
             .background(

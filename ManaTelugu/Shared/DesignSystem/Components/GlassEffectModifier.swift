@@ -230,8 +230,8 @@ struct GlassEffectModifier: ViewModifier {
                         .fill(
                             LinearGradient(
                                 colors: [
-                                    Color.white.opacity(0.1),
-                                    Color.white.opacity(0.05)
+                                    ModernDesignSystem.Colors.surface.opacity(0.1),
+                                    ModernDesignSystem.Colors.surface.opacity(0.05)
                                 ],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
@@ -246,8 +246,7 @@ struct GlassEffectModifier: ViewModifier {
                         .fill(
                             LinearGradient(
                                 colors: [
-                                    Color.white.opacity(0.2),
-                                    Color.white.opacity(0.1)
+                                    ModernDesignSystem.Colors.surface.opacity(0.1)
                                 ],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
@@ -262,7 +261,7 @@ struct GlassEffectModifier: ViewModifier {
                                 LinearGradient(
                                     colors: [
                                         Color.clear,
-                                        Color.white.opacity(0.3),
+ModernDesignSystem.Colors.surface.opacity(0.3),
                                         Color.clear
                                     ],
                                     startPoint: .leading,
@@ -281,7 +280,7 @@ struct GlassEffectModifier: ViewModifier {
                     // Glow effect
                     if config.glowEnabled {
                         RoundedRectangle(cornerRadius: getCornerRadius())
-                            .fill(Color.white.opacity(0.1))
+                            .fill(ModernDesignSystem.Colors.surface.opacity(0.1))
                             .blur(radius: 10)
                             .opacity(glowIntensity)
                             .onAppear {
@@ -296,8 +295,8 @@ struct GlassEffectModifier: ViewModifier {
                         .stroke(
                             LinearGradient(
                                 colors: [
-                                    Color.white.opacity(0.3),
-                                    Color.white.opacity(0.1)
+                                    ModernDesignSystem.Colors.surface.opacity(0.3),
+                                    ModernDesignSystem.Colors.surface.opacity(0.1)
                                 ],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
@@ -307,7 +306,7 @@ struct GlassEffectModifier: ViewModifier {
                 }
             )
             .shadow(
-                color: Color.black.opacity(0.1),
+                color: ModernDesignSystem.Colors.shadow.opacity(0.1),
                 radius: config.shadowRadius,
                 x: 0,
                 y: config.floatingEnabled ? 8 : 4
@@ -462,8 +461,14 @@ struct GlassEffectPreview: View {
                     Text("Strong").tag(GlassEffectPreset.strong)
                 }
                 .pickerStyle(SegmentedPickerStyle())
+                .onChange(of: selectedPreset) { _, _ in
+                    HapticsManager.shared.selection()
+                }
                 
                 Toggle("Enabled", isOn: $isEnabled)
+                    .onChange(of: isEnabled) { _, _ in
+                        HapticsManager.shared.selection()
+                    }
                 
                 // Demo cards
                 VStack(spacing: 16) {

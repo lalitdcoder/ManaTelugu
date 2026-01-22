@@ -13,20 +13,20 @@ struct ElegantVocabularyView: View {
     var body: some View {
         NavigationView {
             ZStack {
-                ElegantGradient()
+                ModernDesignSystem.Colors.backgroundGradient
                     .ignoresSafeArea(.all, edges: .all)
                 
                 ScrollView(showsIndicators: false) {
-                    VStack(alignment: .leading, spacing: ElegantDesign.Spacing.xl) {
+                    VStack(alignment: .leading, spacing: ModernDesignSystem.Spacing.xl) {
                         // Header
                         headerSection
-                            .padding(.top, ElegantDesign.Spacing.xl)
+                            .padding(.top, ModernDesignSystem.Spacing.xl)
                         
                         // Theme Grid
                         themeGridSection
                     }
-                    .padding(.horizontal, ElegantDesign.Spacing.md)
-                    .padding(.bottom, ElegantDesign.Spacing.xl)
+                    .padding(.horizontal, ModernDesignSystem.Spacing.md)
+                    .padding(.bottom, ModernDesignSystem.Spacing.xl)
                 }
             }
             .navigationTitle("Vocabulary")
@@ -38,26 +38,26 @@ struct ElegantVocabularyView: View {
     }
     
     private var headerSection: some View {
-        VStack(alignment: .leading, spacing: ElegantDesign.Spacing.xs) {
+        VStack(alignment: .leading, spacing: ModernDesignSystem.Spacing.xs) {
             Text("Explore different themes to expand your vocabulary")
-                .font(ElegantDesign.Typography.body)
-                .foregroundColor(ElegantDesign.Colors.textSecondary)
+                .font(ModernDesignSystem.Typography.body)
+                .foregroundColor(ModernDesignSystem.Colors.textSecondary)
         }
     }
     
     private var themeGridSection: some View {
-        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: ElegantDesign.Spacing.md), count: 2), spacing: ElegantDesign.Spacing.md) {
+        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: ModernDesignSystem.Spacing.md), count: 2), spacing: ModernDesignSystem.Spacing.md) {
             ForEach(themes, id: \.self) { theme in
                 NavigationLink(destination: ElegantVocabularyCardsView(theme: theme)) {
                     themeCard(theme)
                 }
-                .buttonStyle(PlainButtonStyle())
+.buttonStyle(HapticPlainButtonStyle())
             }
         }
     }
     
     private func themeCard(_ theme: String) -> some View {
-        VStack(spacing: ElegantDesign.Spacing.md) {
+        VStack(spacing: ModernDesignSystem.Spacing.md) {
             // Icon
             Image(systemName: iconForTheme(theme))
                 .font(.system(size: 32))
@@ -65,19 +65,19 @@ struct ElegantVocabularyView: View {
             
             // Title
             Text(theme)
-                .font(ElegantDesign.Typography.callout)
+                .font(ModernDesignSystem.Typography.callout)
                 .fontWeight(.semibold)
-                .foregroundColor(ElegantDesign.Colors.textPrimary)
+                .foregroundColor(ModernDesignSystem.Colors.textPrimary)
                 .multilineTextAlignment(.center)
             
             // Progress indicator
             Text("\(wordsLearnedForTheme(theme))/\(totalWordsForTheme(theme))")
-                .font(ElegantDesign.Typography.caption)
-                .foregroundColor(ElegantDesign.Colors.textSecondary)
+                .font(ModernDesignSystem.Typography.caption)
+                .foregroundColor(ModernDesignSystem.Colors.textSecondary)
         }
         .frame(height: 120)
         .frame(maxWidth: .infinity)
-        .elegantCard()
+        .modernCard()
     }
     
     private func iconForTheme(_ theme: String) -> String {
@@ -97,7 +97,7 @@ struct ElegantVocabularyView: View {
     }
     
     private func colorForTheme(_ theme: String) -> Color {
-        let colors = [ElegantDesign.Colors.primary, ElegantDesign.Colors.secondary, ElegantDesign.Colors.accent]
+        let colors = [ModernDesignSystem.Colors.primary, ModernDesignSystem.Colors.secondary, ModernDesignSystem.Colors.accent]
         return colors[abs(theme.hashValue) % colors.count]
     }
     
@@ -118,20 +118,20 @@ struct ElegantVocabularyCardsView: View {
     
     var body: some View {
         ZStack {
-            ElegantGradient()
+            ModernDesignSystem.Colors.backgroundGradient
                 .ignoresSafeArea(.all, edges: .all)
             
             ScrollView(showsIndicators: false) {
-                VStack(spacing: ElegantDesign.Spacing.lg) {
+                VStack(spacing: ModernDesignSystem.Spacing.lg) {
                     // Progress header
                     progressHeader
-                        .padding(.top, ElegantDesign.Spacing.xl)
+                        .padding(.top, ModernDesignSystem.Spacing.xl)
                     
                     // Words list
                     wordsSection
                 }
-                .padding(.horizontal, ElegantDesign.Spacing.md)
-                .padding(.bottom, ElegantDesign.Spacing.xl)
+                .padding(.horizontal, ModernDesignSystem.Spacing.md)
+                .padding(.bottom, ModernDesignSystem.Spacing.xl)
             }
         }
         .navigationTitle(theme)
@@ -143,14 +143,14 @@ struct ElegantVocabularyCardsView: View {
     
     private var progressHeader: some View {
         HStack {
-            VStack(alignment: .leading, spacing: ElegantDesign.Spacing.xs) {
+            VStack(alignment: .leading, spacing: ModernDesignSystem.Spacing.xs) {
                 Text("Progress")
-                    .font(ElegantDesign.Typography.headline)
-                    .foregroundColor(ElegantDesign.Colors.textPrimary)
+                    .font(ModernDesignSystem.Typography.headline)
+                    .foregroundColor(ModernDesignSystem.Colors.textPrimary)
                 
                 Text("\(learnedCount)/\(words.count) words learned")
-                    .font(ElegantDesign.Typography.body)
-                    .foregroundColor(ElegantDesign.Colors.textSecondary)
+                    .font(ModernDesignSystem.Typography.body)
+                    .foregroundColor(ModernDesignSystem.Colors.textSecondary)
             }
             
             Spacer()
@@ -158,27 +158,27 @@ struct ElegantVocabularyCardsView: View {
             // Progress ring using built-in SwiftUI components
             ZStack {
                 Circle()
-                    .stroke(ElegantDesign.Colors.textTertiary.opacity(0.3), lineWidth: 4)
+                    .stroke(ModernDesignSystem.Colors.textTertiary.opacity(0.3), lineWidth: 4)
                     .frame(width: 60, height: 60)
                 
                 Circle()
                     .trim(from: 0, to: Double(learnedCount) / Double(max(words.count, 1)))
-                    .stroke(ElegantDesign.Colors.primary, style: StrokeStyle(lineWidth: 4, lineCap: .round))
+                    .stroke(ModernDesignSystem.Colors.primary, style: StrokeStyle(lineWidth: 4, lineCap: .round))
                     .frame(width: 60, height: 60)
                     .rotationEffect(.degrees(-90))
                     .animation(.easeInOut(duration: 0.5), value: learnedCount)
                 
                 Text("\(Int((Double(learnedCount) / Double(max(words.count, 1))) * 100))%")
-                    .font(ElegantDesign.Typography.caption)
+                    .font(ModernDesignSystem.Typography.caption)
                     .fontWeight(.semibold)
-                    .foregroundColor(ElegantDesign.Colors.textPrimary)
+                    .foregroundColor(ModernDesignSystem.Colors.textPrimary)
             }
         }
-        .elegantCard()
+        .modernCard()
     }
     
     private var wordsSection: some View {
-        VStack(spacing: ElegantDesign.Spacing.md) {
+        VStack(spacing: ModernDesignSystem.Spacing.md) {
             ForEach(words, id: \.telugu) { word in
                 wordCard(word)
             }
@@ -186,34 +186,34 @@ struct ElegantVocabularyCardsView: View {
     }
     
     private func wordCard(_ word: VocabularyWord) -> some View {
-        HStack(spacing: ElegantDesign.Spacing.md) {
+        HStack(spacing: ModernDesignSystem.Spacing.md) {
             // Telugu word
-            VStack(alignment: .leading, spacing: ElegantDesign.Spacing.xs) {
+            VStack(alignment: .leading, spacing: ModernDesignSystem.Spacing.xs) {
                 Text(word.telugu)
                     .font(.system(size: 24, weight: .medium, design: .serif))
-                    .foregroundColor(ElegantDesign.Colors.primary)
+                    .foregroundColor(ModernDesignSystem.Colors.primary)
                 
                 Text(word.pronunciation)
-                    .font(ElegantDesign.Typography.caption)
-                    .foregroundColor(ElegantDesign.Colors.textTertiary)
+                    .font(ModernDesignSystem.Typography.caption)
+                    .foregroundColor(ModernDesignSystem.Colors.textTertiary)
             }
             
             Spacer()
             
             // English translation
-            VStack(alignment: .trailing, spacing: ElegantDesign.Spacing.xs) {
+            VStack(alignment: .trailing, spacing: ModernDesignSystem.Spacing.xs) {
                 Text(word.english)
-                    .font(ElegantDesign.Typography.callout)
+                    .font(ModernDesignSystem.Typography.callout)
                     .fontWeight(.semibold)
-                    .foregroundColor(ElegantDesign.Colors.textPrimary)
+                    .foregroundColor(ModernDesignSystem.Colors.textPrimary)
                 
                 Circle()
-                    .fill(word.isLearned ? ElegantDesign.Colors.success : ElegantDesign.Colors.textTertiary.opacity(0.3))
+                    .fill(word.isLearned ? ModernDesignSystem.Colors.success : ModernDesignSystem.Colors.textTertiary.opacity(0.3))
                     .frame(width: 8, height: 8)
             }
         }
-        .padding(ElegantDesign.Spacing.md)
-        .elegantCard()
+        .padding(ModernDesignSystem.Spacing.md)
+        .modernCard()
     }
     
     private var learnedCount: Int {
@@ -274,10 +274,10 @@ struct ElegantStoriesView: View {
         
         var color: Color {
             switch self {
-            case .folktales: return ElegantDesign.Colors.primary
-            case .moral: return ElegantDesign.Colors.secondary
-            case .mythology: return ElegantDesign.Colors.accent
-            case .modern: return ElegantDesign.Colors.primary
+            case .folktales: return ModernDesignSystem.Colors.primary
+            case .moral: return ModernDesignSystem.Colors.secondary
+            case .mythology: return ModernDesignSystem.Colors.accent
+            case .modern: return ModernDesignSystem.Colors.primary
             }
         }
     }
@@ -285,14 +285,14 @@ struct ElegantStoriesView: View {
     var body: some View {
         NavigationView {
             ZStack {
-                ElegantGradient()
+                ModernDesignSystem.Colors.backgroundGradient
                     .ignoresSafeArea(.all, edges: .all)
                 
                 ScrollView(showsIndicators: false) {
-                    VStack(spacing: ElegantDesign.Spacing.xl) {
+                    VStack(spacing: ModernDesignSystem.Spacing.xl) {
                         // Hero Header
                         heroHeaderSection
-                            .padding(.top, ElegantDesign.Spacing.xl)
+                            .padding(.top, ModernDesignSystem.Spacing.xl)
                         
                         // Story Categories
                         categoriesSection
@@ -303,8 +303,8 @@ struct ElegantStoriesView: View {
                         // All Stories
                         allStoriesSection
                     }
-                    .padding(.horizontal, ElegantDesign.Spacing.md)
-                    .padding(.bottom, ElegantDesign.Spacing.xl)
+                    .padding(.horizontal, ModernDesignSystem.Spacing.md)
+                    .padding(.bottom, ModernDesignSystem.Spacing.xl)
                 }
             }
             .navigationTitle("Telugu Stories")
@@ -316,31 +316,31 @@ struct ElegantStoriesView: View {
     }
     
     private var heroHeaderSection: some View {
-        VStack(alignment: .leading, spacing: ElegantDesign.Spacing.lg) {
+        VStack(alignment: .leading, spacing: ModernDesignSystem.Spacing.lg) {
             Text("Telugu Stories")
-                .font(ElegantDesign.Typography.title1)
-                .foregroundColor(ElegantDesign.Colors.textPrimary)
+                .font(ModernDesignSystem.Typography.title1)
+                .foregroundColor(ModernDesignSystem.Colors.textPrimary)
             
             Text("Discover the rich heritage of Telugu literature through engaging stories")
-                .font(ElegantDesign.Typography.body)
-                .foregroundColor(ElegantDesign.Colors.textSecondary)
+                .font(ModernDesignSystem.Typography.body)
+                .foregroundColor(ModernDesignSystem.Colors.textSecondary)
             
-            HStack(spacing: ElegantDesign.Spacing.lg) {
-                statCard("Stories", "\(stories.count)", ElegantDesign.Colors.primary)
-                statCard("Completed", "\(completedCount)", ElegantDesign.Colors.secondary)
-                statCard("Favorites", "\(favoritesCount)", ElegantDesign.Colors.accent)
+            HStack(spacing: ModernDesignSystem.Spacing.lg) {
+                statCard("Stories", "\(stories.count)", ModernDesignSystem.Colors.primary)
+                statCard("Completed", "\(completedCount)", ModernDesignSystem.Colors.secondary)
+                statCard("Favorites", "\(favoritesCount)", ModernDesignSystem.Colors.accent)
             }
         }
-        .elegantCard()
+        .modernCard()
     }
     
     private var categoriesSection: some View {
-        VStack(alignment: .leading, spacing: ElegantDesign.Spacing.md) {
+        VStack(alignment: .leading, spacing: ModernDesignSystem.Spacing.md) {
             Text("Story Categories")
-                .font(ElegantDesign.Typography.headline)
-                .foregroundColor(ElegantDesign.Colors.textPrimary)
+                .font(ModernDesignSystem.Typography.headline)
+                .foregroundColor(ModernDesignSystem.Colors.textPrimary)
             
-            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: ElegantDesign.Spacing.md), count: 2), spacing: ElegantDesign.Spacing.md) {
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: ModernDesignSystem.Spacing.md), count: 2), spacing: ModernDesignSystem.Spacing.md) {
                 ForEach(StoryCategory.allCases, id: \.self) { category in
                     categoryCard(category)
                 }
@@ -352,26 +352,26 @@ struct ElegantStoriesView: View {
         Button(action: {
             selectedCategory = selectedCategory == category ? nil : category
         }) {
-            VStack(spacing: ElegantDesign.Spacing.md) {
+            VStack(spacing: ModernDesignSystem.Spacing.md) {
                 Image(systemName: category.icon)
                     .font(.title2)
                     .foregroundColor(category.color)
                 
                 Text(category.rawValue)
-                    .font(ElegantDesign.Typography.callout)
+                    .font(ModernDesignSystem.Typography.callout)
                     .fontWeight(.semibold)
-                    .foregroundColor(ElegantDesign.Colors.textPrimary)
+                    .foregroundColor(ModernDesignSystem.Colors.textPrimary)
                     .multilineTextAlignment(.center)
                 
                 Text("\(storiesCount(for: category)) stories")
-                    .font(ElegantDesign.Typography.caption)
-                    .foregroundColor(ElegantDesign.Colors.textSecondary)
+                    .font(ModernDesignSystem.Typography.caption)
+                    .foregroundColor(ModernDesignSystem.Colors.textSecondary)
             }
             .frame(height: 100)
             .frame(maxWidth: .infinity)
-            .elegantCard()
+            .modernCard()
             .overlay(
-                RoundedRectangle(cornerRadius: ElegantDesign.CornerRadius.lg)
+                RoundedRectangle(cornerRadius: ModernDesignSystem.CornerRadius.lg)
                     .stroke(selectedCategory == category ? category.color : Color.clear, lineWidth: 2)
             )
         }
@@ -379,10 +379,10 @@ struct ElegantStoriesView: View {
     }
     
     private var featuredStoriesSection: some View {
-        VStack(alignment: .leading, spacing: ElegantDesign.Spacing.md) {
+        VStack(alignment: .leading, spacing: ModernDesignSystem.Spacing.md) {
             Text("Featured Stories")
-                .font(ElegantDesign.Typography.headline)
-                .foregroundColor(ElegantDesign.Colors.textPrimary)
+                .font(ModernDesignSystem.Typography.headline)
+                .foregroundColor(ModernDesignSystem.Colors.textPrimary)
             
             if let featuredStory = stories.first {
                 featuredStoryCard(featuredStory)
@@ -391,20 +391,20 @@ struct ElegantStoriesView: View {
     }
     
     private func featuredStoryCard(_ story: ElegantStory) -> some View {
-        VStack(alignment: .leading, spacing: ElegantDesign.Spacing.md) {
+        VStack(alignment: .leading, spacing: ModernDesignSystem.Spacing.md) {
             HStack {
-                VStack(alignment: .leading, spacing: ElegantDesign.Spacing.xs) {
+                VStack(alignment: .leading, spacing: ModernDesignSystem.Spacing.xs) {
                     Text(story.title)
-                        .font(ElegantDesign.Typography.title3)
-                        .foregroundColor(ElegantDesign.Colors.textPrimary)
+                        .font(ModernDesignSystem.Typography.title3)
+                        .foregroundColor(ModernDesignSystem.Colors.textPrimary)
                     
                     Text(story.titleTelugu)
                         .font(.system(size: 18, weight: .medium, design: .serif))
-                        .foregroundColor(ElegantDesign.Colors.primary)
+                        .foregroundColor(ModernDesignSystem.Colors.primary)
                     
                     Text(story.description)
-                        .font(ElegantDesign.Typography.body)
-                        .foregroundColor(ElegantDesign.Colors.textSecondary)
+                        .font(ModernDesignSystem.Typography.body)
+                        .foregroundColor(ModernDesignSystem.Colors.textSecondary)
                 }
                 
                 Spacer()
@@ -416,33 +416,33 @@ struct ElegantStoriesView: View {
             
             HStack {
                 Text("Reading time: \(story.readingTime)")
-                    .font(ElegantDesign.Typography.caption)
-                    .foregroundColor(ElegantDesign.Colors.textTertiary)
+                    .font(ModernDesignSystem.Typography.caption)
+                    .foregroundColor(ModernDesignSystem.Colors.textTertiary)
                 
                 Spacer()
                 
                 if story.isCompleted {
                     Image(systemName: "checkmark.circle.fill")
-                        .foregroundColor(ElegantDesign.Colors.success)
+                        .foregroundColor(ModernDesignSystem.Colors.success)
                 }
                 
                 if story.isFavorite {
                     Image(systemName: "heart.fill")
-                        .foregroundColor(ElegantDesign.Colors.accent)
+                        .foregroundColor(ModernDesignSystem.Colors.accent)
                 }
             }
         }
-        .padding(ElegantDesign.Spacing.md)
-        .elegantCard()
+        .padding(ModernDesignSystem.Spacing.md)
+        .modernCard()
     }
     
     private var allStoriesSection: some View {
-        VStack(alignment: .leading, spacing: ElegantDesign.Spacing.md) {
+        VStack(alignment: .leading, spacing: ModernDesignSystem.Spacing.md) {
             Text("All Stories")
-                .font(ElegantDesign.Typography.headline)
-                .foregroundColor(ElegantDesign.Colors.textPrimary)
+                .font(ModernDesignSystem.Typography.headline)
+                .foregroundColor(ModernDesignSystem.Colors.textPrimary)
             
-            VStack(spacing: ElegantDesign.Spacing.sm) {
+            VStack(spacing: ModernDesignSystem.Spacing.sm) {
                 ForEach(filteredStories, id: \.id) { story in
                     storyCard(story)
                 }
@@ -451,62 +451,62 @@ struct ElegantStoriesView: View {
     }
     
     private func storyCard(_ story: ElegantStory) -> some View {
-        HStack(spacing: ElegantDesign.Spacing.md) {
+        HStack(spacing: ModernDesignSystem.Spacing.md) {
             Image(systemName: story.category.icon)
                 .font(.title2)
                 .foregroundColor(story.category.color)
                 .frame(width: 40)
             
-            VStack(alignment: .leading, spacing: ElegantDesign.Spacing.xs) {
+            VStack(alignment: .leading, spacing: ModernDesignSystem.Spacing.xs) {
                 Text(story.title)
-                    .font(ElegantDesign.Typography.callout)
+                    .font(ModernDesignSystem.Typography.callout)
                     .fontWeight(.semibold)
-                    .foregroundColor(ElegantDesign.Colors.textPrimary)
+                    .foregroundColor(ModernDesignSystem.Colors.textPrimary)
                 
                 Text(story.titleTelugu)
                     .font(.system(size: 14, weight: .medium, design: .serif))
-                    .foregroundColor(ElegantDesign.Colors.primary)
+                    .foregroundColor(ModernDesignSystem.Colors.primary)
                 
                 Text(story.description)
-                    .font(ElegantDesign.Typography.body)
-                    .foregroundColor(ElegantDesign.Colors.textSecondary)
+                    .font(ModernDesignSystem.Typography.body)
+                    .foregroundColor(ModernDesignSystem.Colors.textSecondary)
                 
                 Text("Reading time: \(story.readingTime)")
-                    .font(ElegantDesign.Typography.caption)
-                    .foregroundColor(ElegantDesign.Colors.textTertiary)
+                    .font(ModernDesignSystem.Typography.caption)
+                    .foregroundColor(ModernDesignSystem.Colors.textTertiary)
             }
             
             Spacer()
             
-            VStack(spacing: ElegantDesign.Spacing.xs) {
+            VStack(spacing: ModernDesignSystem.Spacing.xs) {
                 if story.isCompleted {
                     Image(systemName: "checkmark.circle.fill")
-                        .foregroundColor(ElegantDesign.Colors.success)
+                        .foregroundColor(ModernDesignSystem.Colors.success)
                 }
                 
                 if story.isFavorite {
                     Image(systemName: "heart.fill")
-                        .foregroundColor(ElegantDesign.Colors.accent)
+                        .foregroundColor(ModernDesignSystem.Colors.accent)
                 }
                 
                 Image(systemName: "chevron.right")
                     .font(.caption)
-                    .foregroundColor(ElegantDesign.Colors.textTertiary)
+                    .foregroundColor(ModernDesignSystem.Colors.textTertiary)
             }
         }
-        .padding(ElegantDesign.Spacing.md)
-        .elegantCard()
+        .padding(ModernDesignSystem.Spacing.md)
+        .modernCard()
     }
     
     private func statCard(_ title: String, _ value: String, _ color: Color) -> some View {
-        VStack(spacing: ElegantDesign.Spacing.xs) {
+        VStack(spacing: ModernDesignSystem.Spacing.xs) {
             Text(value)
-                .font(ElegantDesign.Typography.title3)
+                .font(ModernDesignSystem.Typography.title3)
                 .foregroundColor(color)
             
             Text(title)
-                .font(ElegantDesign.Typography.caption)
-                .foregroundColor(ElegantDesign.Colors.textSecondary)
+                .font(ModernDesignSystem.Typography.caption)
+                .foregroundColor(ModernDesignSystem.Colors.textSecondary)
         }
         .frame(maxWidth: .infinity)
     }

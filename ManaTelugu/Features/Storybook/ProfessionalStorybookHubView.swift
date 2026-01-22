@@ -5,65 +5,14 @@ import SwiftUI
 
 struct ProfessionalStorybookHubView: View {
     @EnvironmentObject var session: AppSession
+    @Environment(\.dismiss) private var dismiss
     @State private var selectedCategory: StoryCategory? = nil
     @State private var searchText = ""
     @State private var showingSettings = false
     @State private var showingFavorites = false
     
-    // Mock stories data for professional presentation
-    private let stories: [ProfessionalStory] = [
-        ProfessionalStory(
-            id: UUID(),
-            title: "The Cat and the Mouse",
-            titleTelugu: "పిల్లి మరియు ఎలుక",
-            description: "A timeless Telugu folktale filled with wit and wisdom",
-            author: "Traditional",
-            category: .folktales,
-            difficulty: .beginner,
-            readingTime: "5 min",
-            isCompleted: false,
-            isFavorite: false
-        ),
-        ProfessionalStory(
-            id: UUID(),
-            title: "The Wise Farmer",
-            titleTelugu: "తెలివైన రైతు",
-            description: "Learn about hard work and wisdom through this classic story",
-            author: "Traditional",
-            category: .moral,
-            difficulty: .intermediate,
-            readingTime: "8 min",
-            isCompleted: true,
-            isFavorite: true
-        ),
-        ProfessionalStory(
-            id: UUID(),
-            title: "The Magic Pot",
-            titleTelugu: "మాయా కుండ",
-            description: "A magical tale that teaches the value of sharing",
-            author: "Traditional",
-            category: .mythology,
-            difficulty: .beginner,
-            readingTime: "6 min",
-            isCompleted: false,
-            isFavorite: false
-        ),
-        ProfessionalStory(
-            id: UUID(),
-            title: "The King's Challenge",
-            titleTelugu: "రాజు సవాలు",
-            description: "An adventure story about courage and determination",
-            author: "Traditional",
-            category: .historical,
-            difficulty: .advanced,
-            readingTime: "12 min",
-            isCompleted: false,
-            isFavorite: false
-        )
-    ]
-    
-    var filteredStories: [ProfessionalStory] {
-        var filtered = stories
+    var filteredStories: [TeluguStory] {
+        var filtered = session.storyService.stories
         
         if let category = selectedCategory {
             filtered = filtered.filter { $0.category == category }
@@ -72,8 +21,7 @@ struct ProfessionalStorybookHubView: View {
         if !searchText.isEmpty {
             filtered = filtered.filter { story in
                 story.title.localizedCaseInsensitiveContains(searchText) ||
-                story.titleTelugu.localizedCaseInsensitiveContains(searchText) ||
-                story.description.localizedCaseInsensitiveContains(searchText)
+                story.titleEnglish.localizedCaseInsensitiveContains(searchText)
             }
         }
         
@@ -81,313 +29,251 @@ struct ProfessionalStorybookHubView: View {
     }
     
     var body: some View {
-        NavigationStack {
-            ZStack {
-                // Professional gradient background
-                LinearGradient(
-                    colors: [
-                        Color(red: 0.2, green: 0.4, blue: 0.9),
-                        Color(red: 0.4, green: 0.2, blue: 0.8),
-                        Color(red: 0.8, green: 0.3, blue: 0.6)
-                    ],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-                .ignoresSafeArea(.all, edges: .all)
-                
-                ScrollView {
-                    LazyVStack(spacing: ProfessionalSpacing.large.value) {
-                        // Hero Section
-                        heroSection
-                            .padding(.top, ProfessionalSpacing.extraLarge.value)
-                        
-                        // Search Bar
-                        searchSection
-                        
-                        // Categories
-                        categoriesSection
-                        
-                        // Stories List
-                        storiesListSection
-                        
-                        // Bottom padding for tab bar
-                        Color.clear
-                            .frame(height: 120)
-                    }
-                    .padding(.horizontal, ProfessionalSpacing.medium.value)
+        ZStack {
+            ModernDesignSystem.Colors.backgroundGradient
+                .ignoresSafeArea(.container, edges: .top)
+            
+            ScrollView {
+                LazyVStack(spacing: ModernDesignSystem.Spacing.lg) {
+                    // Hero Section
+                    heroSection
+                        .padding(.top, -20)
+                    
+                    // Search Bar
+                    searchSection
+                    
+                    // Categories
+                    categoriesSection
+                    
+                    // Stories List
+                    storiesListSection
+                    
+                    // Bottom padding for tab bar
+                    Color.clear
+                        .frame(height: 120)
                 }
-                .scrollIndicators(.hidden)
+                .padding(.horizontal, ModernDesignSystem.Spacing.md)
             }
-            .navigationBarHidden(true)
+            .scrollIndicators(.hidden)
+        }
+        .navigationTitle("Stories")
+        .navigationBarTitleDisplayMode(.inline)
+        .navigationBarBackButtonHidden(true)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                Button("Back") {
+                    dismiss()
+                }
+                .foregroundColor(.blue)
+            }
         }
     }
     
     // MARK: - Hero Section
     private var heroSection: some View {
-        ProfessionalCard(type: .hero) {
-            VStack(alignment: .leading, spacing: ProfessionalSpacing.large.value) {
-                ProfessionalText(
-                    "Telugu Stories",
-                    style: .heroTitle,
-                    color: .textPrimary
+        VStack(alignment: .leading, spacing: ModernDesignSystem.Spacing.lg) {
+            Text("Telugu Stories")
+                .font(ModernDesignSystem.Typography.title1)
+                .foregroundColor(ModernDesignSystem.Colors.textPrimary)
+            
+            Text("Discover the rich world of Telugu literature and folklore")
+                .font(ModernDesignSystem.Typography.body)
+                .foregroundColor(ModernDesignSystem.Colors.textSecondary)
+            
+            HStack(spacing: ModernDesignSystem.Spacing.lg) {
+                ModernStatCard(
+                    icon: "book.fill",
+                    value: "\(session.storyService.stories.count)",
+                    label: "Stories",
+                    color: ModernDesignSystem.Colors.alphabet
                 )
                 
-                ProfessionalText(
-                    "Discover the rich world of Telugu literature and folklore",
-                    style: .bodyText,
-                    color: .textSecondary
+                ModernStatCard(
+                    icon: "clock.fill",
+                    value: "2h",
+                    label: "Reading",
+                    color: ModernDesignSystem.Colors.lessons
                 )
-                
-                HStack(spacing: ProfessionalSpacing.large.value) {
-                    ProfessionalStatCard(
-                        icon: "book.fill",
-                        value: "\(stories.count)",
-                        label: "Stories",
-                        color: .professionalBlue
-                    )
-                    
-                    ProfessionalStatCard(
-                        icon: "clock.fill",
-                        value: "2h",
-                        label: "Reading",
-                        color: .professionalGreen
-                    )
-                }
             }
         }
+        .modernCard(hasLiquidGlass: true)
     }
     
     // MARK: - Search Section
     private var searchSection: some View {
-        ProfessionalCard(type: .secondary) {
-            HStack(spacing: ProfessionalSpacing.medium.value) {
-                Image(systemName: "magnifyingglass")
-                    .font(.system(size: 16, weight: .medium))
-                    .foregroundColor(.textSecondary)
-                
-                TextField("Search stories...", text: $searchText)
-                    .font(ProfessionalTypography.font(for: .bodyText))
-                    .foregroundColor(.textPrimary)
-                
-                if !searchText.isEmpty {
-                    Button(action: { searchText = "" }) {
-                        Image(systemName: "xmark.circle.fill")
-                            .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(.textSecondary)
-                    }
+        HStack(spacing: ModernDesignSystem.Spacing.md) {
+            Image(systemName: "magnifyingglass")
+                .font(.system(size: 16, weight: .medium))
+                .foregroundColor(ModernDesignSystem.Colors.textSecondary)
+            
+            TextField("Search stories...", text: $searchText)
+                .font(ModernDesignSystem.Typography.body)
+                .foregroundColor(ModernDesignSystem.Colors.textPrimary)
+            
+            if !searchText.isEmpty {
+                Button(action: { 
+                    HapticsService.shared.buttonTap()
+                    searchText = "" 
+                }) {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundColor(ModernDesignSystem.Colors.textSecondary)
                 }
             }
         }
+        .modernCard()
     }
     
     // MARK: - Categories Section
     private var categoriesSection: some View {
-        VStack(alignment: .leading, spacing: ProfessionalSpacing.medium.value) {
-            ProfessionalSectionHeader(
-                title: "Categories",
-                subtitle: "Choose your story type"
-            )
+        VStack(alignment: .leading, spacing: ModernDesignSystem.Spacing.md) {
+            Text("Categories")
+                .font(ModernDesignSystem.Typography.headline)
+                .foregroundColor(ModernDesignSystem.Colors.textPrimary)
             
             ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: ProfessionalSpacing.medium.value) {
-                    // All Stories
-                    ProfessionalCategoryChip(
-                        title: "All",
-                        isSelected: selectedCategory == nil,
-                        action: { selectedCategory = nil }
-                    )
+                HStack(spacing: ModernDesignSystem.Spacing.sm) {
+                    ModernButton("All", style: selectedCategory == nil ? .primary : .secondary) {
+                        selectedCategory = nil
+                    }
                     
-                    // Category Chips
                     ForEach(StoryCategory.allCases, id: \.self) { category in
-                        ProfessionalCategoryChip(
-                            title: category.displayName,
-                            isSelected: selectedCategory == category,
-                            action: { selectedCategory = category }
-                        )
+                        ModernButton(category.displayName, style: selectedCategory == category ? .primary : .secondary) {
+                            selectedCategory = category
+                        }
                     }
                 }
-                .padding(.horizontal, ProfessionalSpacing.medium.value)
+                .padding(.horizontal, ModernDesignSystem.Spacing.md)
             }
         }
     }
     
     // MARK: - Stories List Section
     private var storiesListSection: some View {
-        VStack(alignment: .leading, spacing: ProfessionalSpacing.medium.value) {
-            ProfessionalSectionHeader(
-                title: "Available Stories",
-                subtitle: "\(filteredStories.count) stories found"
-            )
+        VStack(alignment: .leading, spacing: ModernDesignSystem.Spacing.md) {
+            Text("Available Stories")
+                .font(ModernDesignSystem.Typography.headline)
+                .foregroundColor(ModernDesignSystem.Colors.textPrimary)
             
-            VStack(spacing: ProfessionalSpacing.medium.value) {
+            VStack(spacing: ModernDesignSystem.Spacing.md) {
                 ForEach(filteredStories, id: \.id) { story in
-                    ProfessionalStoryCard(story: story)
+                    NavigationLink(destination: StoryReaderView(story: story)) {
+                        ModernStoryCard(story: story)
+                    }
+.buttonStyle(HapticPlainButtonStyle())
                 }
             }
         }
     }
 }
 
-// MARK: - Professional Story Model
-struct ProfessionalStory {
-    let id: UUID
-    let title: String
-    let titleTelugu: String
-    let description: String
-    let author: String
-    let category: StoryCategory
-    let difficulty: DifficultyLevel
-    let readingTime: String
-    let isCompleted: Bool
-    let isFavorite: Bool
-    
-    enum DifficultyLevel {
-        case beginner
-        case intermediate
-        case advanced
-        
-        var displayName: String {
-            switch self {
-            case .beginner: return "Beginner"
-            case .intermediate: return "Intermediate"
-            case .advanced: return "Advanced"
-            }
-        }
-        
-        var color: Color {
-            switch self {
-            case .beginner: return .professionalGreen
-            case .intermediate: return .professionalOrange
-            case .advanced: return .professionalPurple
-            }
-        }
-    }
-}
-
-// MARK: - Story Category (using the one from StoryModels.swift)
-
-// MARK: - Professional Category Chip
-struct ProfessionalCategoryChip: View {
-    let title: String
-    let isSelected: Bool
-    let action: () -> Void
+// MARK: - Modern Stat Card
+struct ModernStatCard: View {
+    let icon: String
+    let value: String
+    let label: String
+    let color: Color
     
     var body: some View {
-        Button(action: action) {
-            ProfessionalText(
-                title,
-                style: .buttonText,
-                color: isSelected ? .white : .textPrimary,
-                alignment: .center
-            )
-            .padding(.horizontal, ProfessionalSpacing.medium.value)
-            .padding(.vertical, ProfessionalSpacing.small.value)
-            .background(
-                Capsule()
-                    .fill(isSelected ? Color.professionalBlue : Color.cardSecondary)
-            )
-            .overlay(
-                Capsule()
-                    .stroke(
-                        isSelected ? Color.professionalBlue : .white.opacity(0.2),
-                        lineWidth: 1
-                    )
-            )
+        VStack(spacing: ModernDesignSystem.Spacing.sm) {
+            Image(systemName: icon)
+                .font(.system(size: 24, weight: .semibold))
+                .foregroundColor(color)
+            
+            Text(value)
+                .font(ModernDesignSystem.Typography.title2)
+                .foregroundColor(ModernDesignSystem.Colors.textPrimary)
+            
+            Text(label)
+                .font(ModernDesignSystem.Typography.caption)
+                .foregroundColor(ModernDesignSystem.Colors.textSecondary)
         }
+        .frame(maxWidth: .infinity)
+        .modernCard()
     }
 }
 
-// MARK: - Professional Story Card
-struct ProfessionalStoryCard: View {
-    let story: ProfessionalStory
-    @State private var isPressed = false
+// MARK: - Modern Story Card
+struct ModernStoryCard: View {
+    let story: TeluguStory
     
     var body: some View {
-        ProfessionalCard(type: .interactive, isInteractive: true) {
-            VStack(alignment: .leading, spacing: ProfessionalSpacing.medium.value) {
-                // Header
-                HStack {
-                    VStack(alignment: .leading, spacing: ProfessionalSpacing.small.value) {
-                        ProfessionalText(
-                            story.title,
-                            style: .cardTitle,
-                            color: .textPrimary
-                        )
-                        
-                        ProfessionalText(
-                            story.titleTelugu,
-                            style: .teluguTitle,
-                            color: .professionalBlue
-                        )
-                    }
+        VStack(alignment: .leading, spacing: ModernDesignSystem.Spacing.md) {
+            // Header
+            HStack {
+                VStack(alignment: .leading, spacing: ModernDesignSystem.Spacing.xs) {
+                    Text(story.titleEnglish)
+                        .font(ModernDesignSystem.Typography.headline)
+                        .foregroundColor(ModernDesignSystem.Colors.textPrimary)
                     
-                    Spacer()
-                    
-                    // Favorite Button
-                    Button(action: {}) {
-                        Image(systemName: story.isFavorite ? "heart.fill" : "heart")
-                            .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(story.isFavorite ? .professionalOrange : .textSecondary)
-                    }
+                    Text(story.title)
+                        .font(ModernDesignSystem.Typography.teluguHeading)
+                        .foregroundColor(ModernDesignSystem.Colors.stories)
                 }
                 
-                // Description
-                ProfessionalText(
-                    story.description,
-                    style: .bodyText,
-                    color: .textSecondary
-                )
+                Spacer()
                 
-                // Footer
-                HStack {
-                    // Author
-                    ProfessionalText(
-                        "by \(story.author)",
-                        style: .caption,
-                        color: .textSecondary
+                // Favorite Button
+                Button(action: {
+                    HapticsService.shared.success()
+                }) {
+                    Image(systemName: story.isBookmarked ? "heart.fill" : "heart")
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundColor(story.isBookmarked ? ModernDesignSystem.Colors.stories : ModernDesignSystem.Colors.textSecondary)
+                }
+            }
+            
+            // Description
+            Text(story.culturalContext)
+                .font(ModernDesignSystem.Typography.body)
+                .foregroundColor(ModernDesignSystem.Colors.textSecondary)
+                .lineLimit(2)
+            
+            // Footer
+            HStack {
+                // Author
+                Text("by \(story.author)")
+                    .font(ModernDesignSystem.Typography.caption)
+                    .foregroundColor(ModernDesignSystem.Colors.textSecondary)
+                
+                Spacer()
+                
+                // Difficulty Badge
+                Text(story.difficulty.displayName)
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundColor(Color(story.difficulty.color))
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(
+                        Capsule()
+                            .fill(Color(story.difficulty.color).opacity(0.15))
                     )
+                
+                // Reading Time
+                Text("\(story.estimatedReadingTime) min")
+                    .font(ModernDesignSystem.Typography.caption)
+                    .foregroundColor(ModernDesignSystem.Colors.textSecondary)
+            }
+            
+            // Completion Status
+            if story.isCompleted {
+                HStack {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(ModernDesignSystem.Colors.success)
+                    
+                    Text("Completed")
+                        .font(ModernDesignSystem.Typography.caption)
+                        .foregroundColor(ModernDesignSystem.Colors.success)
                     
                     Spacer()
-                    
-                    // Difficulty Badge
-                    Text(story.difficulty.displayName)
-                        .font(.system(size: 10, weight: .semibold))
-                        .foregroundColor(story.difficulty.color)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(
-                            Capsule()
-                                .fill(story.difficulty.color.opacity(0.15))
-                        )
-                    
-                    // Reading Time
-                    ProfessionalText(
-                        story.readingTime,
-                        style: .caption,
-                        color: .textSecondary
-                    )
-                }
-                
-                // Completion Status
-                if story.isCompleted {
-                    HStack {
-                        Image(systemName: "checkmark.circle.fill")
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(.professionalGreen)
-                        
-                        ProfessionalText(
-                            "Completed",
-                            style: .caption,
-                            color: .professionalGreen
-                        )
-                        
-                        Spacer()
-                    }
                 }
             }
         }
+        .modernCard()
     }
 }
 
 // MARK: - Replace the original StorybookHubView
 typealias StorybookHubView = ProfessionalStorybookHubView
+

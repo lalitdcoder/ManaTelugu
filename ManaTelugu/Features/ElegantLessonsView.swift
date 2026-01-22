@@ -5,34 +5,52 @@ struct ElegantLessonsView: View {
     @State private var lessons: [TeluguLesson] = teluguLessons
     
     var body: some View {
-        NavigationView {
-            ZStack {
-                ElegantGradient()
-                    .ignoresSafeArea(.all, edges: .all)
+        ZStack {
+                // Stronger gradient background
+                LinearGradient(
+                    colors: [
+                        Color(red: 0.4, green: 0.5, blue: 0.9).opacity(0.3),
+                        Color(red: 0.46, green: 0.29, blue: 0.64).opacity(0.2)
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                .ignoresSafeArea()
                 
                 ScrollView(showsIndicators: false) {
-                    VStack(spacing: ElegantDesign.Spacing.xl) {
+                    VStack(spacing: ModernDesignSystem.Spacing.xl) {
                         // Header
                         headerSection
-                            .padding(.top, ElegantDesign.Spacing.xl)
+                            .padding(.top, ModernDesignSystem.Spacing.xl)
                         
                         // Lessons List
                         lessonsSection
                     }
-                    .padding(.horizontal, ElegantDesign.Spacing.md)
-                    .padding(.bottom, ElegantDesign.Spacing.xl)
+                    .padding(.horizontal, ModernDesignSystem.Spacing.md)
+                    .padding(.bottom, ModernDesignSystem.Spacing.xl)
                 }
             }
             .navigationTitle("Telugu Alphabet")
             .navigationBarTitleDisplayMode(.large)
+            .toolbarBackground(
+                LinearGradient(
+                    colors: [
+                        Color(red: 0.4, green: 0.5, blue: 0.9).opacity(0.1),
+                        Color(red: 0.46, green: 0.29, blue: 0.64).opacity(0.08)
+                    ],
+                    startPoint: .leading,
+                    endPoint: .trailing
+                ),
+                for: .navigationBar
+            )
+            .toolbarBackground(.visible, for: .navigationBar)
         }
-    }
     
     private var headerSection: some View {
-        VStack(alignment: .leading, spacing: ElegantDesign.Spacing.xs) {
+        VStack(alignment: .leading, spacing: ModernDesignSystem.Spacing.xs) {
             Text("Learn Telugu letters step by step")
-                .font(ElegantDesign.Typography.body)
-                .foregroundColor(ElegantDesign.Colors.textSecondary)
+                .font(ModernDesignSystem.Typography.body)
+                .foregroundColor(ModernDesignSystem.Colors.textSecondary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding()
@@ -41,7 +59,7 @@ struct ElegantLessonsView: View {
     }
     
     private var lessonsSection: some View {
-        VStack(spacing: ElegantDesign.Spacing.md) {
+        VStack(spacing: ModernDesignSystem.Spacing.md) {
             ForEach(lessons, id: \.id) { lesson in
                 lessonCard(lesson)
             }
@@ -50,13 +68,13 @@ struct ElegantLessonsView: View {
     
     private func lessonCard(_ lesson: TeluguLesson) -> some View {
         NavigationLink(destination: LessonFlowView(lesson: lesson)) {
-            HStack(spacing: ElegantDesign.Spacing.md) {
+            HStack(spacing: ModernDesignSystem.Spacing.md) {
                 // Lesson number
                 ZStack {
                     Circle()
-                        .fill(lesson.isCompleted ? ElegantDesign.Colors.success : 
-                              lesson.isUnlocked ? ElegantDesign.Colors.primary.opacity(0.1) : 
-                              ElegantDesign.Colors.textTertiary.opacity(0.3))
+                        .fill(lesson.isCompleted ? ModernDesignSystem.Colors.success : 
+                              lesson.isUnlocked ? ModernDesignSystem.Colors.primary.opacity(0.1) : 
+                              ModernDesignSystem.Colors.textTertiary.opacity(0.3))
                         .frame(width: 50, height: 50)
                     
                     if lesson.isCompleted {
@@ -66,38 +84,38 @@ struct ElegantLessonsView: View {
                             .foregroundColor(.white)
                     } else if lesson.isUnlocked {
                         Text("\(lesson.id)")
-                            .font(ElegantDesign.Typography.title3)
+                            .font(ModernDesignSystem.Typography.title3)
                             .fontWeight(.semibold)
-                            .foregroundColor(ElegantDesign.Colors.primary)
+                            .foregroundColor(ModernDesignSystem.Colors.primary)
                     } else {
                         Image(systemName: "lock.fill")
                             .font(.title3)
-                            .foregroundColor(ElegantDesign.Colors.textTertiary)
+                            .foregroundColor(ModernDesignSystem.Colors.textTertiary)
                     }
                 }
                 
                 // Lesson content
-                VStack(alignment: .leading, spacing: ElegantDesign.Spacing.xs) {
+                VStack(alignment: .leading, spacing: ModernDesignSystem.Spacing.xs) {
                     Text(lesson.title)
-                        .font(ElegantDesign.Typography.callout)
+                        .font(ModernDesignSystem.Typography.callout)
                         .fontWeight(.semibold)
-                        .foregroundColor(lesson.isUnlocked ? ElegantDesign.Colors.textPrimary : ElegantDesign.Colors.textTertiary)
+                        .foregroundColor(lesson.isUnlocked ? ModernDesignSystem.Colors.textPrimary : ModernDesignSystem.Colors.textTertiary)
                     
                     HStack {
                         ForEach(lesson.letters.prefix(4), id: \.character) { letter in
                             Text(letter.character)
                                 .font(.system(size: 18, design: .serif))
-                                .foregroundColor(lesson.isUnlocked ? ElegantDesign.Colors.primary : ElegantDesign.Colors.textTertiary)
+                                .foregroundColor(lesson.isUnlocked ? ModernDesignSystem.Colors.primary : ModernDesignSystem.Colors.textTertiary)
                         }
                         if lesson.letters.count > 4 {
                             Text("...")
-                                .foregroundColor(lesson.isUnlocked ? ElegantDesign.Colors.primary : ElegantDesign.Colors.textTertiary)
+                                .foregroundColor(lesson.isUnlocked ? ModernDesignSystem.Colors.primary : ModernDesignSystem.Colors.textTertiary)
                         }
                     }
                     
                     Text("\(lesson.letters.count) letters")
-                        .font(ElegantDesign.Typography.caption)
-                        .foregroundColor(ElegantDesign.Colors.textTertiary)
+                        .font(ModernDesignSystem.Typography.caption)
+                        .foregroundColor(ModernDesignSystem.Colors.textTertiary)
                 }
                 
                 Spacer()
@@ -105,13 +123,13 @@ struct ElegantLessonsView: View {
                 if lesson.isUnlocked {
                     Image(systemName: "chevron.right")
                         .font(.caption)
-                        .foregroundColor(ElegantDesign.Colors.textTertiary)
+                        .foregroundColor(ModernDesignSystem.Colors.textTertiary)
                 }
             }
-            .padding(ElegantDesign.Spacing.md)
-            .elegantCard()
+            .padding(ModernDesignSystem.Spacing.md)
+            .modernCard()
         }
-        .buttonStyle(PlainButtonStyle())
+.buttonStyle(HapticPlainButtonStyle())
         .disabled(!lesson.isUnlocked)
     }
 }

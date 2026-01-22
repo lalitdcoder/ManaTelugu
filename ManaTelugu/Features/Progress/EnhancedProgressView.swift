@@ -4,50 +4,44 @@ struct EnhancedProgressView: View {
     @EnvironmentObject var session: AppSession
     @State private var selectedTab = 0
     @State private var showingBadgeDetail: GamificationBadge? = nil
-    
+
     var body: some View {
         NavigationStack {
-            ZStack {
-                LinearGradient(
-                    colors: [
-                        Color(red: 0.95, green: 0.97, blue: 1.0),
-                        Color(red: 0.92, green: 0.95, blue: 0.98)
-                    ],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-                .ignoresSafeArea(.all)
-                
-                VStack(spacing: 0) {
-                    tabSelector
-                        .padding(.horizontal, 20)
-                        .padding(.top, 10)
-                    
-                    TabView(selection: $selectedTab) {
-                        progressOverview
-                            .tag(0)
-                        
-                        badgeShowcase
-                            .tag(1)
-                        
-                        achievementsView
-                            .tag(2)
-                    }
-                    .tabViewStyle(.page(indexDisplayMode: .never))
+            VStack(spacing: 0) {
+                // Use standard segmented control
+                Picker("Progress View", selection: $selectedTab) {
+                    Text("Overview").tag(0)
+                    Text("Badges").tag(1)
+                    Text("Achievements").tag(2)
                 }
+                .pickerStyle(.segmented)
+                .padding(.horizontal, AppleHIGDesign.Spacing.md)
+                .padding(.top, AppleHIGDesign.Spacing.sm)
+
+                TabView(selection: $selectedTab) {
+                    progressOverview
+                        .tag(0)
+
+                        // Removed badge showcase section
+                        .tag(1)
+
+                    achievementsView
+                        .tag(2)
+                }
+                .tabViewStyle(.page(indexDisplayMode: .never))
             }
+            .background(AppleHIGDesign.Colors.systemBackground)
             .navigationTitle("Progress")
             .navigationBarTitleDisplayMode(.large)
-            .sheet(item: $showingBadgeDetail) { badge in
-                BadgeDetailSheet(badge: badge)
-            }
+            // Removed badge detail sheet
         }
     }
-    
+
     private var tabSelector: some View {
         HStack(spacing: 0) {
             ForEach(0..<3) { index in
                 Button(action: {
+                    HapticsService.shared.navigationTap()
                     withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
                         selectedTab = index
                     }
@@ -56,7 +50,7 @@ struct EnhancedProgressView: View {
                         Text(tabTitle(for: index))
                             .font(.system(size: 16, weight: .semibold))
                             .foregroundColor(selectedTab == index ? .white : .secondary)
-                        
+
                         if selectedTab == index {
                             RoundedRectangle(cornerRadius: 2)
                                 .fill(Color.white)
@@ -79,11 +73,11 @@ struct EnhancedProgressView: View {
         }
         .background(
             RoundedRectangle(cornerRadius: 16)
-                .fill(Color.white.opacity(0.8))
+                .fill(Color(UIColor.secondarySystemBackground).opacity(0.8))
                 .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
         )
     }
-    
+
     private func tabTitle(for index: Int) -> String {
         switch index {
         case 0: return "Overview"
@@ -92,7 +86,7 @@ struct EnhancedProgressView: View {
         default: return ""
         }
     }
-    
+
     private var progressOverview: some View {
         ScrollView(showsIndicators: false) {
             VStack(spacing: 24) {
@@ -104,42 +98,46 @@ struct EnhancedProgressView: View {
             .padding(.vertical, 20)
         }
     }
-    
+
     private var statsGrid: some View {
-        LazyVGrid(columns: [
-            GridItem(.flexible(), spacing: 12),
-            GridItem(.flexible(), spacing: 12)
-        ], spacing: 12) {
+        LazyVGrid(
+            columns: [
+                GridItem(.flexible(), spacing: 12),
+                GridItem(.flexible(), spacing: 12),
+            ], spacing: 12
+        ) {
             StatCard(
                 title: "Letters Learned",
-                value: "24",
-                total: "36",
+                value: "\(session.learnedLetters)",
+                total: "\(session.totalLetters)",
                 icon: "textformat.abc",
                 color: .blue,
-                progress: 24.0/36.0
+                progress: session.totalLetters > 0
+                    ? Double(session.learnedLetters) / Double(session.totalLetters) : 0
             )
-            
+
             StatCard(
-                title: "Games Played",
-                value: "47",
-                total: nil,
-                icon: "gamecontroller.fill",
+                title: "Words Mastered",
+                value: "\(session.masteredWords)",
+                total: "\(session.dataRepository.words.count)",
+                icon: "book.fill",
                 color: .green,
-                progress: nil
+                progress: session.dataRepository.words.count > 0
+                    ? Double(session.masteredWords) / Double(session.dataRepository.words.count) : 0
             )
-            
+
             StatCard(
-                title: "Study Streak",
-                value: "5",
+                title: "Current Streak",
+                value: "\(session.currentStreak)",
                 total: nil,
                 icon: "flame.fill",
                 color: .orange,
                 progress: nil
             )
-            
+
             StatCard(
                 title: "Total XP",
-                value: "1,250",
+                value: "\(session.gamificationService.gamificationState.totalXP)",
                 total: nil,
                 icon: "star.fill",
                 color: .purple,
@@ -147,21 +145,32 @@ struct EnhancedProgressView: View {
             )
         }
     }
-    
+
     private var weeklyProgressChart: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("This Week's Progress")
+            Text("This Week's XP")
                 .font(.headline)
                 .fontWeight(.semibold)
                 .foregroundColor(.primary)
-            
+
             HStack(alignment: .bottom, spacing: 8) {
-                ForEach(weeklyData, id: \.day) { data in
+                ForEach(calculateWeeklyXP(), id: \.day) { data in
                     VStack(spacing: 8) {
-                        RoundedRectangle(cornerRadius: 4)
-                            .fill(Color.blue.opacity(0.8))
-                            .frame(width: 30, height: CGFloat(data.minutes) * 2)
-                        
+                        GeometryReader { geometry in
+                            VStack {
+                                Spacer()
+                                RoundedRectangle(cornerRadius: 4)
+                                    .fill(Color.blue.opacity(0.8))
+                                    // Scale height based on max XP, min height 4
+                                    .frame(
+                                        height: max(
+                                            4,
+                                            CGFloat(data.xp) / CGFloat(max(1, maxWeeklyXP()))
+                                                * geometry.size.height))
+                            }
+                        }
+                        .frame(height: 100)
+
                         Text(data.day)
                             .font(.caption)
                             .foregroundColor(.secondary)
@@ -174,49 +183,68 @@ struct EnhancedProgressView: View {
         .padding(20)
         .background(
             RoundedRectangle(cornerRadius: 16)
-                .fill(Color.white)
+                .fill(Color(UIColor.secondarySystemBackground))
                 .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
         )
     }
-    
+
     private var recentActivity: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Recent Activity")
                 .font(.headline)
                 .fontWeight(.semibold)
                 .foregroundColor(.primary)
-            
-            VStack(spacing: 12) {
-                ActivityRow(
-                    icon: "checkmark.circle.fill",
-                    title: "Completed Letter 'అ'",
-                    time: "2 hours ago",
-                    color: .green
-                )
-                
-                ActivityRow(
-                    icon: "gamecontroller.fill",
-                    title: "Played Sound Match Game",
-                    time: "Yesterday",
-                    color: .blue
-                )
-                
-                ActivityRow(
-                    icon: "star.fill",
-                    title: "Earned 'Quick Learner' Badge",
-                    time: "2 days ago",
-                    color: .orange
-                )
+
+            if session.gamificationService.gamificationState.xpHistory.isEmpty {
+                Text("No recent activity")
+                    .font(.body)
+                    .foregroundColor(.secondary)
+                    .padding(.vertical, 8)
+            } else {
+                VStack(spacing: 12) {
+                    ForEach(
+                        session.gamificationService.gamificationState.xpHistory.suffix(3).reversed()
+                    ) { event in
+                        ActivityRow(
+                            icon: event.type.icon,
+                            title: event.description,
+                            time: event.timestamp.formatted(date: .omitted, time: .shortened),
+                            color: Color(event.type.color)
+                        )
+                    }
+                }
             }
         }
         .padding(20)
         .background(
             RoundedRectangle(cornerRadius: 16)
-                .fill(Color.white)
+                .fill(Color(UIColor.secondarySystemBackground))
                 .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
         )
     }
-    
+
+    // Helper to calculate weekly XP
+    private func calculateWeeklyXP() -> [(day: String, xp: Int)] {
+        let calendar = Calendar.current
+        let today = Date()
+        let last7Days = (0..<7).map { dayOffset in
+            calendar.date(byAdding: .day, value: -dayOffset, to: today)!
+        }.reversed()
+
+        return last7Days.map { date in
+            let dayName = calendar.shortWeekdaySymbols[calendar.component(.weekday, from: date) - 1]
+            let dailyXP = session.gamificationService.gamificationState.xpHistory
+                .filter { calendar.isDate($0.timestamp, inSameDayAs: date) }
+                .reduce(0) { $0 + $1.amount }
+
+            return (day: dayName, xp: dailyXP)
+        }
+    }
+
+    private func maxWeeklyXP() -> Int {
+        calculateWeeklyXP().map { $0.xp }.max() ?? 100  // Default max for scale
+    }
+
     private var badgeShowcase: some View {
         ScrollView(showsIndicators: false) {
             VStack(spacing: 24) {
@@ -225,13 +253,13 @@ struct EnhancedProgressView: View {
                         .font(.title2)
                         .fontWeight(.bold)
                         .foregroundColor(.primary)
-                    
+
                     Text("Earn badges by completing lessons and games")
                         .font(.body)
                         .foregroundColor(.secondary)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
-                
+
                 earnedBadgesSection
                 lockedBadgesSection
             }
@@ -239,7 +267,7 @@ struct EnhancedProgressView: View {
             .padding(.vertical, 20)
         }
     }
-    
+
     private var earnedBadgesSection: some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack {
@@ -247,9 +275,9 @@ struct EnhancedProgressView: View {
                     .font(.headline)
                     .fontWeight(.semibold)
                     .foregroundColor(.primary)
-                
+
                 Spacer()
-                
+
                 Text("3/6")
                     .font(.caption)
                     .fontWeight(.medium)
@@ -261,12 +289,14 @@ struct EnhancedProgressView: View {
                             .fill(Color.blue.opacity(0.1))
                     )
             }
-            
-            LazyVGrid(columns: [
-                GridItem(.flexible(), spacing: 12),
-                GridItem(.flexible(), spacing: 12),
-                GridItem(.flexible(), spacing: 12)
-            ], spacing: 12) {
+
+            LazyVGrid(
+                columns: [
+                    GridItem(.flexible(), spacing: 12),
+                    GridItem(.flexible(), spacing: 12),
+                    GridItem(.flexible(), spacing: 12),
+                ], spacing: 12
+            ) {
                 ForEach(earnedBadges) { badge in
                     BadgeCard(badge: badge, isEarned: true) {
                         showingBadgeDetail = badge
@@ -277,23 +307,25 @@ struct EnhancedProgressView: View {
         .padding(20)
         .background(
             RoundedRectangle(cornerRadius: 16)
-                .fill(Color.white)
+                .fill(Color(UIColor.secondarySystemBackground))
                 .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
         )
     }
-    
+
     private var lockedBadgesSection: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Locked Badges")
                 .font(.headline)
                 .fontWeight(.semibold)
                 .foregroundColor(.primary)
-            
-            LazyVGrid(columns: [
-                GridItem(.flexible(), spacing: 12),
-                GridItem(.flexible(), spacing: 12),
-                GridItem(.flexible(), spacing: 12)
-            ], spacing: 12) {
+
+            LazyVGrid(
+                columns: [
+                    GridItem(.flexible(), spacing: 12),
+                    GridItem(.flexible(), spacing: 12),
+                    GridItem(.flexible(), spacing: 12),
+                ], spacing: 12
+            ) {
                 ForEach(lockedBadges) { badge in
                     BadgeCard(badge: badge, isEarned: false) {
                         showingBadgeDetail = badge
@@ -304,11 +336,11 @@ struct EnhancedProgressView: View {
         .padding(20)
         .background(
             RoundedRectangle(cornerRadius: 16)
-                .fill(Color.white)
+                .fill(Color(UIColor.secondarySystemBackground))
                 .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
         )
     }
-    
+
     private var achievementsView: some View {
         ScrollView(showsIndicators: false) {
             VStack(spacing: 24) {
@@ -320,14 +352,14 @@ struct EnhancedProgressView: View {
             .padding(.vertical, 20)
         }
     }
-    
+
     private var milestonesSection: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Milestones")
                 .font(.headline)
                 .fontWeight(.semibold)
                 .foregroundColor(.primary)
-            
+
             VStack(spacing: 12) {
                 MilestoneRow(
                     title: "First Letter Learned",
@@ -335,14 +367,14 @@ struct EnhancedProgressView: View {
                     isCompleted: true,
                     date: "5 days ago"
                 )
-                
+
                 MilestoneRow(
                     title: "10 Letters Mastered",
                     description: "Learn 10 Telugu letters",
                     isCompleted: true,
                     date: "3 days ago"
                 )
-                
+
                 MilestoneRow(
                     title: "25 Letters Mastered",
                     description: "Learn 25 Telugu letters",
@@ -354,18 +386,18 @@ struct EnhancedProgressView: View {
         .padding(20)
         .background(
             RoundedRectangle(cornerRadius: 16)
-                .fill(Color.white)
+                .fill(Color(UIColor.secondarySystemBackground))
                 .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
         )
     }
-    
+
     private var streaksSection: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Streaks")
                 .font(.headline)
                 .fontWeight(.semibold)
                 .foregroundColor(.primary)
-            
+
             HStack(spacing: 16) {
                 StreakCard(
                     title: "Current Streak",
@@ -373,7 +405,7 @@ struct EnhancedProgressView: View {
                     icon: "flame.fill",
                     color: .orange
                 )
-                
+
                 StreakCard(
                     title: "Best Streak",
                     value: "12 days",
@@ -385,18 +417,18 @@ struct EnhancedProgressView: View {
         .padding(20)
         .background(
             RoundedRectangle(cornerRadius: 16)
-                .fill(Color.white)
+                .fill(Color(UIColor.secondarySystemBackground))
                 .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
         )
     }
-    
+
     private var recordsSection: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Personal Records")
                 .font(.headline)
                 .fontWeight(.semibold)
                 .foregroundColor(.primary)
-            
+
             VStack(spacing: 12) {
                 RecordRow(title: "Fastest Game Completion", value: "45 seconds")
                 RecordRow(title: "Most XP in One Day", value: "350 XP")
@@ -407,11 +439,11 @@ struct EnhancedProgressView: View {
         .padding(20)
         .background(
             RoundedRectangle(cornerRadius: 16)
-                .fill(Color.white)
+                .fill(Color(UIColor.secondarySystemBackground))
                 .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
         )
     }
-    
+
     private let weeklyData = [
         (day: "Mon", minutes: 25),
         (day: "Tue", minutes: 40),
@@ -419,13 +451,13 @@ struct EnhancedProgressView: View {
         (day: "Thu", minutes: 35),
         (day: "Fri", minutes: 50),
         (day: "Sat", minutes: 30),
-        (day: "Sun", minutes: 20)
+        (day: "Sun", minutes: 20),
     ]
-    
+
     private var earnedBadges: [GamificationBadge] {
         session.gamificationService.gamificationState.badges.filter { $0.isUnlocked }
     }
-    
+
     private var lockedBadges: [GamificationBadge] {
         session.gamificationService.gamificationState.badges.filter { !$0.isUnlocked }
     }
@@ -439,16 +471,16 @@ struct StatCard: View {
     let icon: String
     let color: Color
     let progress: Double?
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Image(systemName: icon)
                     .font(.system(size: 20, weight: .medium))
                     .foregroundColor(color)
-                
+
                 Spacer()
-                
+
                 if let progress = progress {
                     Text("\(Int(progress * 100))%")
                         .font(.caption)
@@ -456,25 +488,25 @@ struct StatCard: View {
                         .foregroundColor(color)
                 }
             }
-            
+
             VStack(alignment: .leading, spacing: 4) {
                 HStack(alignment: .bottom, spacing: 4) {
                     Text(value)
                         .font(.title2)
                         .fontWeight(.bold)
                         .foregroundColor(.primary)
-                    
+
                     if let total = total {
                         Text("/\(total)")
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
                 }
-                
+
                 Text(title)
                     .font(.caption)
                     .foregroundColor(.secondary)
-                
+
                 if let progress = progress {
                     ProgressView(value: progress)
                         .progressViewStyle(LinearProgressViewStyle(tint: color))
@@ -485,7 +517,7 @@ struct StatCard: View {
         .padding(16)
         .background(
             RoundedRectangle(cornerRadius: 12)
-                .fill(Color.white)
+                .fill(Color(UIColor.secondarySystemBackground))
                 .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
         )
     }
@@ -496,24 +528,24 @@ struct ActivityRow: View {
     let title: String
     let time: String
     let color: Color
-    
+
     var body: some View {
         HStack(spacing: 12) {
             Image(systemName: icon)
                 .font(.system(size: 16, weight: .medium))
                 .foregroundColor(color)
                 .frame(width: 24, height: 24)
-            
+
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
                     .font(.body)
                     .foregroundColor(.primary)
-                
+
                 Text(time)
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
-            
+
             Spacer()
         }
     }
@@ -523,23 +555,26 @@ struct BadgeCard: View {
     let badge: GamificationBadge
     let isEarned: Bool
     let action: () -> Void
-    
+
     @State private var isPressed = false
-    
+
     var body: some View {
-        Button(action: action) {
+        Button(action: {
+            HapticsService.shared.buttonTap()
+            action()
+        }) {
             VStack(spacing: 8) {
                 ZStack {
                     Circle()
                         .fill(isEarned ? Color.blue.opacity(0.2) : Color.gray.opacity(0.1))
                         .frame(width: 60, height: 60)
-                    
+
                     Text(badge.emoji)
                         .font(.system(size: 30))
                         .grayscale(isEarned ? 0 : 1)
                         .opacity(isEarned ? 1 : 0.5)
                 }
-                
+
                 Text(badge.name)
                     .font(.caption)
                     .fontWeight(.medium)
@@ -557,11 +592,13 @@ struct BadgeCard: View {
             .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isPressed)
         }
         .buttonStyle(.plain)
-        .onLongPressGesture(minimumDuration: 0, maximumDistance: .infinity, pressing: { pressing in
-            withAnimation(.easeInOut(duration: 0.1)) {
-                isPressed = pressing
-            }
-        }, perform: {})
+        .onLongPressGesture(
+            minimumDuration: 0, maximumDistance: .infinity,
+            pressing: { pressing in
+                withAnimation(.easeInOut(duration: 0.1)) {
+                    isPressed = pressing
+                }
+            }, perform: {})
     }
 }
 
@@ -570,30 +607,30 @@ struct MilestoneRow: View {
     let description: String
     let isCompleted: Bool
     let date: String?
-    
+
     var body: some View {
         HStack(spacing: 12) {
             Image(systemName: isCompleted ? "checkmark.circle.fill" : "circle")
                 .font(.system(size: 20, weight: .medium))
                 .foregroundColor(isCompleted ? .green : .gray)
-            
+
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
                     .font(.body)
                     .fontWeight(.medium)
                     .foregroundColor(.primary)
-                
+
                 Text(description)
                     .font(.caption)
                     .foregroundColor(.secondary)
-                
+
                 if let date = date {
                     Text(date)
                         .font(.caption)
                         .foregroundColor(.green)
                 }
             }
-            
+
             Spacer()
         }
     }
@@ -604,18 +641,18 @@ struct StreakCard: View {
     let value: String
     let icon: String
     let color: Color
-    
+
     var body: some View {
         VStack(spacing: 8) {
             Image(systemName: icon)
                 .font(.system(size: 24, weight: .medium))
                 .foregroundColor(color)
-            
+
             Text(value)
                 .font(.title3)
                 .fontWeight(.bold)
                 .foregroundColor(.primary)
-            
+
             Text(title)
                 .font(.caption)
                 .foregroundColor(.secondary)
@@ -632,15 +669,15 @@ struct StreakCard: View {
 struct RecordRow: View {
     let title: String
     let value: String
-    
+
     var body: some View {
         HStack {
             Text(title)
                 .font(.body)
                 .foregroundColor(.secondary)
-            
+
             Spacer()
-            
+
             Text(value)
                 .font(.body)
                 .fontWeight(.semibold)
@@ -652,25 +689,25 @@ struct RecordRow: View {
 struct BadgeDetailSheet: View {
     let badge: GamificationBadge
     @Environment(\.dismiss) private var dismiss
-    
+
     var body: some View {
         NavigationStack {
             VStack(spacing: 24) {
                 VStack(spacing: 16) {
                     Text(badge.emoji)
                         .font(.system(size: 80))
-                    
+
                     Text(badge.name)
                         .font(.title2)
                         .fontWeight(.bold)
                         .foregroundColor(.primary)
-                    
+
                     Text(badge.description)
                         .font(.body)
                         .foregroundColor(.secondary)
                         .multilineTextAlignment(.center)
                 }
-                
+
                 VStack(spacing: 12) {
                     if badge.isUnlocked {
                         Text("Earned!")
@@ -682,14 +719,14 @@ struct BadgeDetailSheet: View {
                                 .font(.headline)
                                 .fontWeight(.semibold)
                                 .foregroundColor(.primary)
-                            
+
                             Text(requirementDescription(badge.requirement))
                                 .font(.body)
                                 .foregroundColor(.secondary)
                         }
                     }
                 }
-                
+
                 Spacer()
             }
             .padding(.horizontal, 24)
@@ -699,13 +736,14 @@ struct BadgeDetailSheet: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Done") {
+                        HapticsService.shared.navigationTap()
                         dismiss()
                     }
                 }
             }
         }
     }
-    
+
     private func requirementDescription(_ requirement: BadgeRequirement) -> String {
         switch requirement {
         case .wordsLearned(let count):
@@ -722,6 +760,10 @@ struct BadgeDetailSheet: View {
             return "Reach level \(level)"
         case .daysActive(let days):
             return "Be active for \(days) days"
+        case .lettersLearned(let count):
+            return "Learn \(count) letters"
+        case .storiesCompleted(let count):
+            return "Read \(count) stories"
         case .combo(let requirements):
             return requirements.map { requirementDescription($0) }.joined(separator: " and ")
         }

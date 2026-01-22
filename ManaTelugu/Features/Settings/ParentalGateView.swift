@@ -41,13 +41,13 @@ struct ParentalGateView: View {
             confirmPin = "" // Clear the confirm PIN field
             updateValidationStates()
         }
-        .onChange(of: pin) { _ in
+        .onChange(of: pin) {
             updateValidationStates()
         }
-        .onChange(of: newPin) { _ in
+        .onChange(of: newPin) {
             updateValidationStates()
         }
-        .onChange(of: confirmPin) { _ in
+        .onChange(of: confirmPin) {
             updateValidationStates()
         }
     }
@@ -80,10 +80,14 @@ struct ParentalGateView: View {
                     .foregroundColor(.red)
             }
             
-            Button("Unlock", action: checkPin)
+            Button("Unlock", action: {
+                HapticsService.shared.importantAction()
+                checkPin()
+            })
                 .buttonStyle(.primary(isEnabled: isUnlockButtonEnabled))
             
             Button("Forgot PIN?", action: {
+                HapticsService.shared.buttonTap()
                 showingPinReset = true
             })
             .font(.caption)
@@ -136,7 +140,10 @@ struct ParentalGateView: View {
                     .foregroundColor(.red)
             }
             
-            Button("Save PIN", action: savePin)
+            Button("Save PIN", action: {
+                HapticsService.shared.success()
+                savePin()
+            })
                 .buttonStyle(.primary(isEnabled: isConfirmPinValid))
         }
     }

@@ -154,7 +154,7 @@ struct XPPopupView: View {
                 .liquidGlassBackground()
                 .ignoresSafeArea()
             
-            VStack(spacing: MTSpacing.medium) {
+            VStack(spacing: ModernDesignSystem.Spacing.md) {
             // Icon
             ZStack {
                 Circle()
@@ -173,18 +173,18 @@ struct XPPopupView: View {
             HStack(spacing: 8) {
                 Image(systemName: "star.fill")
                     .font(.title2)
-                    .foregroundColor(MTColors.funYellow)
+                    .foregroundColor(ModernDesignSystem.Colors.funYellow)
                 
                 Text("+\(data.amount)")
                     .font(.system(size: 36, weight: .bold))
-                    .foregroundColor(MTColors.funYellow)
+                    .foregroundColor(ModernDesignSystem.Colors.funYellow)
                     .scaleEffect(animateNumber ? 1.1 : 1.0)
                     .animation(.spring(response: 0.3, dampingFraction: 0.6), value: animateNumber)
             }
             
             // Description
             Text(data.description)
-                .font(MTTypography.heading())
+                .font(ModernDesignSystem.Typography.headline)
                 .foregroundColor(.primary)
                 .multilineTextAlignment(.center)
             
@@ -194,18 +194,18 @@ struct XPPopupView: View {
                     isPresented = false
                 }
             }
-            .font(MTTypography.body())
+            .font(ModernDesignSystem.Typography.body)
             .fontWeight(.semibold)
             .foregroundColor(.white)
             .padding(.horizontal, 32)
             .padding(.vertical, 12)
             .background(
                 RoundedRectangle(cornerRadius: 25)
-                    .fill(MTColors.primary)
+                    .fill(ModernDesignSystem.Colors.primary)
             )
             }
         }
-        .padding(MTSpacing.xLarge)
+        .padding(ModernDesignSystem.Spacing.xLarge)
         .background(
             LiquidGlassView(
                 intensity: 0.15,
@@ -216,7 +216,7 @@ struct XPPopupView: View {
                     .fill(Color.clear)
             }
         )
-        .padding(.horizontal, MTSpacing.large)
+        .padding(.horizontal, ModernDesignSystem.Spacing.lg)
         .onAppear {
             animateNumber = true
         }
@@ -236,7 +236,7 @@ struct BadgePopupView: View {
                 .liquidGlassBackground()
                 .ignoresSafeArea()
             
-            VStack(spacing: MTSpacing.medium) {
+            VStack(spacing: ModernDesignSystem.Spacing.md) {
             // Badge Icon
             ZStack {
                 Circle()
@@ -259,12 +259,12 @@ struct BadgePopupView: View {
                 .multilineTextAlignment(.center)
             
             Text(data.badge.teluguName)
-                .font(MTTypography.heading())
+                .font(ModernDesignSystem.Typography.headline)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
             
             Text(data.badge.description)
-                .font(MTTypography.body())
+                .font(ModernDesignSystem.Typography.body)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal)
@@ -273,18 +273,18 @@ struct BadgePopupView: View {
             HStack(spacing: 8) {
                 Image(systemName: "star.fill")
                     .font(.title3)
-                    .foregroundColor(MTColors.funYellow)
+                    .foregroundColor(ModernDesignSystem.Colors.funYellow)
                 
                 Text("+\(data.badge.xpReward) XP")
-                    .font(MTTypography.heading())
+                    .font(ModernDesignSystem.Typography.headline)
                     .fontWeight(.semibold)
-                    .foregroundColor(MTColors.funYellow)
+                    .foregroundColor(ModernDesignSystem.Colors.funYellow)
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 8)
             .background(
                 RoundedRectangle(cornerRadius: 20)
-                    .fill(MTColors.funYellow.opacity(0.1))
+                    .fill(ModernDesignSystem.Colors.funYellow.opacity(0.1))
             )
             
             // Action Button
@@ -293,7 +293,7 @@ struct BadgePopupView: View {
                     isPresented = false
                 }
             }
-            .font(MTTypography.body())
+            .font(ModernDesignSystem.Typography.body)
             .fontWeight(.semibold)
             .foregroundColor(.white)
             .padding(.horizontal, 32)
@@ -304,7 +304,7 @@ struct BadgePopupView: View {
             )
             }
         }
-        .padding(MTSpacing.xLarge)
+        .padding(ModernDesignSystem.Spacing.xLarge)
         .background(
             LiquidGlassView(
                 intensity: 0.15,
@@ -315,7 +315,7 @@ struct BadgePopupView: View {
                     .fill(Color.clear)
             }
         )
-        .padding(.horizontal, MTSpacing.large)
+        .padding(.horizontal, ModernDesignSystem.Spacing.lg)
         .onAppear {
             animateBadge = true
         }
@@ -335,7 +335,7 @@ struct StreakPopupView: View {
                 .liquidGlassBackground()
                 .ignoresSafeArea()
             
-            VStack(spacing: MTSpacing.medium) {
+            VStack(spacing: ModernDesignSystem.Spacing.md) {
             // Flame Icon
             ZStack {
                 Circle()
@@ -357,12 +357,12 @@ struct StreakPopupView: View {
                 .multilineTextAlignment(.center)
             
             Text(data.milestone.teluguName)
-                .font(MTTypography.heading())
+                .font(ModernDesignSystem.Typography.headline)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
             
             Text(data.milestone.description)
-                .font(MTTypography.body())
+                .font(ModernDesignSystem.Typography.body)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal)
@@ -371,18 +371,18 @@ struct StreakPopupView: View {
             HStack(spacing: 8) {
                 Image(systemName: "star.fill")
                     .font(.title3)
-                    .foregroundColor(MTColors.funYellow)
+                    .foregroundColor(ModernDesignSystem.Colors.funYellow)
                 
                 Text("+\(data.milestone.xpBonus) XP Bonus")
-                    .font(MTTypography.heading())
+                    .font(ModernDesignSystem.Typography.headline)
                     .fontWeight(.semibold)
-                    .foregroundColor(MTColors.funYellow)
+                    .foregroundColor(ModernDesignSystem.Colors.funYellow)
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 8)
             .background(
                 RoundedRectangle(cornerRadius: 20)
-                    .fill(MTColors.funYellow.opacity(0.1))
+                    .fill(ModernDesignSystem.Colors.funYellow.opacity(0.1))
             )
             
             // Action Button
@@ -391,7 +391,7 @@ struct StreakPopupView: View {
                     isPresented = false
                 }
             }
-            .font(MTTypography.body())
+            .font(ModernDesignSystem.Typography.body)
             .fontWeight(.semibold)
             .foregroundColor(.white)
             .padding(.horizontal, 32)
@@ -402,7 +402,7 @@ struct StreakPopupView: View {
             )
             }
         }
-        .padding(MTSpacing.xLarge)
+        .padding(ModernDesignSystem.Spacing.xLarge)
         .background(
             LiquidGlassView(
                 intensity: 0.15,
@@ -413,7 +413,7 @@ struct StreakPopupView: View {
                     .fill(Color.clear)
             }
         )
-        .padding(.horizontal, MTSpacing.large)
+        .padding(.horizontal, ModernDesignSystem.Spacing.lg)
         .onAppear {
             animateFlame = true
         }
@@ -433,7 +433,7 @@ struct LevelUpPopupView: View {
                 .liquidGlassBackground()
                 .ignoresSafeArea()
             
-            VStack(spacing: MTSpacing.medium) {
+            VStack(spacing: ModernDesignSystem.Spacing.md) {
             // Level Icon
             ZStack {
                 Circle()
@@ -455,12 +455,12 @@ struct LevelUpPopupView: View {
                 .multilineTextAlignment(.center)
             
             Text(data.newLevel.teluguName)
-                .font(MTTypography.heading())
+                .font(ModernDesignSystem.Typography.headline)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
             
             Text(data.newLevel.description)
-                .font(MTTypography.body())
+                .font(ModernDesignSystem.Typography.body)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal)
@@ -471,7 +471,7 @@ struct LevelUpPopupView: View {
                     isPresented = false
                 }
             }
-            .font(MTTypography.body())
+            .font(ModernDesignSystem.Typography.body)
             .fontWeight(.semibold)
             .foregroundColor(.white)
             .padding(.horizontal, 32)
@@ -482,7 +482,7 @@ struct LevelUpPopupView: View {
             )
             }
         }
-        .padding(MTSpacing.xLarge)
+        .padding(ModernDesignSystem.Spacing.xLarge)
         .background(
             LiquidGlassView(
                 intensity: 0.15,
@@ -493,7 +493,7 @@ struct LevelUpPopupView: View {
                     .fill(Color.clear)
             }
         )
-        .padding(.horizontal, MTSpacing.large)
+        .padding(.horizontal, ModernDesignSystem.Spacing.lg)
         .onAppear {
             animateLevel = true
         }

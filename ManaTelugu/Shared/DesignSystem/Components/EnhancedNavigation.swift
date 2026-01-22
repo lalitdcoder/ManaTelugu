@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 // MARK: - Enhanced Navigation System
 struct EnhancedNavigation {
@@ -8,7 +9,7 @@ struct EnhancedNavigation {
         let content: Content
         let bottomPadding: CGFloat
         
-        init(bottomPadding: CGFloat = 120, @ViewBuilder content: () -> Content) {
+        init(bottomPadding: CGFloat = 24, @ViewBuilder content: () -> Content) {
             self.bottomPadding = bottomPadding
             self.content = content()
         }
@@ -18,7 +19,7 @@ struct EnhancedNavigation {
                 content
                     .safeAreaInset(edge: .bottom) {
                         Color.clear
-                            .frame(height: bottomPadding)
+                            .frame(height: min(bottomPadding, 32))
                     }
             }
         }
@@ -99,7 +100,7 @@ struct EnhancedNavigation {
                 y: 30
             )
             .shadow(
-                color: Color.black.opacity(0.05),
+                color: ModernDesignSystem.Colors.shadow.opacity(0.05),
                 radius: 10,
                 x: 0,
                 y: 5
@@ -116,10 +117,8 @@ struct EnhancedNavigation {
         }
         
         private func handleTabSelection(_ index: Int) {
-            // Haptic feedback
-            let impactFeedback = UIImpactFeedbackGenerator(style: .light)
-            impactFeedback.prepare()
-            impactFeedback.impactOccurred()
+// Haptic feedback
+            HapticsManager.shared.impact(.light)
             
             // Animation for selected tab
             withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
@@ -176,8 +175,8 @@ struct EnhancedNavigation {
                                 .fill(
                                     LinearGradient(
                                         colors: [
-                                            MTColors.funBlue.opacity(0.3),
-                                            MTColors.funBlue.opacity(0.1)
+                                            ModernDesignSystem.Colors.funBlue.opacity(0.3),
+                                            ModernDesignSystem.Colors.funBlue.opacity(0.1)
                                         ],
                                         startPoint: .topLeading,
                                         endPoint: .bottomTrailing
@@ -186,7 +185,7 @@ struct EnhancedNavigation {
                                 .frame(width: 50, height: 50)
                                 .scaleEffect(isAnimating ? 1.1 : 1.0)
                                 .shadow(
-                                    color: MTColors.funBlue.opacity(0.3),
+                                    color: ModernDesignSystem.Colors.funBlue.opacity(0.3),
                                     radius: isAnimating ? 15 : 8,
                                     x: 0,
                                     y: 0
@@ -196,7 +195,7 @@ struct EnhancedNavigation {
                         // Icon with enhanced styling
                         Image(systemName: tab.icon)
                             .font(.system(size: 20, weight: .medium))
-                            .foregroundColor(isSelected ? MTColors.funBlue : .primary)
+                            .foregroundColor(isSelected ? ModernDesignSystem.Colors.funBlue : .primary)
                             .scaleEffect(isSelected ? 1.1 : 1.0)
                             .scaleEffect(isPressed ? 0.9 : 1.0)
                     }
@@ -204,7 +203,7 @@ struct EnhancedNavigation {
                     // Label with enhanced typography
                     Text(tab.title)
                         .font(.system(size: 10, weight: .medium))
-                        .foregroundColor(isSelected ? MTColors.funBlue : .secondary)
+                        .foregroundColor(isSelected ? ModernDesignSystem.Colors.funBlue : .secondary)
                         .lineLimit(1)
                 }
                 .frame(maxWidth: .infinity)
@@ -277,7 +276,7 @@ struct EnhancedNavigation {
                     // Icon
                     Image(systemName: icon)
                         .font(.system(size: 24, weight: .semibold))
-                        .foregroundColor(.white)
+                        .foregroundColor(ModernDesignSystem.Colors.textPrimary)
                 }
             }
             .buttonStyle(.plain)
@@ -367,7 +366,7 @@ struct EnhancedScrollView<Content: View>: View {
     let content: Content
     let bottomPadding: CGFloat
     
-    init(bottomPadding: CGFloat = 120, @ViewBuilder content: () -> Content) {
+    init(bottomPadding: CGFloat = 24, @ViewBuilder content: () -> Content) {
         self.bottomPadding = bottomPadding
         self.content = content()
     }
@@ -379,7 +378,7 @@ struct EnhancedScrollView<Content: View>: View {
                 
                 // Bottom spacer to prevent content overlap
                 Color.clear
-                    .frame(height: bottomPadding)
+                    .frame(height: min(bottomPadding, 32))
             }
         }
         .scrollContentBackground(.hidden)
@@ -389,7 +388,7 @@ struct EnhancedScrollView<Content: View>: View {
             LinearGradient(
                 colors: [
                     Color.clear,
-                    Color.black.opacity(0.02)
+                    ModernDesignSystem.Colors.shadow.opacity(0.02)
                 ],
                 startPoint: .top,
                 endPoint: .bottom
@@ -403,4 +402,45 @@ struct TabItem {
     let title: String
     let icon: String
     let view: AnyView
+}
+
+// MARK: - Sticky Title Bar
+struct StickyTitleBar: View {
+    let title: String
+    var body: some View {
+        let topInset = SafeAreaHelper.topInset()
+        ZStack(alignment: .bottom) {
+            VisualEffectBlur(blurStyle: .systemMaterial)
+                .ignoresSafeArea(edges: .top)
+            Text(title)
+                .font(ModernDesignSystem.Typography.headline)
+                .foregroundColor(ModernDesignSystem.Colors.textPrimary)
+                .lineLimit(1)
+                .padding(.top, topInset > 0 ? topInset - 6 : 8)
+            // Bottom separator for contrast
+            Rectangle()
+                .fill(ModernDesignSystem.Colors.shadow.opacity(0.08))
+                .frame(height: 1)
+        }
+        .frame(height: 56 + topInset)
+        .background(.regularMaterial)
+        .zIndex(1000)
+    }
+}
+
+// Simple blur wrapper compatible with platforms
+struct VisualEffectBlur: UIViewRepresentable {
+    let blurStyle: UIBlurEffect.Style
+    func makeUIView(context: Context) -> UIVisualEffectView {
+        UIVisualEffectView(effect: UIBlurEffect(style: blurStyle))
+    }
+    func updateUIView(_ uiView: UIVisualEffectView, context: Context) {}
+}
+
+enum SafeAreaHelper {
+    static func topInset() -> CGFloat {
+        guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+              let window = windowScene.windows.first else { return 0 }
+        return window.safeAreaInsets.top
+    }
 }

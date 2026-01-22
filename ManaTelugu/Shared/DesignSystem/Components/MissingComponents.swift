@@ -52,13 +52,13 @@ struct EnhancedWordOfTheDayCard: View {
                         .foregroundColor(.secondary)
                     
                     Text(word)
-                        .font(MTTypography.teluguTitle())
+                        .font(ModernDesignSystem.Typography.teluguTitle)
                         .fontWeight(.bold)
-                        .foregroundColor(MTColors.culturalGold)
+                        .foregroundColor(ModernDesignSystem.Colors.culturalGold)
                     
                     Text(translation)
-                        .font(MTTypography.teluguHeading())
-                        .foregroundColor(MTColors.culturalOrange)
+                        .font(ModernDesignSystem.Typography.teluguHeading)
+                        .foregroundColor(ModernDesignSystem.Colors.culturalOrange)
                 }
                 
                 Spacer()
@@ -66,14 +66,14 @@ struct EnhancedWordOfTheDayCard: View {
                 // Progress ring
                 ZStack {
                     Circle()
-                        .stroke(Color.gray.opacity(0.2), lineWidth: 4)
+                        .stroke(ModernDesignSystem.Colors.textTertiary.opacity(0.2), lineWidth: 4)
                         .frame(width: 60, height: 60)
                     
                     Circle()
                         .trim(from: 0, to: progress)
                         .stroke(
                             LinearGradient(
-                                colors: [MTColors.culturalGold, MTColors.culturalOrange],
+                                colors: [ModernDesignSystem.Colors.culturalGold, ModernDesignSystem.Colors.culturalOrange],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
                             ),
@@ -163,7 +163,7 @@ struct HorizontalLearningCards: View {
                                     GeometryReader { geometry in
                                         ZStack(alignment: .leading) {
                                             RoundedRectangle(cornerRadius: 2)
-                                                .fill(Color.gray.opacity(0.2))
+.fill(ModernDesignSystem.Colors.textTertiary.opacity(0.2))
                                                 .frame(height: 4)
                                             
                                             RoundedRectangle(cornerRadius: 2)
@@ -300,7 +300,10 @@ struct LiquidGlassToggle: View {
             Spacer()
             
             Toggle("", isOn: isOn)
-                .toggleStyle(SwitchToggleStyle(tint: MTColors.funBlue))
+                .toggleStyle(SwitchToggleStyle(tint: ModernDesignSystem.Colors.funBlue))
+                .onChange(of: isOn.wrappedValue) { _, _ in
+                    HapticsManager.shared.selection()
+                }
         }
         .padding()
         .background(
@@ -335,8 +338,7 @@ struct LiquidGlassButton: View {
                 Text(title)
                     .font(.body)
                     .fontWeight(.medium)
-                    .foregroundColor(.white)
-                    .padding(.horizontal, 24)
+.foregroundColor(ModernDesignSystem.Colors.textPrimary)
                     .padding(.vertical, 12)
                     .background(
                         LiquidGlassView(
@@ -345,7 +347,7 @@ struct LiquidGlassButton: View {
                             cornerRadius: 25,
                             padding: 0
                         ) {
-                            MTColors.funBlue
+                            ModernDesignSystem.Colors.funBlue
                         }
                     )
             }
@@ -376,7 +378,7 @@ struct GlobalAlert: View {
     var body: some View {
         if isPresented.wrappedValue {
             ZStack {
-                Color.black.opacity(0.4)
+                ModernDesignSystem.Colors.shadow.opacity(0.4)
                     .ignoresSafeArea()
                     .onTapGesture {
                         isPresented.wrappedValue = false
@@ -430,12 +432,12 @@ struct GlobalAlert: View {
                                 Text(primaryButton.title)
                                     .font(.body)
                                     .fontWeight(.medium)
-                                    .foregroundColor(.white)
+.foregroundColor(ModernDesignSystem.Colors.textPrimary)
                                     .padding(.horizontal, 20)
                                     .padding(.vertical, 12)
                                     .background(
                                         RoundedRectangle(cornerRadius: 8)
-                                            .fill(primaryButton.style == .destructive ? .red : MTColors.funBlue)
+                                            .fill(primaryButton.style == .destructive ? ModernDesignSystem.Colors.error : ModernDesignSystem.Colors.funBlue)
                                     )
                             }
                         )
@@ -473,7 +475,7 @@ struct GlobalInteractiveButton: View {
                 Text(title)
                     .font(.body)
                     .fontWeight(.semibold)
-                    .foregroundColor(.white)
+                    .foregroundColor(ModernDesignSystem.Colors.textPrimary)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 16)
                     .background(
@@ -483,7 +485,7 @@ struct GlobalInteractiveButton: View {
                             cornerRadius: 12,
                             padding: 0
                         ) {
-                            MTColors.funBlue
+                            ModernDesignSystem.Colors.funBlue
                         }
                     )
             }
@@ -562,7 +564,7 @@ struct ContinueLearningCard: View {
             GeometryReader { geometry in
                 ZStack(alignment: .leading) {
                     RoundedRectangle(cornerRadius: 2)
-                        .fill(Color.gray.opacity(0.2))
+                        .fill(ModernDesignSystem.Colors.textTertiary.opacity(0.2))
                         .frame(height: 4)
                     
                     RoundedRectangle(cornerRadius: 2)

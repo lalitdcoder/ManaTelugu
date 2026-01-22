@@ -30,8 +30,8 @@ struct SwiftUIGlassEffect: ViewModifier {
                                 .fill(
                                     LinearGradient(
                                         colors: [
-                                            Color.white.opacity(0.25),
-                                            Color.white.opacity(0.1)
+                                            ModernDesignSystem.Colors.surface.opacity(0.25),
+ModernDesignSystem.Colors.surface.opacity(0.1)
                                         ],
                                         startPoint: .topLeading,
                                         endPoint: .bottomTrailing
@@ -44,7 +44,7 @@ struct SwiftUIGlassEffect: ViewModifier {
                                 .fill(
                                     LinearGradient(
                                         colors: [
-                                            Color.white.opacity(0.4),
+                                            ModernDesignSystem.Colors.surface.opacity(0.4),
                                             Color.clear
                                         ],
                                         startPoint: .topLeading,
@@ -60,7 +60,7 @@ struct SwiftUIGlassEffect: ViewModifier {
                                 LinearGradient(
                                     colors: [
                                         Color.clear,
-                                        Color.white.opacity(0.3),
+                                        ModernDesignSystem.Colors.surface.opacity(0.3),
                                         Color.clear
                                     ],
                                     startPoint: .leading,
@@ -81,9 +81,9 @@ struct SwiftUIGlassEffect: ViewModifier {
                         .stroke(
                             LinearGradient(
                                 colors: [
-                                    Color.white.opacity(0.6),
-                                    Color.white.opacity(0.2),
-                                    Color.white.opacity(0.1)
+                                    ModernDesignSystem.Colors.surface.opacity(0.6),
+                                    ModernDesignSystem.Colors.surface.opacity(0.2),
+ModernDesignSystem.Colors.surface.opacity(0.1)
                                 ],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
@@ -93,19 +93,19 @@ struct SwiftUIGlassEffect: ViewModifier {
                 }
             )
             .shadow(
-                color: Color.black.opacity(0.15),
+                color: ModernDesignSystem.Colors.shadow.opacity(0.15),
                 radius: glassType.shadowRadius,
                 x: 0,
                 y: glassType.shadowOffset
             )
             .shadow(
-                color: Color.black.opacity(0.08),
+                color: ModernDesignSystem.Colors.shadow.opacity(0.08),
                 radius: glassType.shadowRadius * 2,
                 x: 0,
                 y: glassType.shadowOffset * 2
             )
             .shadow(
-                color: Color.white.opacity(0.1),
+                color: ModernDesignSystem.Colors.surface.opacity(0.1),
                 radius: 2,
                 x: 0,
                 y: -1

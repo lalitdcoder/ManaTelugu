@@ -8,13 +8,13 @@ struct ImprovedAlphabetGridView: View {
     var body: some View {
         NavigationView {
             ZStack {
-                MTColors.background.ignoresSafeArea()
+                ModernDesignSystem.Colors.background.ignoresSafeArea()
                 
                 VStack(spacing: 0) {
                     // Category Selector
                     categorySelector
-                        .padding(.horizontal, MTSpacing.medium)
-                        .padding(.bottom, MTSpacing.medium)
+                        .padding(.horizontal, ModernDesignSystem.Spacing.md)
+                        .padding(.bottom, ModernDesignSystem.Spacing.md)
                     
                     // Letters Grid
                     ScrollView {
@@ -37,18 +37,18 @@ struct ImprovedAlphabetGridView: View {
     }
     
     private var categorySelector: some View {
-        HStack(spacing: MTSpacing.small) {
+        HStack(spacing: ModernDesignSystem.Spacing.sm) {
             categoryButton(.vowels, "Vowels", "అ")
             categoryButton(.consonants, "Consonants", "క")
         }
-        .padding(MTSpacing.tiny)
-        .background(MTColors.cardBackground)
+        .padding(ModernDesignSystem.Spacing.tiny)
+        .background(ModernDesignSystem.Colors.cardBackground)
         .cornerRadius(12)
     }
     
     private func categoryButton(_ category: AlphabetCategory, _ title: String, _ example: String) -> some View {
         Button(action: { selectedCategory = category }) {
-            HStack(spacing: MTSpacing.small) {
+            HStack(spacing: ModernDesignSystem.Spacing.sm) {
                 Text(example)
                     .font(.title3)
                     .fontWeight(.bold)
@@ -57,10 +57,10 @@ struct ImprovedAlphabetGridView: View {
                     .font(.body)
                     .fontWeight(.medium)
             }
-            .padding(.horizontal, MTSpacing.medium)
-            .padding(.vertical, MTSpacing.small)
-            .background(selectedCategory == category ? MTColors.teluguBlue : Color.clear)
-            .foregroundColor(selectedCategory == category ? .white : MTColors.primaryText)
+            .padding(.horizontal, ModernDesignSystem.Spacing.md)
+            .padding(.vertical, ModernDesignSystem.Spacing.sm)
+            .background(selectedCategory == category ? ModernDesignSystem.Colors.teluguBlue : Color.clear)
+            .foregroundColor(selectedCategory == category ? .white : ModernDesignSystem.Colors.primaryText)
             .cornerRadius(8)
         }
         .higAccessible(
@@ -75,27 +75,27 @@ struct ImprovedAlphabetGridView: View {
             subtitle: "\(filteredLetters.count) letters to learn"
         ) {
             HStack {
-                VStack(alignment: .leading, spacing: MTSpacing.tiny) {
+                VStack(alignment: .leading, spacing: ModernDesignSystem.Spacing.tiny) {
                     Text("Progress")
                         .font(.caption)
-                        .foregroundColor(MTColors.secondaryText)
+                        .foregroundColor(ModernDesignSystem.Colors.secondaryText)
                     
                     Text("12 of \(filteredLetters.count)")
                         .font(.title3)
                         .fontWeight(.bold)
-                        .foregroundColor(MTColors.teluguGreen)
+                        .foregroundColor(ModernDesignSystem.Colors.teluguGreen)
                 }
                 
                 Spacer()
                 
-                CircularProgressView(progress: 0.6, color: MTColors.teluguGreen)
+                CircularProgressView(progress: 0.6, color: ModernDesignSystem.Colors.teluguGreen)
                     .frame(width: 40, height: 40)
             }
         }
     }
     
     private var lettersGrid: some View {
-        ImprovedGrid(columns: 3, spacing: MTSpacing.medium) {
+        ImprovedGrid(columns: 3, spacing: ModernDesignSystem.Spacing.md) {
             ForEach(filteredLetters, id: \.id) { letter in
                 letterCard(letter)
             }
@@ -108,16 +108,16 @@ struct ImprovedAlphabetGridView: View {
             hint: "Double tap to learn about this letter",
             action: { learnLetter(letter) }
         ) {
-            VStack(spacing: MTSpacing.medium) {
+            VStack(spacing: ModernDesignSystem.Spacing.md) {
                 Text(letter.character)
                     .font(.system(size: 36, weight: .bold))
-                    .foregroundColor(MTColors.teluguBlue)
+                    .foregroundColor(ModernDesignSystem.Colors.teluguBlue)
                 
-                VStack(spacing: MTSpacing.tiny) {
+                VStack(spacing: ModernDesignSystem.Spacing.tiny) {
                     Text(letter.romanization)
                         .font(.caption)
                         .fontWeight(.medium)
-                        .foregroundColor(MTColors.secondaryText)
+                        .foregroundColor(ModernDesignSystem.Colors.secondaryText)
                     
                     AudioButton(
                         audioFile: letter.audioFileName ?? "default_audio",
@@ -126,8 +126,8 @@ struct ImprovedAlphabetGridView: View {
                     )
                 }
             }
-            .padding(MTSpacing.medium)
-            .background(MTColors.cardBackground)
+            .padding(ModernDesignSystem.Spacing.md)
+            .background(ModernDesignSystem.Colors.cardBackground)
             .cornerRadius(16)
             .frame(minHeight: 120)
         }

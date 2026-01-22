@@ -1,5 +1,5 @@
-import Foundation
 import Combine
+import Foundation
 
 @MainActor
 class DataRepository: ObservableObject {
@@ -8,14 +8,62 @@ class DataRepository: ObservableObject {
     @Published var lessons: [Lesson] = []
     @Published var isLoading = false
     @Published var error: DataError?
-    
+
     private let userDefaults = UserDefaults.standard
-    
+    private let learnedLetterIDsKey = "learnedLetterIDs"
+    private let learnedWordIDsKey = "learnedWordIDs"  // <-- NEW
+
+    // MARK: - Letter Progress
+
+    public func updateLetterProgress(letterID: String, isLearned: Bool) {
+        if let index = letters.firstIndex(where: { $0.id == letterID }) {
+            letters[index].isLearned = isLearned
+
+            var learnedIDs = Set(loadProgress([String].self, key: learnedLetterIDsKey) ?? [])
+            if isLearned {
+                learnedIDs.insert(letterID)
+            } else {
+                learnedIDs.remove(letterID)
+            }
+            saveProgress(Array(learnedIDs), key: learnedLetterIDsKey)
+        }
+    }
+
+    public func markLetterAsLearned(_ letterID: String) {
+        updateLetterProgress(letterID: letterID, isLearned: true)
+    }
+
+    public func unmarkLetterAsLearned(_ letterID: String) {
+        updateLetterProgress(letterID: letterID, isLearned: false)
+    }
+
+    // MARK: - Word Progress
+
+    public func isWordLearned(_ wordID: String) -> Bool {
+        let learnedIDs = Set(loadProgress([String].self, key: learnedWordIDsKey) ?? [])
+        return learnedIDs.contains(wordID)
+    }
+
+    public func markWordAsLearned(_ wordID: String) {
+        var learnedIDs = Set(loadProgress([String].self, key: learnedWordIDsKey) ?? [])
+        learnedIDs.insert(wordID)
+        saveProgress(Array(learnedIDs), key: learnedWordIDsKey)
+    }
+
+    public func resetProgress() {
+        userDefaults.removeObject(forKey: learnedLetterIDsKey)
+        userDefaults.removeObject(forKey: learnedWordIDsKey)
+
+        for index in letters.indices {
+            letters[index].isLearned = false
+        }
+    }
+
     enum DataError: LocalizedError {
         case loadingFailed(String)
         case savingFailed(String)
         case notFound(String)
-        
+
         var errorDescription: String? {
             switch self {
             case .loadingFailed(let item): return "Failed to load \(item)"
@@ -24,24 +72,26 @@ class DataRepository: ObservableObject {
             }
         }
     }
-    
+
     init() {
         loadData()
     }
-    
+
     // MARK: - Data Loading
     func loadData() {
         isLoading = true
         error = nil
-        
+
         Task {
             do {
                 async let lettersTask = loadLetters()
                 async let wordsTask = loadWords()
                 async let lessonsTask = loadLessons()
-                
-                let (loadedLetters, loadedWords, loadedLessons) = try await (lettersTask, wordsTask, lessonsTask)
-                
+
+                let (loadedLetters, loadedWords, loadedLessons) = try await (
+                    lettersTask, wordsTask, lessonsTask
+                )
+
                 await MainActor.run {
                     self.letters = loadedLetters
                     self.words = loadedWords
@@ -56,52 +106,109 @@ class DataRepository: ObservableObject {
             }
         }
     }
-    
+
     private func loadLetters() async throws -> [Letter] {
-        return [
-            Letter(id: "1", character: "అ", romanization: "a", meaning: "vowel a", category: .vowel),
-            Letter(id: "2", character: "ఆ", romanization: "aa", meaning: "vowel aa", category: .vowel),
-            Letter(id: "3", character: "ఇ", romanization: "i", meaning: "vowel i", category: .vowel),
-            Letter(id: "4", character: "ఈ", romanization: "ee", meaning: "vowel ee", category: .vowel),
-            Letter(id: "5", character: "ఉ", romanization: "u", meaning: "vowel u", category: .vowel),
-            Letter(id: "6", character: "క", romanization: "ka", meaning: "consonant ka", category: .consonant),
-            Letter(id: "7", character: "గ", romanization: "ga", meaning: "consonant ga", category: .consonant),
-            Letter(id: "8", character: "చ", romanization: "cha", meaning: "consonant cha", category: .consonant)
+        struct LetterEntry: Decodable {
+            let id: String
+            let glyph: String
+            let transliteration: String
+            let audioFile: String?
+            let strokePathPoints: [[[String: Double]]]
+        }
+        guard let url = Bundle.main.url(forResource: "letters", withExtension: "json") else {
+            // Fallback to minimal seed if JSON missing
+            return [
+                Letter(
+                    id: "1", character: "అ", romanization: "a", meaning: "vowel a", category: .vowel
+                ),
+                Letter(
+                    id: "2", character: "ఆ", romanization: "aa", meaning: "vowel aa",
+                    category: .vowel),
+                Letter(
+                    id: "3", character: "ఇ", romanization: "i", meaning: "vowel i", category: .vowel
+                ),
+                Letter(
+                    id: "4", character: "ఈ", romanization: "ee", meaning: "vowel ee",
+                    category: .vowel),
+            ]
+        }
+        let data = try Data(contentsOf: url)
+        let entries = try JSONDecoder().decode([LetterEntry].self, from: data)
+
+        let learnedIDs = Set(loadProgress([String].self, key: learnedLetterIDsKey) ?? [])
+
+        let vowelSet: Set<String> = [
+            "అ", "ఆ", "ఇ", "ఈ", "ఉ", "ఊ", "ఋ", "ౠ", "ఎ", "ఏ", "ఐ", "ఒ", "ఓ", "ఔ", "అఁ", "అం", "అః",
         ]
+        func toCGPointArray(_ raw: [[String: Double]]) -> [CGPointCodable] {
+            raw.compactMap { dict in
+                if let x = dict["x"], let y = dict["y"] { return CGPointCodable(x: x, y: y) }
+                return nil
+            }
+        }
+        return entries.map { entry in
+            let points: [[CGPointCodable]] = entry.strokePathPoints.map { toCGPointArray($0) }
+            let category: LetterCategory = vowelSet.contains(entry.glyph) ? .vowel : .consonant
+            var letter = Letter(
+                id: entry.id,
+                character: entry.glyph,
+                romanization: entry.transliteration,
+                meaning: entry.transliteration,
+                category: category,
+                strokePathPoints: points,
+                audioFileName: entry.audioFile,
+                difficulty: 1
+            )
+            if learnedIDs.contains(letter.id) {
+                letter.isLearned = true
+            }
+            return letter
+        }
     }
-    
+
     private func loadWords() async throws -> [Word] {
-        return [
-            Word(id: "1", telugu: "అమ్మ", transliteration: "amma", english: "Mother", imageName: "family_mother", audioFile: "amma.mp3", theme: "Family"),
-            Word(id: "2", telugu: "నాన్న", transliteration: "naanna", english: "Father", imageName: "family_father", audioFile: "naanna.mp3", theme: "Family"),
-            Word(id: "3", telugu: "నీరు", transliteration: "neeru", english: "Water", imageName: "basic_water", audioFile: "neeru.mp3", theme: "Basic")
-        ]
+        if let url = Bundle.main.url(forResource: "words", withExtension: "json") {
+            do {
+                let data = try Data(contentsOf: url)
+                let words = try JSONDecoder().decode([Word].self, from: data)
+                return words
+            } catch {
+                // Log error to analytics if needed
+            }
+        }
+        return EmbeddedWordsData.words
     }
-    
+
     private func loadLessons() async throws -> [Lesson] {
         return [
-            Lesson(id: "1", title: "Telugu Vowels", description: "Learn basic vowel sounds", levelId: "beginner", order: 1, difficulty: 1, xpReward: 50, estimatedMinutes: 10, activities: []),
-            Lesson(id: "2", title: "Basic Consonants", description: "Learn consonant sounds", levelId: "beginner", order: 2, difficulty: 2, xpReward: 75, estimatedMinutes: 15, activities: [])
+            Lesson(
+                id: "1", title: "Telugu Vowels", description: "Learn basic vowel sounds",
+                levelId: "beginner", order: 1, difficulty: 1, xpReward: 50, estimatedMinutes: 10,
+                activities: []),
+            Lesson(
+                id: "2", title: "Basic Consonants", description: "Learn consonant sounds",
+                levelId: "beginner", order: 2, difficulty: 2, xpReward: 75, estimatedMinutes: 15,
+                activities: []),
         ]
     }
-    
+
     // MARK: - Getters with Error Handling
     func getLetter(by id: String) -> Letter? {
         letters.first { $0.id == id }
     }
-    
+
     func getLetters(by category: LetterCategory) -> [Letter] {
         letters.filter { $0.category == category }
     }
-    
+
     func getWord(by id: String) -> Word? {
         words.first { $0.id == id }
     }
-    
+
     func getLesson(by id: String) -> Lesson? {
         lessons.first { $0.id == id }
     }
-    
+
     // MARK: - Progress Persistence
     func saveProgress<T: Codable>(_ data: T, key: String) {
         do {
@@ -111,7 +218,7 @@ class DataRepository: ObservableObject {
             self.error = .savingFailed(key)
         }
     }
-    
+
     func loadProgress<T: Codable>(_ type: T.Type, key: String) -> T? {
         guard let data = userDefaults.data(forKey: key) else { return nil }
         return try? JSONDecoder().decode(type, from: data)

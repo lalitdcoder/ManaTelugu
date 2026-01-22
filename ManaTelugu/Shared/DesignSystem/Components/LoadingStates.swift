@@ -93,7 +93,7 @@ struct LoadingStates {
             if isPresented {
                 ZStack {
                     // Blurred background
-                    Color.black.opacity(0.3)
+                    ModernDesignSystem.Colors.shadow.opacity(0.3)
                         .ignoresSafeArea()
                         .blur(radius: 2)
                     
@@ -105,7 +105,7 @@ struct LoadingStates {
                                 .stroke(
                                     LinearGradient(
                                         colors: [
-                                            Color.white.opacity(0.2),
+                                            ModernDesignSystem.Colors.surface.opacity(0.2),
                                             Color.clear
                                         ],
                                         startPoint: .topLeading,
@@ -114,7 +114,7 @@ struct LoadingStates {
                                     lineWidth: 1
                                 )
                         )
-                        .shadow(color: .black.opacity(0.1), radius: 20, x: 0, y: 10)
+                        .shadow(color: ModernDesignSystem.Colors.shadow.opacity(0.1), radius: 20, x: 0, y: 10)
                         .frame(width: 200, height: 120)
                         .overlay(
                             VStack(spacing: 16) {
@@ -191,7 +191,7 @@ struct LoadingStates {
                     GeometryReader { geometry in
                         ZStack(alignment: .leading) {
                             RoundedRectangle(cornerRadius: 4)
-                                .fill(Color.gray.opacity(0.2))
+                                .fill(ModernDesignSystem.Colors.textTertiary.opacity(0.2))
                                 .frame(height: 8)
                             
                             RoundedRectangle(cornerRadius: 4)
@@ -240,15 +240,15 @@ struct LoadingButton: View {
                 if isLoading {
                     ProgressView()
                         .scaleEffect(0.8)
-                        .tint(.white)
+                        .tint(ModernDesignSystem.Colors.textPrimary)
                 } else {
                     Text(title)
                 }
             }
             .frame(maxWidth: .infinity)
             .padding()
-            .background(isLoading ? Color.gray : Color.accentColor)
-            .foregroundColor(.white)
+            .background(isLoading ? ModernDesignSystem.Colors.textTertiary : ModernDesignSystem.Colors.accent)
+            .foregroundColor(ModernDesignSystem.Colors.textPrimary)
             .cornerRadius(12)
         }
         .disabled(isLoading)

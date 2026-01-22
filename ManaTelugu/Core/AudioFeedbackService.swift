@@ -2,13 +2,17 @@ import AVFoundation
 import SwiftUI
 
 class AudioFeedbackService: ObservableObject {
+    static let shared = AudioFeedbackService()
+    @Published var isEnabled: Bool = true
     private var audioPlayer: AVAudioPlayer?
     
     func playSuccess() {
+        guard isEnabled else { return }
         playSound(named: "success")
     }
     
     func playTryAgain() {
+        guard isEnabled else { return }
         playSound(named: "tryagain")
     }
     

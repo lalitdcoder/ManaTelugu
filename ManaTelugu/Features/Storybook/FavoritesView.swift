@@ -5,28 +5,33 @@ struct FavoritesView: View {
     @Environment(\.dismiss) private var dismiss
     
     var body: some View {
-        NavigationStack {
-            ZStack {
-                // Enhanced background gradient for Liquid Glass effect
-                Color.clear
-                    .liquidGlassBackground()
-                    .ignoresSafeArea()
-                
-                Group {
-                if session.storyService.bookmarkedStories.isEmpty {
-                    emptyStateView
-                } else {
-                    storiesList
-                }
-                }
+        ZStack {
+            // Stronger gradient background
+            LinearGradient(
+                colors: [
+                    Color(red: 0.4, green: 0.5, blue: 0.9).opacity(0.3),
+                    Color(red: 0.46, green: 0.29, blue: 0.64).opacity(0.2)
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .ignoresSafeArea()
+            
+            Group {
+            if session.storyService.bookmarkedStories.isEmpty {
+                emptyStateView
+            } else {
+                storiesList
             }
-            .navigationTitle("Favorites")
-            .navigationBarTitleDisplayMode(.large)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Done") {
-                        dismiss()
-                    }
+            }
+        }
+        .navigationTitle("Favorites")
+        .navigationBarTitleDisplayMode(.large)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button("Done") {
+                    HapticsService.shared.navigationTap()
+                    dismiss()
                 }
             }
         }
@@ -39,7 +44,7 @@ struct FavoritesView: View {
                     NavigationLink(destination: StoryReaderView(story: story).environmentObject(session)) {
                         FavoriteStoryRow(story: story)
                     }
-                    .buttonStyle(PlainButtonStyle())
+.buttonStyle(HapticPlainButtonStyle())
                 }
             }
             .padding(.horizontal, 16)
@@ -65,6 +70,7 @@ struct FavoritesView: View {
                 .multilineTextAlignment(.center)
             
             Button("Browse Stories") {
+                HapticsService.shared.navigationTap()
                 dismiss()
             }
             .buttonStyle(.borderedProminent)
@@ -83,7 +89,7 @@ struct FavoriteStoryRow: View {
             // Story Icon
             RoundedRectangle(cornerRadius: 12)
                 .fill(LinearGradient(
-                    colors: [MTColors.accent.opacity(0.3), MTColors.accent.opacity(0.1)],
+                    colors: [ModernDesignSystem.Colors.accent.opacity(0.3), ModernDesignSystem.Colors.accent.opacity(0.1)],
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing
                 ))
@@ -91,7 +97,7 @@ struct FavoriteStoryRow: View {
                 .overlay(
                     Image(systemName: story.category.icon)
                         .font(.title2)
-                        .foregroundColor(MTColors.accent)
+                        .foregroundColor(ModernDesignSystem.Colors.accent)
                 )
             
             // Story Details
@@ -114,9 +120,9 @@ struct FavoriteStoryRow: View {
                         .padding(.vertical, 4)
                         .background(
                             RoundedRectangle(cornerRadius: 8)
-                                .fill(MTColors.accent.opacity(0.2))
+                                .fill(ModernDesignSystem.Colors.accent.opacity(0.2))
                         )
-                        .foregroundColor(MTColors.accent)
+                        .foregroundColor(ModernDesignSystem.Colors.accent)
                     
                     Spacer()
                     

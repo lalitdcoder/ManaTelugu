@@ -9,6 +9,7 @@ struct Letter: Identifiable, Codable, Hashable {
     let strokePathPoints: [[CGPointCodable]]
     let audioFileName: String?
     let difficulty: Int
+    var isLearned: Bool = false
     
     init(id: String, character: String, romanization: String, meaning: String, category: LetterCategory, strokePathPoints: [[CGPointCodable]] = [], audioFileName: String? = nil, difficulty: Int = 1) {
         self.id = id
@@ -53,4 +54,103 @@ struct CGPointCodable: Codable, Hashable {
     var cgPoint: CGPoint {
         CGPoint(x: x, y: y)
     }
+}
+
+// MARK: - Sample Data Extension
+extension Letter {
+    static let sampleLetters: [Letter] = [
+        // Vowels
+        Letter(
+            id: "అ",
+            character: "అ",
+            romanization: "a",
+            meaning: "Basic vowel sound",
+            category: .vowel,
+            audioFileName: "అ",
+            difficulty: 1
+        ),
+        Letter(
+            id: "ఆ",
+            character: "ఆ",
+            romanization: "aa",
+            meaning: "Long vowel sound",
+            category: .vowel,
+            audioFileName: "ఆ",
+            difficulty: 1
+        ),
+        Letter(
+            id: "ఇ",
+            character: "ఇ",
+            romanization: "i",
+            meaning: "Short 'i' sound",
+            category: .vowel,
+            audioFileName: "ఇ",
+            difficulty: 1
+        ),
+        Letter(
+            id: "ఈ",
+            character: "ఈ",
+            romanization: "ee",
+            meaning: "Long 'i' sound",
+            category: .vowel,
+            audioFileName: "ఈ",
+            difficulty: 1
+        ),
+        Letter(
+            id: "ఉ",
+            character: "ఉ",
+            romanization: "u",
+            meaning: "Short 'u' sound",
+            category: .vowel,
+            audioFileName: "ఉ",
+            difficulty: 1
+        ),
+        
+        // Consonants
+        Letter(
+            id: "క",
+            character: "క",
+            romanization: "ka",
+            meaning: "Basic consonant",
+            category: .consonant,
+            audioFileName: "క",
+            difficulty: 1
+        ),
+        Letter(
+            id: "ఖ",
+            character: "ఖ",
+            romanization: "kha",
+            meaning: "Aspirated consonant",
+            category: .consonant,
+            audioFileName: "ఖ",
+            difficulty: 2
+        ),
+        Letter(
+            id: "గ",
+            character: "గ",
+            romanization: "ga",
+            meaning: "Common consonant",
+            category: .consonant,
+            audioFileName: "గ",
+            difficulty: 1
+        ),
+        Letter(
+            id: "ఘ",
+            character: "ఘ",
+            romanization: "gha",
+            meaning: "Aspirated consonant",
+            category: .consonant,
+            audioFileName: "ఘ",
+            difficulty: 2
+        ),
+        Letter(
+            id: "ఙ",
+            character: "ఙ",
+            romanization: "nga",
+            meaning: "Nasal consonant",
+            category: .consonant,
+            audioFileName: "ఙ",
+            difficulty: 2
+        )
+    ]
 }

@@ -1,158 +1,115 @@
 import SwiftUI
 
-// MARK: - Professional More View
 struct ProfessionalMoreView: View {
     @EnvironmentObject var session: AppSession
-    
+    @State private var showingParentMode = false
+
     var body: some View {
         NavigationStack {
             ZStack {
-                // Professional gradient background
+                // Stronger gradient background
                 LinearGradient(
                     colors: [
-                        Color(red: 0.2, green: 0.4, blue: 0.9),
-                        Color(red: 0.4, green: 0.2, blue: 0.8),
-                        Color(red: 0.8, green: 0.3, blue: 0.6)
+                        Color(red: 0.4, green: 0.5, blue: 0.9).opacity(0.3),
+                        Color(red: 0.46, green: 0.29, blue: 0.64).opacity(0.2),
                     ],
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing
                 )
-                .ignoresSafeArea(.all, edges: .all)
-                
+                .ignoresSafeArea()
+
                 ScrollView {
-                    LazyVStack(spacing: ProfessionalSpacing.large.value) {
-                        // Header Section
-                        ProfessionalCard(type: .hero) {
-                            VStack(alignment: .leading, spacing: ProfessionalSpacing.medium.value) {
-                                ProfessionalText(
-                                    "More Options",
-                                    style: .heroTitle,
-                                    color: .textPrimary
-                                )
-                                
-                                ProfessionalText(
-                                    "Manage your profile, settings, and get support",
-                                    style: .bodyText,
-                                    color: .textSecondary
-                                )
-                            }
+                    VStack(spacing: 20) {
+                        // Header
+                        VStack(spacing: 12) {
+                            Text("🎯")
+                                .font(.system(size: 50))
+
+                            Text("More Options")
+                                .font(.title2)
+                                .fontWeight(.bold)
+
+                            Text("Track progress and manage settings")
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
                         }
-                        .padding(.top, ProfessionalSpacing.extraLarge.value)
-                        
-                        // Settings Section
-                        VStack(alignment: .leading, spacing: ProfessionalSpacing.medium.value) {
-                            ProfessionalSectionHeader(
-                                title: "Settings",
-                                subtitle: "Customize your experience"
-                            )
-                            
-                            VStack(spacing: ProfessionalSpacing.small.value) {
-                                ProfessionalMoreOptionCard(
-                                    title: "Profile Settings",
-                                    icon: "person.crop.circle",
-                                    action: { /* Navigate to Profile Settings */ }
-                                )
-                                ProfessionalMoreOptionCard(
+                        .padding(.top, 20)
+
+                        // Cards
+                        VStack(spacing: 16) {
+                            NavigationLink(destination: EnhancedProgressView()) {
+                                MoreCard(
+                                    icon: "📊",
                                     title: "Progress Dashboard",
-                                    icon: "chart.bar.fill",
-                                    action: { /* Navigate to Progress Dashboard */ }
+                                    subtitle: "View your learning journey",
+                                    color: .blue
                                 )
                             }
-                        }
-                        
-                        // Support Section
-                        VStack(alignment: .leading, spacing: ProfessionalSpacing.medium.value) {
-                            ProfessionalSectionHeader(
-                                title: "Support",
-                                subtitle: "Get help and contact us"
-                            )
-                            
-                            VStack(spacing: ProfessionalSpacing.small.value) {
-                                ProfessionalMoreOptionCard(
-                                    title: "Help & FAQ",
-                                    icon: "questionmark.circle.fill",
-                                    action: { /* Navigate to Help & FAQ */ }
-                                )
-                                ProfessionalMoreOptionCard(
-                                    title: "Contact Us",
-                                    icon: "envelope.fill",
-                                    action: { /* Navigate to Contact Us */ }
+                            .buttonStyle(PlainButtonStyle())
+
+                            Button {
+                                showingParentMode = true
+                            } label: {
+                                MoreCard(
+                                    icon: "👨‍👩‍👧‍👦",
+                                    title: "Parent Mode",
+                                    subtitle: "Parental controls and settings",
+                                    color: .professionalPurple
                                 )
                             }
+                            .buttonStyle(PlainButtonStyle())
                         }
-                        
-                        // About Section
-                        VStack(alignment: .leading, spacing: ProfessionalSpacing.medium.value) {
-                            ProfessionalSectionHeader(
-                                title: "About",
-                                subtitle: "Learn more about Mana Telugu"
-                            )
-                            
-                            VStack(spacing: ProfessionalSpacing.small.value) {
-                                ProfessionalMoreOptionCard(
-                                    title: "About This App",
-                                    icon: "info.circle.fill",
-                                    action: { /* Navigate to About App */ }
-                                )
-                                ProfessionalMoreOptionCard(
-                                    title: "Privacy Policy",
-                                    icon: "hand.raised.fill",
-                                    action: { /* Navigate to Privacy Policy */ }
-                                )
-                                ProfessionalMoreOptionCard(
-                                    title: "Terms of Service",
-                                    icon: "doc.text.fill",
-                                    action: { /* Navigate to Terms of Service */ }
-                                )
-                            }
-                        }
-                        
-                        // Bottom padding for tab bar
-                        Color.clear
-                            .frame(height: 120)
+                        .padding(.horizontal, 20)
                     }
-                    .padding(.horizontal, ProfessionalSpacing.medium.value)
                 }
-                .scrollIndicators(.hidden)
+                .sheet(isPresented: $showingParentMode) {
+                    NavigationStack {
+                        SimplifiedParentModeView()
+                    }
+                }
             }
-            .navigationBarHidden(true)
         }
     }
 }
 
-// MARK: - Professional More Option Card
-struct ProfessionalMoreOptionCard: View {
-    let title: String
+struct MoreCard: View {
     let icon: String
-    let action: () -> Void
-    
+    let title: String
+    let subtitle: String
+    let color: Color
+
     var body: some View {
-        Button(action: action) {
-            ProfessionalCard(type: .interactive, isInteractive: true) {
-                HStack(spacing: ProfessionalSpacing.medium.value) {
-                    Image(systemName: icon)
-                        .font(.system(size: 20, weight: .semibold))
-                        .foregroundColor(.professionalBlue)
-                        .frame(width: 32, height: 32)
-                        .background(
-                            Circle()
-                                .fill(Color.professionalBlue.opacity(0.15))
-                        )
-                    
-                    ProfessionalText(title, style: .cardTitle, color: .textPrimary)
-                    Spacer()
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(.textSecondary)
-                }
+        HStack(spacing: 16) {
+            Text(icon)
+                .font(.system(size: 32))
+                .frame(width: 60, height: 60)
+                .background(color.opacity(0.15))
+                .clipShape(RoundedRectangle(cornerRadius: 16))
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title)
+                    .font(.headline)
+                    .fontWeight(.semibold)
+                    .foregroundColor(.black)
+
+                Text(subtitle)
+                    .font(.subheadline)
+                    .foregroundColor(.gray)
             }
+
+            Spacer()
+
+            Image(systemName: "chevron.right")
+                .font(.system(size: 16, weight: .medium))
+                .foregroundColor(.blue)
         }
-        .buttonStyle(PlainButtonStyle())
+        .padding(20)
+        .background(Color.white)
+        .clipShape(RoundedRectangle(cornerRadius: 20))
+        .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: 4)
     }
 }
 
-
-// MARK: - Preview
 #Preview {
     ProfessionalMoreView()
         .environmentObject(AppSession())

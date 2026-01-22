@@ -19,8 +19,7 @@ struct LiquidGlassHomeView: View {
                         // Header Section
                         headerSection
                         
-                        // Continue Journey Card
-                        continueJourneyCard
+
                         
                         // Goals Card
                         goalsCard
@@ -65,34 +64,7 @@ struct LiquidGlassHomeView: View {
         }
     }
     
-    // MARK: - Continue Journey Card
-    private var continueJourneyCard: some View {
-        LiquidGlassCard(padding: LGDesign.Spacing.lg) {
-            VStack(alignment: .leading, spacing: LGDesign.Spacing.md) {
-                HStack {
-                    VStack(alignment: .leading, spacing: LGDesign.Spacing.xs) {
-                        Text("Continue Your Journey")
-                            .font(LGDesign.Typography.title2)
-                            .foregroundColor(LGDesign.Colors.text)
-                        
-                        Text("Next: \(nextLesson)")
-                            .font(LGDesign.Typography.body)
-                            .foregroundColor(LGDesign.Colors.secondaryText)
-                    }
-                    
-                    Spacer()
-                    
-                    Image(systemName: "arrow.right.circle.fill")
-                        .font(.title)
-                        .foregroundColor(LGDesign.Colors.accent)
-                }
-                
-                LiquidGlassButton(title: "Start Learning") {
-                    // Navigate to lesson
-                }
-            }
-        }
-    }
+
     
     // MARK: - Goals Card
     private var goalsCard: some View {

@@ -13,7 +13,8 @@ struct ImprovedGamesHubView: View {
             icon: "text.bubble.fill",
             difficulty: "Beginner",
             estimatedTime: "5 min",
-            color: Color(red: 0.2, green: 0.6, blue: 1.0)
+            color: Color(red: 0.2, green: 0.6, blue: 1.0),
+            isRecommended: false
         ),
         GameInfo(
             id: "listening_challenge", 
@@ -22,7 +23,8 @@ struct ImprovedGamesHubView: View {
             icon: "ear.fill",
             difficulty: "Intermediate",
             estimatedTime: "8 min",
-            color: Color(red: 0.8, green: 0.4, blue: 0.9)
+            color: Color(red: 0.8, green: 0.4, blue: 0.9),
+            isRecommended: false
         ),
         GameInfo(
             id: "letter_tracing",
@@ -31,7 +33,8 @@ struct ImprovedGamesHubView: View {
             icon: "pencil.tip",
             difficulty: "Beginner",
             estimatedTime: "10 min",
-            color: Color(red: 1.0, green: 0.6, blue: 0.2)
+            color: Color(red: 1.0, green: 0.6, blue: 0.2),
+            isRecommended: false
         ),
         GameInfo(
             id: "sound_match",
@@ -40,7 +43,8 @@ struct ImprovedGamesHubView: View {
             icon: "speaker.wave.2.fill",
             difficulty: "Intermediate", 
             estimatedTime: "6 min",
-            color: Color(red: 0.3, green: 0.8, blue: 0.5)
+            color: Color(red: 0.3, green: 0.8, blue: 0.5),
+            isRecommended: false
         )
     ]
     
@@ -138,7 +142,10 @@ struct GameCard: View {
     @State private var isPressed = false
     
     var body: some View {
-        Button(action: action) {
+        Button(action: {
+            HapticsService.shared.gameStart()
+            action()
+        }) {
             VStack(alignment: .leading, spacing: 16) {
                 HStack {
                     ZStack {
@@ -199,7 +206,7 @@ struct GameCard: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(
                 RoundedRectangle(cornerRadius: 20)
-                    .fill(Color.white)
+                    .fill(ModernDesignSystem.Colors.surface)
                     .shadow(
                         color: isSelected ? game.color.opacity(0.3) : Color.black.opacity(0.05),
                         radius: isSelected ? 8 : 4,

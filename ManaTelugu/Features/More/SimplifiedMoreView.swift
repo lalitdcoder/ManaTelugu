@@ -83,24 +83,28 @@ struct SimplifiedMoreView: View {
     
     private var mainOptions: some View {
         VStack(spacing: 16) {
-            MoreOptionCard(
-                icon: "envelope.fill",
-                title: "Contact Us",
-                description: "Get help or send us feedback",
-                color: .blue,
-                showChevron: true
-            ) {
-                // Navigate to contact us
+            NavigationLink {
+                ContactUsView()
+            } label: {
+                MoreOptionCard(
+                    icon: "envelope.fill",
+                    title: "Contact Us",
+                    description: "Get help or send us feedback",
+                    color: .blue,
+                    showChevron: true
+                )
             }
             
-            MoreOptionCard(
-                icon: "info.circle.fill",
-                title: "About Us",
-                description: "Learn about Mana Telugu and our mission",
-                color: .green,
-                showChevron: true
-            ) {
-                // Navigate to about us
+            NavigationLink {
+                AboutUsView()
+            } label: {
+                MoreOptionCard(
+                    icon: "info.circle.fill",
+                    title: "About Us",
+                    description: "Learn about Mana Telugu and our mission",
+                    color: .green,
+                    showChevron: true
+                )
             }
         }
     }
@@ -112,15 +116,18 @@ struct SimplifiedMoreView: View {
                 .fontWeight(.semibold)
                 .foregroundColor(.primary)
             
-            MoreOptionCard(
-                icon: "person.2.fill",
-                title: "Parent Mode",
-                description: "Access parental controls and progress reports",
-                color: .purple,
-                showChevron: false
-            ) {
+            Button(action: {
                 showingParentMode = true
+            }) {
+                MoreOptionCard(
+                    icon: "person.2.fill",
+                    title: "Parent Mode",
+                    description: "Access parental controls and progress reports",
+                    color: .purple,
+                    showChevron: false
+                )
             }
+            .buttonStyle(.plain)
         }
         .padding(20)
         .background(
@@ -172,62 +179,49 @@ struct MoreOptionCard: View {
     let description: String
     let color: Color
     let showChevron: Bool
-    let action: () -> Void
-    
-    @State private var isPressed = false
     
     var body: some View {
-        Button(action: action) {
-            HStack(spacing: 16) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(color.opacity(0.15))
-                        .frame(width: 50, height: 50)
-                    
-                    Image(systemName: icon)
-                        .font(.system(size: 24, weight: .medium))
-                        .foregroundColor(color)
-                }
+        HStack(spacing: 16) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(color.opacity(0.15))
+                    .frame(width: 50, height: 50)
                 
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(title)
-                        .font(.body)
-                        .fontWeight(.semibold)
-                        .foregroundColor(.primary)
-                    
-                    Text(description)
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                        .multilineTextAlignment(.leading)
-                }
-                
-                Spacer()
-                
-                if showChevron {
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(.secondary)
-                } else {
-                    Image(systemName: "arrow.up.right")
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(color)
-                }
+                Image(systemName: icon)
+                    .font(.system(size: 24, weight: .medium))
+                    .foregroundColor(color)
             }
-            .padding(20)
-            .background(
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(Color.white)
-                    .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
-            )
-            .scaleEffect(isPressed ? 0.98 : 1.0)
-            .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isPressed)
+            
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title)
+                    .font(.body)
+                    .fontWeight(.semibold)
+                    .foregroundColor(.primary)
+                
+                Text(description)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.leading)
+            }
+            
+            Spacer()
+            
+            if showChevron {
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundColor(.secondary)
+            } else {
+                Image(systemName: "arrow.up.right")
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundColor(color)
+            }
         }
-        .buttonStyle(.plain)
-        .onLongPressGesture(minimumDuration: 0, maximumDistance: .infinity, pressing: { pressing in
-            withAnimation(.easeInOut(duration: 0.1)) {
-                isPressed = pressing
-            }
-        }, perform: {})
+        .padding(20)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color.white)
+                .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
+        )
     }
 }
 

@@ -12,7 +12,7 @@ struct HIGComplianceTestSuite: View {
     var body: some View {
         #if DEBUG
         NavigationView {
-            VStack(spacing: MTSpacing.large) {
+            VStack(spacing: ModernDesignSystem.Spacing.lg) {
                 HIGComplianceHeader()
                 
                 HIGTestControls(
@@ -26,7 +26,7 @@ struct HIGComplianceTestSuite: View {
                 
                 Spacer()
             }
-            .padding(MTSpacing.medium)
+            .padding(ModernDesignSystem.Spacing.md)
             .navigationTitle("HIG Compliance")
             .navigationBarTitleDisplayMode(.large)
         }
@@ -47,10 +47,10 @@ struct HIGComplianceTestSuite: View {
 
 struct HIGComplianceHeader: View {
     var body: some View {
-        VStack(spacing: MTSpacing.small) {
+        VStack(spacing: ModernDesignSystem.Spacing.sm) {
             Image(systemName: "checkmark.seal.fill")
                 .font(.system(size: 48))
-                .foregroundColor(MTColors.success)
+                .foregroundColor(ModernDesignSystem.Colors.success)
             
             HIGDynamicText(
                 "HIG Compliance Testing",
@@ -61,7 +61,7 @@ struct HIGComplianceHeader: View {
             HIGDynamicText(
                 "Ensure your app meets Apple's Human Interface Guidelines",
                 style: .body,
-                color: MTColors.secondaryText,
+                color: ModernDesignSystem.Colors.secondaryText,
                 maxLines: 2
             )
             .multilineTextAlignment(.center)
@@ -74,7 +74,7 @@ struct HIGTestControls: View {
     let onRunTests: () -> Void
     
     var body: some View {
-        VStack(spacing: MTSpacing.medium) {
+        VStack(spacing: ModernDesignSystem.Spacing.md) {
             HIGPrimaryButton(
                 "Run All Tests",
                 icon: isRunningTests ? nil : "play.fill",
@@ -83,7 +83,7 @@ struct HIGTestControls: View {
                 action: onRunTests
             )
             
-            HStack(spacing: MTSpacing.medium) {
+            HStack(spacing: ModernDesignSystem.Spacing.md) {
                 HIGSecondaryButton(
                     "Touch Targets",
                     icon: "hand.tap.fill",
@@ -104,14 +104,14 @@ struct HIGTestResultsList: View {
     let results: [HIGTestResult]
     
     var body: some View {
-        VStack(alignment: .leading, spacing: MTSpacing.medium) {
+        VStack(alignment: .leading, spacing: ModernDesignSystem.Spacing.md) {
             HIGDynamicText(
                 "Test Results",
                 style: .headline,
                 weight: .semibold
             )
             
-            LazyVStack(spacing: MTSpacing.small) {
+            LazyVStack(spacing: ModernDesignSystem.Spacing.sm) {
                 ForEach(results, id: \.id) { result in
                     HIGTestResultRow(result: result)
                 }
@@ -124,12 +124,12 @@ struct HIGTestResultRow: View {
     let result: HIGTestResult
     
     var body: some View {
-        HStack(spacing: MTSpacing.medium) {
+        HStack(spacing: ModernDesignSystem.Spacing.md) {
             Image(systemName: result.passed ? "checkmark.circle.fill" : "xmark.circle.fill")
-                .foregroundColor(result.passed ? MTColors.success : MTColors.error)
+                .foregroundColor(result.passed ? ModernDesignSystem.Colors.success : ModernDesignSystem.Colors.error)
                 .font(.system(size: 20))
             
-            VStack(alignment: .leading, spacing: MTSpacing.tiny) {
+            VStack(alignment: .leading, spacing: ModernDesignSystem.Spacing.tiny) {
                 HIGDynamicText(
                     result.testName,
                     style: .body,
@@ -139,7 +139,7 @@ struct HIGTestResultRow: View {
                 HIGDynamicText(
                     result.description,
                     style: .caption,
-                    color: MTColors.secondaryText,
+                    color: ModernDesignSystem.Colors.secondaryText,
                     maxLines: 2
                 )
             }
@@ -151,13 +151,13 @@ struct HIGTestResultRow: View {
                     // Navigate to fix
                 }
                 .font(.caption)
-                .foregroundColor(MTColors.primary)
+                .foregroundColor(ModernDesignSystem.Colors.primary)
             }
         }
-        .padding(MTSpacing.medium)
+        .padding(ModernDesignSystem.Spacing.md)
         .background(
             RoundedRectangle(cornerRadius: 12)
-                .fill(MTColors.surface)
+                .fill(ModernDesignSystem.Colors.surface)
         )
     }
 }
@@ -341,7 +341,7 @@ struct HIGComplianceBadge: View {
     let score: Double
     
     var body: some View {
-        HStack(spacing: MTSpacing.tiny) {
+        HStack(spacing: ModernDesignSystem.Spacing.tiny) {
             Image(systemName: badgeIcon)
                 .foregroundColor(badgeColor)
             
@@ -352,8 +352,8 @@ struct HIGComplianceBadge: View {
                 color: badgeColor
             )
         }
-        .padding(.horizontal, MTSpacing.small)
-        .padding(.vertical, MTSpacing.tiny)
+        .padding(.horizontal, ModernDesignSystem.Spacing.sm)
+        .padding(.vertical, ModernDesignSystem.Spacing.tiny)
         .background(
             RoundedRectangle(cornerRadius: 8)
                 .fill(badgeColor.opacity(0.1))
@@ -370,9 +370,9 @@ struct HIGComplianceBadge: View {
     
     private var badgeColor: Color {
         switch score {
-        case 0.9...1.0: return MTColors.success
-        case 0.7..<0.9: return MTColors.warning
-        default: return MTColors.error
+        case 0.9...1.0: return ModernDesignSystem.Colors.success
+        case 0.7..<0.9: return ModernDesignSystem.Colors.warning
+        default: return ModernDesignSystem.Colors.error
         }
     }
 }

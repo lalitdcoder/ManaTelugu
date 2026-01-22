@@ -33,7 +33,7 @@ struct HIGAccessibleButton<Content: View>: View {
         }) {
             content
         }
-        .frame(minWidth: MTSpacing.minimumTouchTarget, minHeight: MTSpacing.minimumTouchTarget)
+        .frame(minWidth: ModernDesignSystem.Spacing.minimumTouchTarget, minHeight: ModernDesignSystem.Spacing.minimumTouchTarget)
         .accessibilityLabel(label)
         .accessibilityHint(hint)
         .accessibilityAddTraits(traits)
@@ -89,7 +89,7 @@ struct HIGAccessibleCard<Content: View>: View {
                 content
             }
         }
-        .frame(minWidth: MTSpacing.minimumTouchTarget, minHeight: MTSpacing.minimumTouchTarget)
+        .frame(minWidth: ModernDesignSystem.Spacing.minimumTouchTarget, minHeight: ModernDesignSystem.Spacing.minimumTouchTarget)
         .accessibilityElement(children: .combine)
         .accessibilityLabel(label)
         .accessibilityHint(hint)
@@ -112,7 +112,7 @@ struct HIGDynamicText: View {
         style: Font.TextStyle = .body,
         weight: Font.Weight = .regular,
         design: Font.Design = .default,
-        color: Color = MTColors.primaryText,
+        color: Color = ModernDesignSystem.Colors.primaryText,
         maxLines: Int? = nil
     ) {
         self.text = text
@@ -146,7 +146,7 @@ struct HIGFocusableView<Content: View>: View {
     var body: some View {
         content
             .focused($isFocused)
-            .onChange(of: isFocused) { focused in
+            .onChange(of: isFocused) { _, focused in
                 if focused {
                     session.hapticsService.lightImpact()
                 }
@@ -189,7 +189,7 @@ struct AccessibilityTestingView: View {
             .accessibilityHint("Displays current accessibility settings")
             
             if showingAccessibilityInfo {
-                VStack(alignment: .leading, spacing: MTSpacing.small) {
+                VStack(alignment: .leading, spacing: ModernDesignSystem.Spacing.sm) {
                     Text("Accessibility Status:")
                         .font(.headline)
                     
@@ -224,7 +224,7 @@ extension View {
     }
     
     func higTouchTarget() -> some View {
-        self.frame(minWidth: MTSpacing.minimumTouchTarget, minHeight: MTSpacing.minimumTouchTarget)
+        self.frame(minWidth: ModernDesignSystem.Spacing.minimumTouchTarget, minHeight: ModernDesignSystem.Spacing.minimumTouchTarget)
     }
     
     func higButtonStyle() -> some View {

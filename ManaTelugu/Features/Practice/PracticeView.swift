@@ -2,6 +2,7 @@ import SwiftUI
 
 struct PracticeView: View {
     @EnvironmentObject var session: AppSession
+    @Environment(\.dismiss) private var dismiss
     @State private var practiceItems: [PracticeItem] = []
     
     struct PracticeItem: Identifiable {
@@ -20,10 +21,16 @@ struct PracticeView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                // Enhanced background gradient for Liquid Glass effect
-                Color.clear
-                    .liquidGlassBackground()
-                    .ignoresSafeArea()
+                // Stronger gradient background
+                LinearGradient(
+                    colors: [
+                        Color(red: 0.4, green: 0.5, blue: 0.9).opacity(0.3),
+                        Color(red: 0.46, green: 0.29, blue: 0.64).opacity(0.2)
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                .ignoresSafeArea()
                 
                 EnhancedScrollView {
                     VStack(alignment: .leading, spacing: 32) {
@@ -53,13 +60,13 @@ struct PracticeView: View {
                                     .fontWeight(.semibold)
                                     .foregroundColor(.primary)
                             }
-                            .padding(.horizontal, MTSpacing.large)
+                            .padding(.horizontal, ModernDesignSystem.Spacing.lg)
                             
                             VStack(spacing: 12) {
                                 PracticeSectionCard(
                                     title: "Vocabulary Match",
                                     icon: "rectangle.stack.fill",
-                                    accent: MTColors.funBlue,
+                                    accent: ModernDesignSystem.Colors.funBlue,
                                     action: { },
                                     content: {
                                         Text("Match Telugu words with their English meanings.")
@@ -72,7 +79,7 @@ struct PracticeView: View {
                                 PracticeSectionCard(
                                     title: "Sentence Builder",
                                     icon: "text.bubble.fill",
-                                    accent: MTColors.funGreen,
+                                    accent: ModernDesignSystem.Colors.funGreen,
                                     action: { },
                                     content: {
                                         Text("Build Telugu sentences by arranging words correctly.")
@@ -85,7 +92,7 @@ struct PracticeView: View {
                                 PracticeSectionCard(
                                     title: "Listening Challenge",
                                     icon: "ear.fill",
-                                    accent: MTColors.funPink,
+                                    accent: ModernDesignSystem.Colors.funPink,
                                     action: { },
                                     content: {
                                         Text("Listen to Telugu words and choose the right meaning.")
@@ -98,7 +105,7 @@ struct PracticeView: View {
                                 PracticeSectionCard(
                                     title: "Sound Match",
                                     icon: "speaker.wave.2.fill",
-                                    accent: MTColors.funYellow,
+                                    accent: ModernDesignSystem.Colors.funYellow,
                                     action: { },
                                     content: {
                                         Text("Listen to the sound and pick the right letter or word.")
@@ -111,7 +118,7 @@ struct PracticeView: View {
                                 PracticeSectionCard(
                                     title: "Card Match",
                                     icon: "arrow.left.arrow.right",
-                                    accent: MTColors.funBlue,
+                                    accent: ModernDesignSystem.Colors.funBlue,
                                     action: { },
                                     content: {
                                         Text("Memory match game with Telugu letters.")
@@ -124,7 +131,7 @@ struct PracticeView: View {
                                 PracticeSectionCard(
                                     title: "Trace Letters",
                                     icon: "pencil.tip",
-                                    accent: MTColors.funGreen,
+                                    accent: ModernDesignSystem.Colors.funGreen,
                                     action: { },
                                     content: {
                                         Text("Practice writing letters by tracing them.")
@@ -135,7 +142,7 @@ struct PracticeView: View {
                                 )
                                 
                             }
-                            .padding(.horizontal, MTSpacing.large)
+                            .padding(.horizontal, ModernDesignSystem.Spacing.lg)
                         }
                         
                         // Quizzes Section - Apple-style section header
@@ -149,13 +156,13 @@ struct PracticeView: View {
                                     .fontWeight(.semibold)
                                     .foregroundColor(.primary)
                             }
-                            .padding(.horizontal, MTSpacing.large)
+                            .padding(.horizontal, ModernDesignSystem.Spacing.lg)
                             
                             VStack(spacing: 12) {
                             PracticeSectionCard(
                                 title: "Vowels Quiz",
                                 icon: "textformat",
-                                accent: MTColors.funYellow,
+                                accent: ModernDesignSystem.Colors.funYellow,
                                 action: { },
                                 content: {
                                     Text("Test your knowledge of Telugu vowels: అ ఆ ఇ ఈ...")
@@ -168,7 +175,7 @@ struct PracticeView: View {
                             PracticeSectionCard(
                                 title: "Consonants Quiz",
                                 icon: "textformat.abc",
-                                accent: MTColors.funBlue,
+                                accent: ModernDesignSystem.Colors.funBlue,
                                 action: { },
                                 content: {
                                     Text("Challenge yourself with consonants: క నుండి క్ష వరకు")
@@ -181,7 +188,7 @@ struct PracticeView: View {
                             PracticeSectionCard(
                                 title: "Complete Letters Quiz",
                                 icon: "square.grid.2x2",
-                                accent: MTColors.funGreen,
+                                accent: ModernDesignSystem.Colors.funGreen,
                                 action: { },
                                 content: {
                                     Text("Mixed practice with all Telugu letters.")
@@ -191,20 +198,26 @@ struct PracticeView: View {
                                 destination: AnyView(LettersQuizView(scope: .all).environmentObject(session))
                             )
                             }
-                            .padding(.horizontal, MTSpacing.large)
+                            .padding(.horizontal, ModernDesignSystem.Spacing.lg)
                         }
                         
                     }
-                    .padding(.vertical, MTSpacing.large)
+                    .padding(.vertical, ModernDesignSystem.Spacing.lg)
                 }
             }
-            .navigationTitle("")
-            .navigationBarHidden(true)
-        }
-        .onAppear {
-            Task {
-                await loadPracticeItems()
+            .navigationTitle("Practice")
+            .navigationBarTitleDisplayMode(.inline)
+            .navigationBarBackButtonHidden(true)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    BackButton {
+                        dismiss()
+                    }
+                }
             }
+        }
+.onAppear {
+            loadPracticeItems()
         }
         .tabItem {
             Image(systemName: "book")
@@ -212,10 +225,10 @@ struct PracticeView: View {
         }
     }
     
-    private func loadPracticeItems() async {
+private func loadPracticeItems() {
         // Load a mix of letters and words for practice
-        let letters = await session.dataRepository.letters.prefix(5)
-        let words = await session.dataRepository.words.prefix(5)
+        let letters = session.dataRepository.letters.prefix(5)
+        let words = session.dataRepository.words.prefix(5)
         
         var items: [PracticeItem] = []
         
@@ -258,7 +271,7 @@ struct PracticeSectionCard<Content: View>: View {
             hapticStyle: .medium,
             loadingMessage: "Loading practice..."
         ) {
-            HStack(spacing: MTSpacing.medium) {
+            HStack(spacing: ModernDesignSystem.Spacing.md) {
                 // Apple-style icon container
                 ZStack {
                     RoundedRectangle(cornerRadius: 12)
@@ -271,11 +284,11 @@ struct PracticeSectionCard<Content: View>: View {
                         .accessibilityHidden(true) // Icon is decorative
                 }
                 
-                VStack(alignment: .leading, spacing: MTSpacing.tiny) {
+                VStack(alignment: .leading, spacing: ModernDesignSystem.Spacing.tiny) {
                     (Text(title) as Text)
-                        .font(MTTypography.heading())
+                        .font(ModernDesignSystem.Typography.headline)
                         .fontWeight(.semibold)
-                        .foregroundColor(MTColors.primaryText)
+                        .foregroundColor(ModernDesignSystem.Colors.primaryText)
                         .multilineTextAlignment(.leading)
                     content()
                 }
@@ -285,14 +298,14 @@ struct PracticeSectionCard<Content: View>: View {
                 // Apple-style chevron
                 Image(systemName: "chevron.right")
                     .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(MTColors.tertiaryText)
+                    .foregroundColor(ModernDesignSystem.Colors.tertiaryText)
                     .accessibilityHidden(true) // Decorative indicator
             }
-            .padding(.horizontal, MTSpacing.medium)
-            .padding(.vertical, MTSpacing.regular)
+            .padding(.horizontal, ModernDesignSystem.Spacing.md)
+            .padding(.vertical, ModernDesignSystem.Spacing.regular)
             .background(
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(MTColors.surfaceAlt)
+                    .fill(ModernDesignSystem.Colors.surfaceSecondary)
                     .shadow(color: .black.opacity(0.05), radius: 1, x: 0, y: 1)
             )
         }
@@ -308,41 +321,41 @@ struct PracticeItemView: View {
     @State private var showingOptions = false
     
     var body: some View {
-        VStack(alignment: .leading, spacing: MTSpacing.small) {
+        VStack(alignment: .leading, spacing: ModernDesignSystem.Spacing.sm) {
             (Text(item.telugu) as Text)
-                .font(MTTypography.title())
-                .foregroundColor(MTColors.primaryText)
+                .font(ModernDesignSystem.Typography.title1)
+                .foregroundColor(ModernDesignSystem.Colors.primaryText)
             
             Text(item.transliteration)
-                .font(MTTypography.body())
-                .foregroundColor(MTColors.secondaryText)
+                .font(ModernDesignSystem.Typography.body)
+                .foregroundColor(ModernDesignSystem.Colors.secondaryText)
             
             if showingOptions {
                 Text(item.english)
-                    .font(MTTypography.body())
-                    .foregroundColor(MTColors.primaryText)
-                    .padding(.bottom, MTSpacing.small)
+                    .font(ModernDesignSystem.Typography.body)
+                    .foregroundColor(ModernDesignSystem.Colors.primaryText)
+                    .padding(.bottom, ModernDesignSystem.Spacing.sm)
                 
-                HStack(spacing: MTSpacing.medium) {
+                HStack(spacing: ModernDesignSystem.Spacing.md) {
                     EnhancedButton(
                         interaction: .medium,
                         isLoading: false,
                         isEnabled: true,
                         action: {
                             // Mark as hard
-                            session.hapticsService.warning()
+HapticsManager.shared.notification(.warning)
                         },
                         content: {
                             Text("Hard")
-                                .font(MTTypography.caption())
-                                .padding(.horizontal, MTSpacing.large)
-                                .padding(.vertical, MTSpacing.small)
-                                .background(MTColors.warning)
+                                .font(ModernDesignSystem.Typography.caption)
+                                .padding(.horizontal, ModernDesignSystem.Spacing.lg)
+                                .padding(.vertical, ModernDesignSystem.Spacing.sm)
+                                .background(ModernDesignSystem.Colors.warning)
                                 .foregroundColor(.white)
                                 .cornerRadius(20)
                         }
                     )
-                    .frame(minWidth: MTSpacing.minimumTouchTarget, minHeight: MTSpacing.minimumTouchTarget)
+                    .frame(minWidth: ModernDesignSystem.Spacing.minimumTouchTarget, minHeight: ModernDesignSystem.Spacing.minimumTouchTarget)
                     .accessibilityLabel("Mark as hard")
                     .accessibilityHint("This practice item was difficult")
                     .accessibilityAddTraits(.isButton)
@@ -353,19 +366,19 @@ struct PracticeItemView: View {
                         isEnabled: true,
                         action: {
                             // Mark as medium
-                            session.hapticsService.lightImpact()
+HapticsManager.shared.impact(.light)
                         },
                         content: {
                             Text("Okay")
-                                .font(MTTypography.caption())
-                                .padding(.horizontal, MTSpacing.large)
-                                .padding(.vertical, MTSpacing.small)
-                                .background(MTColors.primary)
+                                .font(ModernDesignSystem.Typography.caption)
+                                .padding(.horizontal, ModernDesignSystem.Spacing.lg)
+                                .padding(.vertical, ModernDesignSystem.Spacing.sm)
+                                .background(ModernDesignSystem.Colors.primary)
                                 .foregroundColor(.white)
                                 .cornerRadius(20)
                         }
                     )
-                    .frame(minWidth: MTSpacing.minimumTouchTarget, minHeight: MTSpacing.minimumTouchTarget)
+                    .frame(minWidth: ModernDesignSystem.Spacing.minimumTouchTarget, minHeight: ModernDesignSystem.Spacing.minimumTouchTarget)
                     .accessibilityLabel("Mark as okay")
                     .accessibilityHint("This practice item was moderately difficult")
                     .accessibilityAddTraits(.isButton)
@@ -376,27 +389,27 @@ struct PracticeItemView: View {
                         isEnabled: true,
                         action: {
                             // Mark as easy
-                            session.hapticsService.success()
+HapticsManager.shared.notification(.success)
                         },
                         content: {
                             Text("Easy")
-                                .font(MTTypography.caption())
-                                .padding(.horizontal, MTSpacing.large)
-                                .padding(.vertical, MTSpacing.small)
-                                .background(MTColors.success)
+                                .font(ModernDesignSystem.Typography.caption)
+                                .padding(.horizontal, ModernDesignSystem.Spacing.lg)
+                                .padding(.vertical, ModernDesignSystem.Spacing.sm)
+                                .background(ModernDesignSystem.Colors.success)
                                 .foregroundColor(.white)
                                 .cornerRadius(20)
                         }
                     )
-                    .frame(minWidth: MTSpacing.minimumTouchTarget, minHeight: MTSpacing.minimumTouchTarget)
+                    .frame(minWidth: ModernDesignSystem.Spacing.minimumTouchTarget, minHeight: ModernDesignSystem.Spacing.minimumTouchTarget)
                     .accessibilityLabel("Mark as easy")
                     .accessibilityHint("This practice item was easy")
                     .accessibilityAddTraits(.isButton)
                 }
             }
         }
-        .padding(MTSpacing.medium)
-        .background(MTColors.surfaceAlt)
+        .padding(ModernDesignSystem.Spacing.md)
+        .background(ModernDesignSystem.Colors.surfaceSecondary)
         .cornerRadius(12)
         .onTapGesture {
             withAnimation {

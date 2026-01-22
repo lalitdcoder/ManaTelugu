@@ -3,7 +3,7 @@ import SwiftUI
 struct StreamlinedRootTabView: View {
     @EnvironmentObject var session: AppSession
     @State private var selectedTab = 0
-    
+
     var body: some View {
         TabView(selection: $selectedTab) {
             // Home - Streamlined without Quick Actions
@@ -13,7 +13,7 @@ struct StreamlinedRootTabView: View {
                     Text("Home")
                 }
                 .tag(0)
-            
+
             // Learn - Alphabet learning with smooth navigation
             AlphabetHubView()
                 .tabItem {
@@ -21,7 +21,7 @@ struct StreamlinedRootTabView: View {
                     Text("Learn")
                 }
                 .tag(1)
-            
+
             // Practice - Improved games with better responsiveness
             ImprovedGamesHubView()
                 .tabItem {
@@ -29,15 +29,17 @@ struct StreamlinedRootTabView: View {
                     Text("Practice")
                 }
                 .tag(2)
-            
+
             // Progress - Enhanced with integrated badge system
             EnhancedProgressView()
                 .tabItem {
-                    Image(systemName: selectedTab == 3 ? "chart.line.uptrend.xyaxis" : "chart.line.uptrend.xyaxis")
+                    Image(
+                        systemName: selectedTab == 3
+                            ? "chart.line.uptrend.xyaxis" : "chart.line.uptrend.xyaxis")
                     Text("Progress")
                 }
                 .tag(3)
-            
+
             // More - Simplified with only Contact Us and About Us
             SimplifiedMoreView()
                 .tabItem {
@@ -47,26 +49,12 @@ struct StreamlinedRootTabView: View {
                 .tag(4)
         }
         .accentColor(.blue)
-        .onAppear {
-            setupTabBarAppearance()
+        .toolbarBackground(.visible, for: .tabBar)
+        .toolbarBackground(Color(.systemBackground), for: .tabBar)
+        .toolbarColorScheme(nil, for: .tabBar)
+        .onChange(of: selectedTab) {
+            HapticsManager.shared.impact(.light)
         }
-    }
-    
-    private func setupTabBarAppearance() {
-        let appearance = UITabBarAppearance()
-        appearance.configureWithOpaqueBackground()
-        appearance.backgroundColor = UIColor.systemBackground
-        appearance.shadowColor = UIColor.separator.withAlphaComponent(0.3)
-        
-        // Smooth rounded corners effect
-        appearance.backgroundEffect = UIBlurEffect(style: .systemMaterial)
-        
-        UITabBar.appearance().standardAppearance = appearance
-        UITabBar.appearance().scrollEdgeAppearance = appearance
-        
-        // Add subtle animation to tab switches
-        UITabBar.appearance().layer.cornerRadius = 0
-        UITabBar.appearance().clipsToBounds = true
     }
 }
 
@@ -76,9 +64,8 @@ extension StreamlinedRootTabView {
         withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
             selectedTab = index
         }
-        
+
         // Add haptic feedback
-        let impactFeedback = UIImpactFeedbackGenerator(style: .light)
-        impactFeedback.impactOccurred()
+        HapticsManager.shared.impact(.light)
     }
 }

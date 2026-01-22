@@ -28,8 +28,8 @@ struct ElegantDesign {
         static let error = Color(.systemRed)
         
         // Glass effect colors
-        static let glassBackground = Color.white.opacity(0.1)
-        static let glassBorder = Color.white.opacity(0.2)
+        static let glassBackground = ModernDesignSystem.Colors.surface.opacity(0.1)
+        static let glassBorder = ModernDesignSystem.Colors.surface.opacity(0.2)
     }
     
     // MARK: - Typography
@@ -71,9 +71,9 @@ struct ElegantDesign {
     
     // MARK: - Shadows
     struct Shadow {
-        static let subtle = (color: Color.black.opacity(0.05), radius: CGFloat(2), x: CGFloat(0), y: CGFloat(1))
-        static let soft = (color: Color.black.opacity(0.1), radius: CGFloat(8), x: CGFloat(0), y: CGFloat(4))
-        static let medium = (color: Color.black.opacity(0.15), radius: CGFloat(16), x: CGFloat(0), y: CGFloat(8))
+        static let subtle = (color: ModernDesignSystem.Colors.shadow.opacity(0.05), radius: CGFloat(2), x: CGFloat(0), y: CGFloat(1))
+        static let soft = (color: ModernDesignSystem.Colors.shadow.opacity(0.1), radius: CGFloat(8), x: CGFloat(0), y: CGFloat(4))
+        static let medium = (color: ModernDesignSystem.Colors.shadow.opacity(0.15), radius: CGFloat(16), x: CGFloat(0), y: CGFloat(8))
     }
 }
 
@@ -89,7 +89,10 @@ struct ElegantButton: View {
     }
     
     var body: some View {
-        Button(action: action) {
+        Button(action: {
+            HapticFeedback.light()
+            action()
+        }) {
             Text(title)
                 .font(ElegantDesign.Typography.callout)
                 .fontWeight(.semibold)
@@ -101,12 +104,12 @@ struct ElegantButton: View {
                 .cornerRadius(cornerRadius)
                 .overlay(overlayBorder)
         }
-        .buttonStyle(PlainButtonStyle())
+.buttonStyle(HapticPlainButtonStyle())
     }
     
     private var textColor: Color {
         switch style {
-        case .primary: return .white
+        case .primary: return ModernDesignSystem.Colors.textPrimary
         case .secondary: return ElegantDesign.Colors.primary
         case .tertiary: return ElegantDesign.Colors.textPrimary
         case .minimal: return ElegantDesign.Colors.primary

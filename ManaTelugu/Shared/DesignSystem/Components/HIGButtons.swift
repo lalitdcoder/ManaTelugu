@@ -32,7 +32,7 @@ struct HIGPrimaryButton: View {
             session.hapticsService.lightImpact()
             action()
         }) {
-            HStack(spacing: MTSpacing.small) {
+            HStack(spacing: ModernDesignSystem.Spacing.sm) {
                 if isLoading {
                     ProgressView()
                         .scaleEffect(0.8)
@@ -49,12 +49,12 @@ struct HIGPrimaryButton: View {
                     color: .white
                 )
             }
-            .padding(.horizontal, MTSpacing.large)
-            .padding(.vertical, MTSpacing.medium)
-            .frame(minHeight: MTSpacing.minimumTouchTarget)
+            .padding(.horizontal, ModernDesignSystem.Spacing.lg)
+            .padding(.vertical, ModernDesignSystem.Spacing.md)
+            .frame(minHeight: ModernDesignSystem.Spacing.minimumTouchTarget)
             .background(
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(isEnabled ? MTColors.primary : MTColors.primary.opacity(0.5))
+                    .fill(isEnabled ? ModernDesignSystem.Colors.primary : ModernDesignSystem.Colors.primary.opacity(0.5))
             )
         }
         .disabled(!isEnabled || isLoading)
@@ -98,7 +98,7 @@ struct HIGSecondaryButton: View {
             session.hapticsService.lightImpact()
             action()
         }) {
-            HStack(spacing: MTSpacing.small) {
+            HStack(spacing: ModernDesignSystem.Spacing.sm) {
                 if let icon = icon {
                     Image(systemName: icon)
                         .font(.system(size: 16, weight: .medium))
@@ -108,15 +108,15 @@ struct HIGSecondaryButton: View {
                     title,
                     style: .body,
                     weight: .medium,
-                    color: isEnabled ? MTColors.primary : MTColors.secondaryText
+                    color: isEnabled ? ModernDesignSystem.Colors.primary : ModernDesignSystem.Colors.secondaryText
                 )
             }
-            .padding(.horizontal, MTSpacing.large)
-            .padding(.vertical, MTSpacing.medium)
-            .frame(minHeight: MTSpacing.minimumTouchTarget)
+            .padding(.horizontal, ModernDesignSystem.Spacing.lg)
+            .padding(.vertical, ModernDesignSystem.Spacing.md)
+            .frame(minHeight: ModernDesignSystem.Spacing.minimumTouchTarget)
             .background(
                 RoundedRectangle(cornerRadius: 12)
-                    .stroke(isEnabled ? MTColors.primary : MTColors.secondaryText, lineWidth: 1.5)
+                    .stroke(isEnabled ? ModernDesignSystem.Colors.primary : ModernDesignSystem.Colors.secondaryText, lineWidth: 1.5)
             )
         }
         .disabled(!isEnabled)
@@ -219,7 +219,7 @@ struct HIGFloatingActionButton: View {
                 .frame(width: 56, height: 56)
                 .background(
                     Circle()
-                        .fill(MTColors.primary)
+                        .fill(ModernDesignSystem.Colors.primary)
                         .shadow(color: .black.opacity(0.2), radius: 8, x: 0, y: 4)
                 )
         }
@@ -240,8 +240,8 @@ enum HIGButtonSize {
     
     var frameSize: CGFloat {
         switch self {
-        case .small: return MTSpacing.minimumTouchTarget
-        case .medium: return MTSpacing.recommendedTouchTarget
+        case .small: return ModernDesignSystem.Spacing.minimumTouchTarget
+        case .medium: return ModernDesignSystem.Spacing.recommendedTouchTarget
         case .large: return 56
         }
     }
@@ -261,7 +261,7 @@ enum HIGIconButtonStyle {
     func backgroundColor(isEnabled: Bool) -> Color {
         switch self {
         case .filled:
-            return isEnabled ? MTColors.primary : MTColors.primary.opacity(0.5)
+            return isEnabled ? ModernDesignSystem.Colors.primary : ModernDesignSystem.Colors.primary.opacity(0.5)
         case .outlined:
             return Color.clear
         case .plain:
@@ -274,7 +274,7 @@ enum HIGIconButtonStyle {
         case .filled:
             return .white
         case .outlined, .plain:
-            return isEnabled ? MTColors.primary : MTColors.secondaryText
+            return isEnabled ? ModernDesignSystem.Colors.primary : ModernDesignSystem.Colors.secondaryText
         }
     }
 }
@@ -284,7 +284,7 @@ struct HIGButtonGroup<Content: View>: View {
     let spacing: CGFloat
     let content: Content
     
-    init(spacing: CGFloat = MTSpacing.medium, @ViewBuilder content: () -> Content) {
+    init(spacing: CGFloat = ModernDesignSystem.Spacing.md, @ViewBuilder content: () -> Content) {
         self.spacing = spacing
         self.content = content()
     }

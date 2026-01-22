@@ -134,7 +134,10 @@ struct InteractiveLiquidGlassButton<Content: View>: View {
     }
     
     var body: some View {
-        Button(action: action) {
+        Button(action: {
+            HapticFeedback.light()
+            action()
+        }) {
             content
         }
         .disabled(!isEnabled || isLoading)

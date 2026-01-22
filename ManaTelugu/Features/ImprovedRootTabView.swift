@@ -38,9 +38,9 @@ struct ImprovedRootTabView: View {
                 }
                 .tag(3)
         }
-        .accentColor(MTColors.teluguBlue)
-        .onChange(of: selectedTab) { _ in
-            session.hapticsService.lightImpact()
+        .accentColor(ModernDesignSystem.Colors.teluguBlue)
+.onChange(of: selectedTab) { _, _ in
+            HapticsManager.shared.impact(.light)
         }
     }
 }
@@ -52,7 +52,7 @@ struct ImprovedLearnView: View {
     var body: some View {
         NavigationView {
             ZStack {
-                MTColors.background.ignoresSafeArea()
+                ModernDesignSystem.Colors.background.ignoresSafeArea()
                 
                 BreathingRoomLayout {
                     // Quick Access Section
@@ -76,17 +76,17 @@ struct ImprovedLearnView: View {
     
     private var quickAccessSection: some View {
         CleanCardLayout(title: "Continue Learning") {
-            VStack(spacing: MTSpacing.medium) {
+            VStack(spacing: ModernDesignSystem.Spacing.md) {
                 HStack {
-                    VStack(alignment: .leading, spacing: MTSpacing.tiny) {
+                    VStack(alignment: .leading, spacing: ModernDesignSystem.Spacing.tiny) {
                         Text("Next Up")
                             .font(.caption)
-                            .foregroundColor(MTColors.secondaryText)
+                            .foregroundColor(ModernDesignSystem.Colors.secondaryText)
                         
                         Text("Letter ఆ")
                             .font(.title3)
                             .fontWeight(.bold)
-                            .foregroundColor(MTColors.teluguBlue)
+                            .foregroundColor(ModernDesignSystem.Colors.teluguBlue)
                     }
                     
                     Spacer()
@@ -100,16 +100,16 @@ struct ImprovedLearnView: View {
     }
     
     private var learningPathsSection: some View {
-        VStack(alignment: .leading, spacing: MTSpacing.medium) {
+        VStack(alignment: .leading, spacing: ModernDesignSystem.Spacing.md) {
             Text("Learning Paths")
                 .font(.title3)
                 .fontWeight(.semibold)
-                .foregroundColor(MTColors.primaryText)
+                .foregroundColor(ModernDesignSystem.Colors.primaryText)
             
-            VStack(spacing: MTSpacing.medium) {
-                learningPathCard("Alphabet", "Master Telugu letters", "textformat.abc", MTColors.teluguBlue, 0.75)
-                learningPathCard("Vocabulary", "Build your word bank", "book.fill", MTColors.teluguGreen, 0.45)
-                learningPathCard("Lessons", "Structured learning", "graduationcap.fill", MTColors.teluguSaffron, 0.30)
+            VStack(spacing: ModernDesignSystem.Spacing.md) {
+                learningPathCard("Alphabet", "Master Telugu letters", "textformat.abc", ModernDesignSystem.Colors.teluguBlue, 0.75)
+                learningPathCard("Vocabulary", "Build your word bank", "book.fill", ModernDesignSystem.Colors.teluguGreen, 0.45)
+                learningPathCard("Lessons", "Structured learning", "graduationcap.fill", ModernDesignSystem.Colors.teluguSaffron, 0.30)
             }
         }
     }
@@ -120,21 +120,21 @@ struct ImprovedLearnView: View {
             hint: "Start \(title.lowercased()) learning",
             action: { /* Navigate */ }
         ) {
-            HStack(spacing: MTSpacing.medium) {
+            HStack(spacing: ModernDesignSystem.Spacing.md) {
                 Image(systemName: icon)
                     .font(.title2)
                     .foregroundColor(color)
                     .frame(width: 40)
                 
-                VStack(alignment: .leading, spacing: MTSpacing.tiny) {
+                VStack(alignment: .leading, spacing: ModernDesignSystem.Spacing.tiny) {
                     Text(title)
                         .font(.body)
                         .fontWeight(.semibold)
-                        .foregroundColor(MTColors.primaryText)
+                        .foregroundColor(ModernDesignSystem.Colors.primaryText)
                     
                     Text(subtitle)
                         .font(.caption)
-                        .foregroundColor(MTColors.secondaryText)
+                        .foregroundColor(ModernDesignSystem.Colors.secondaryText)
                     
                     ProgressView(value: progress)
                         .tint(color)
@@ -147,18 +147,18 @@ struct ImprovedLearnView: View {
                     .fontWeight(.medium)
                     .foregroundColor(color)
             }
-            .padding(MTSpacing.medium)
-            .background(MTColors.cardBackground)
+            .padding(ModernDesignSystem.Spacing.md)
+            .background(ModernDesignSystem.Colors.cardBackground)
             .cornerRadius(12)
         }
     }
     
     private var recentActivitySection: some View {
         CleanCardLayout(title: "Recent Activity") {
-            VStack(spacing: MTSpacing.small) {
-                activityRow("Completed Letter అ", "2 hours ago", MTColors.teluguGreen)
-                activityRow("Vocabulary Quiz", "Yesterday", MTColors.teluguBlue)
-                activityRow("Story: The Clever Fox", "2 days ago", MTColors.teluguSaffron)
+            VStack(spacing: ModernDesignSystem.Spacing.sm) {
+                activityRow("Completed Letter అ", "2 hours ago", ModernDesignSystem.Colors.teluguGreen)
+                activityRow("Vocabulary Quiz", "Yesterday", ModernDesignSystem.Colors.teluguBlue)
+                activityRow("Story: The Clever Fox", "2 days ago", ModernDesignSystem.Colors.teluguSaffron)
             }
         }
     }
@@ -171,13 +171,13 @@ struct ImprovedLearnView: View {
             
             Text(title)
                 .font(.body)
-                .foregroundColor(MTColors.primaryText)
+                .foregroundColor(ModernDesignSystem.Colors.primaryText)
             
             Spacer()
             
             Text(time)
                 .font(.caption)
-                .foregroundColor(MTColors.secondaryText)
+                .foregroundColor(ModernDesignSystem.Colors.secondaryText)
         }
     }
 }
@@ -187,7 +187,7 @@ struct ImprovedPracticeView: View {
     var body: some View {
         NavigationView {
             ZStack {
-                MTColors.background.ignoresSafeArea()
+                ModernDesignSystem.Colors.background.ignoresSafeArea()
                 
                 BreathingRoomLayout {
                     // Daily Challenge
@@ -210,15 +210,15 @@ struct ImprovedPracticeView: View {
             subtitle: "Complete today's challenge to earn bonus XP"
         ) {
             HStack {
-                VStack(alignment: .leading, spacing: MTSpacing.tiny) {
+                VStack(alignment: .leading, spacing: ModernDesignSystem.Spacing.tiny) {
                     Text("Word Match")
                         .font(.body)
                         .fontWeight(.semibold)
-                        .foregroundColor(MTColors.primaryText)
+                        .foregroundColor(ModernDesignSystem.Colors.primaryText)
                     
                     Text("50 XP Bonus")
                         .font(.caption)
-                        .foregroundColor(MTColors.teluguSaffron)
+                        .foregroundColor(ModernDesignSystem.Colors.teluguSaffron)
                 }
                 
                 Spacer()
@@ -232,10 +232,10 @@ struct ImprovedPracticeView: View {
     
     private var practiceOptionsSection: some View {
         ImprovedGrid(columns: 2) {
-            practiceCard("Games", "gamecontroller.fill", MTColors.teluguBlue)
-            practiceCard("Stories", "books.vertical.fill", MTColors.teluguGreen)
-            practiceCard("Quiz", "questionmark.circle.fill", MTColors.teluguSaffron)
-            practiceCard("Review", "arrow.clockwise", MTColors.culturalRed)
+            practiceCard("Games", "gamecontroller.fill", ModernDesignSystem.Colors.teluguBlue)
+            practiceCard("Stories", "books.vertical.fill", ModernDesignSystem.Colors.teluguGreen)
+            practiceCard("Quiz", "questionmark.circle.fill", ModernDesignSystem.Colors.teluguSaffron)
+            practiceCard("Review", "arrow.clockwise", ModernDesignSystem.Colors.culturalRed)
         }
     }
     
@@ -245,7 +245,7 @@ struct ImprovedPracticeView: View {
             hint: "Start \(title.lowercased()) practice",
             action: { /* Navigate */ }
         ) {
-            VStack(spacing: MTSpacing.medium) {
+            VStack(spacing: ModernDesignSystem.Spacing.md) {
                 Image(systemName: icon)
                     .font(.system(size: 32))
                     .foregroundColor(color)
@@ -253,10 +253,10 @@ struct ImprovedPracticeView: View {
                 Text(title)
                     .font(.body)
                     .fontWeight(.semibold)
-                    .foregroundColor(MTColors.primaryText)
+                    .foregroundColor(ModernDesignSystem.Colors.primaryText)
             }
-            .padding(MTSpacing.large)
-            .background(MTColors.cardBackground)
+            .padding(ModernDesignSystem.Spacing.lg)
+            .background(ModernDesignSystem.Colors.cardBackground)
             .cornerRadius(16)
             .frame(minHeight: 120)
         }
@@ -270,7 +270,7 @@ struct ImprovedProgressView: View {
     var body: some View {
         NavigationView {
             ZStack {
-                MTColors.background.ignoresSafeArea()
+                ModernDesignSystem.Colors.background.ignoresSafeArea()
                 
                 BreathingRoomLayout {
                     // Stats Overview
@@ -294,15 +294,15 @@ struct ImprovedProgressView: View {
     
     private var statsOverviewSection: some View {
         ImprovedGrid(columns: 2) {
-            statCard("Total XP", "\(session.userProfile.totalXP)", MTColors.teluguBlue)
-            statCard("Level", "\(session.userProfile.level)", MTColors.teluguGreen)
-            statCard("Streak", "\(session.userProfile.currentStreak) days", MTColors.teluguSaffron)
-            statCard("Badges", "\(session.gamificationService.gamificationState.badges.filter { $0.isUnlocked }.count)", MTColors.culturalRed)
+            statCard("Total XP", "\(session.userProfile.totalXP)", ModernDesignSystem.Colors.teluguBlue)
+            statCard("Level", "\(session.userProfile.level)", ModernDesignSystem.Colors.teluguGreen)
+            statCard("Streak", "\(session.userProfile.currentStreak) days", ModernDesignSystem.Colors.teluguSaffron)
+            statCard("Badges", "\(session.gamificationService.gamificationState.badges.filter { $0.isUnlocked }.count)", ModernDesignSystem.Colors.culturalRed)
         }
     }
     
     private func statCard(_ title: String, _ value: String, _ color: Color) -> some View {
-        VStack(spacing: MTSpacing.small) {
+        VStack(spacing: ModernDesignSystem.Spacing.sm) {
             Text(value)
                 .font(.title2)
                 .fontWeight(.bold)
@@ -310,39 +310,39 @@ struct ImprovedProgressView: View {
             
             Text(title)
                 .font(.caption)
-                .foregroundColor(MTColors.secondaryText)
+                .foregroundColor(ModernDesignSystem.Colors.secondaryText)
         }
-        .padding(MTSpacing.large)
-        .background(MTColors.cardBackground)
+        .padding(ModernDesignSystem.Spacing.lg)
+        .background(ModernDesignSystem.Colors.cardBackground)
         .cornerRadius(16)
         .frame(minHeight: 100)
     }
     
     private var achievementsSection: some View {
         CleanCardLayout(title: "Recent Achievements") {
-            VStack(spacing: MTSpacing.small) {
-                achievementRow("First Letter", "Learned your first Telugu letter", MTColors.teluguGreen)
-                achievementRow("Word Master", "Learned 50 vocabulary words", MTColors.teluguBlue)
-                achievementRow("Streak Keeper", "Maintained 7-day streak", MTColors.teluguSaffron)
+            VStack(spacing: ModernDesignSystem.Spacing.sm) {
+                achievementRow("First Letter", "Learned your first Telugu letter", ModernDesignSystem.Colors.teluguGreen)
+                achievementRow("Word Master", "Learned 50 vocabulary words", ModernDesignSystem.Colors.teluguBlue)
+                achievementRow("Streak Keeper", "Maintained 7-day streak", ModernDesignSystem.Colors.teluguSaffron)
             }
         }
     }
     
     private func achievementRow(_ title: String, _ description: String, _ color: Color) -> some View {
-        HStack(spacing: MTSpacing.medium) {
+        HStack(spacing: ModernDesignSystem.Spacing.md) {
             Image(systemName: "star.fill")
                 .font(.title3)
                 .foregroundColor(color)
             
-            VStack(alignment: .leading, spacing: MTSpacing.tiny) {
+            VStack(alignment: .leading, spacing: ModernDesignSystem.Spacing.tiny) {
                 Text(title)
                     .font(.body)
                     .fontWeight(.medium)
-                    .foregroundColor(MTColors.primaryText)
+                    .foregroundColor(ModernDesignSystem.Colors.primaryText)
                 
                 Text(description)
                     .font(.caption)
-                    .foregroundColor(MTColors.secondaryText)
+                    .foregroundColor(ModernDesignSystem.Colors.secondaryText)
             }
             
             Spacer()
@@ -352,22 +352,22 @@ struct ImprovedProgressView: View {
     private var streakSection: some View {
         CleanCardLayout(title: "Learning Streak") {
             HStack {
-                VStack(alignment: .leading, spacing: MTSpacing.tiny) {
+                VStack(alignment: .leading, spacing: ModernDesignSystem.Spacing.tiny) {
                     Text("Current Streak")
                         .font(.caption)
-                        .foregroundColor(MTColors.secondaryText)
+                        .foregroundColor(ModernDesignSystem.Colors.secondaryText)
                     
                     Text("\(session.userProfile.currentStreak) days")
                         .font(.title2)
                         .fontWeight(.bold)
-                        .foregroundColor(MTColors.teluguSaffron)
+                        .foregroundColor(ModernDesignSystem.Colors.teluguSaffron)
                 }
                 
                 Spacer()
                 
                 Image(systemName: "flame.fill")
                     .font(.system(size: 32))
-                    .foregroundColor(MTColors.teluguSaffron)
+                    .foregroundColor(ModernDesignSystem.Colors.teluguSaffron)
             }
         }
     }
@@ -378,10 +378,10 @@ struct ImprovedMoreView: View {
     var body: some View {
         NavigationView {
             ZStack {
-                MTColors.background.ignoresSafeArea()
+                ModernDesignSystem.Colors.background.ignoresSafeArea()
                 
                 BreathingRoomLayout {
-                    VStack(spacing: MTSpacing.large) {
+                    VStack(spacing: ModernDesignSystem.Spacing.lg) {
                         settingsSection
                         helpSection
                         aboutSection
@@ -395,7 +395,7 @@ struct ImprovedMoreView: View {
     
     private var settingsSection: some View {
         CleanCardLayout(title: "Settings") {
-            VStack(spacing: MTSpacing.medium) {
+            VStack(spacing: ModernDesignSystem.Spacing.md) {
                 settingRow("Kid Mode", "toggle.left.and.right")
                 settingRow("Notifications", "bell.fill")
                 settingRow("Audio Settings", "speaker.wave.2.fill")
@@ -405,7 +405,7 @@ struct ImprovedMoreView: View {
     
     private var helpSection: some View {
         CleanCardLayout(title: "Help & Support") {
-            VStack(spacing: MTSpacing.medium) {
+            VStack(spacing: ModernDesignSystem.Spacing.md) {
                 settingRow("How to Use", "questionmark.circle.fill")
                 settingRow("Contact Us", "envelope.fill")
                 settingRow("FAQ", "doc.text.fill")
@@ -415,7 +415,7 @@ struct ImprovedMoreView: View {
     
     private var aboutSection: some View {
         CleanCardLayout(title: "About") {
-            VStack(spacing: MTSpacing.medium) {
+            VStack(spacing: ModernDesignSystem.Spacing.md) {
                 settingRow("Privacy Policy", "hand.raised.fill")
                 settingRow("Terms of Service", "doc.fill")
                 settingRow("Version 1.0", "info.circle.fill")
@@ -424,21 +424,21 @@ struct ImprovedMoreView: View {
     }
     
     private func settingRow(_ title: String, _ icon: String) -> some View {
-        HStack(spacing: MTSpacing.medium) {
+        HStack(spacing: ModernDesignSystem.Spacing.md) {
             Image(systemName: icon)
                 .font(.title3)
-                .foregroundColor(MTColors.teluguBlue)
+                .foregroundColor(ModernDesignSystem.Colors.teluguBlue)
                 .frame(width: 24)
             
             Text(title)
                 .font(.body)
-                .foregroundColor(MTColors.primaryText)
+                .foregroundColor(ModernDesignSystem.Colors.primaryText)
             
             Spacer()
             
             Image(systemName: "chevron.right")
                 .font(.caption)
-                .foregroundColor(MTColors.secondaryText)
+                .foregroundColor(ModernDesignSystem.Colors.secondaryText)
         }
     }
 }

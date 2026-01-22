@@ -60,9 +60,9 @@ struct HIGNavigationButton: View {
         }) {
             Image(systemName: item.icon)
                 .font(.system(size: 18, weight: .medium))
-                .foregroundColor(MTColors.primary)
+                .foregroundColor(ModernDesignSystem.Colors.primary)
         }
-        .frame(minWidth: MTSpacing.minimumTouchTarget, minHeight: MTSpacing.minimumTouchTarget)
+        .frame(minWidth: ModernDesignSystem.Spacing.minimumTouchTarget, minHeight: ModernDesignSystem.Spacing.minimumTouchTarget)
         .accessibilityLabel(item.label)
         .accessibilityHint(item.hint)
         .accessibilityAddTraits(.isButton)
@@ -99,8 +99,8 @@ struct HIGCompliantTabView: View {
                     .tag(index)
             }
         }
-        .accentColor(MTColors.primary)
-        .onChange(of: selectedTab) { _ in
+        .accentColor(ModernDesignSystem.Colors.primary)
+        .onChange(of: selectedTab) {
             session.hapticsService.lightImpact()
         }
     }
@@ -145,15 +145,15 @@ struct HIGBackButton: View {
                 dismiss()
             }
         }) {
-            HStack(spacing: MTSpacing.tiny) {
+            HStack(spacing: ModernDesignSystem.Spacing.tiny) {
                 Image(systemName: "chevron.left")
                     .font(.system(size: 16, weight: .semibold))
                 Text("Back")
-                    .font(MTTypography.body())
+                    .font(ModernDesignSystem.Typography.body)
             }
-            .foregroundColor(MTColors.primary)
+            .foregroundColor(ModernDesignSystem.Colors.primary)
         }
-        .frame(minWidth: MTSpacing.minimumTouchTarget, minHeight: MTSpacing.minimumTouchTarget)
+        .frame(minWidth: ModernDesignSystem.Spacing.minimumTouchTarget, minHeight: ModernDesignSystem.Spacing.minimumTouchTarget)
         .accessibilityLabel("Back")
         .accessibilityHint("Return to previous screen")
         .accessibilityAddTraits(.isButton)

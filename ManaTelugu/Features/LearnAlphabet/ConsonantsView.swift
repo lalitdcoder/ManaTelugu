@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ConsonantsView: View {
     @EnvironmentObject var session: AppSession
+    @Environment(\.dismiss) private var dismiss
     @State private var consonants: [Letter] = []
     
     // Traditional Telugu consonant order (grouped, simplified up to క్ష)
@@ -18,29 +19,41 @@ struct ConsonantsView: View {
     
     var body: some View {
         ZStack {
-            ElegantGradient()
+            ModernDesignSystem.Colors.backgroundGradient
                 .ignoresSafeArea(.all, edges: .all)
             
             ScrollView(showsIndicators: false) {
-                VStack(spacing: ElegantDesign.Spacing.md) {
-                    LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: ElegantDesign.Spacing.sm), count: 4), spacing: ElegantDesign.Spacing.sm) {
+                VStack(spacing: ModernDesignSystem.Spacing.md) {
+                    LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 16), count: 4), spacing: 16) {
                         ForEach(Array(consonants.enumerated()), id: \.element.id) { index, letter in
                             NavigationLink {
                                 LetterDetailView(letters: consonants, initialIndex: index)
                             } label: {
                                 LetterCardView(letter: letter)
                             }
+                            .buttonStyle(.plain)
+                            .onTapGesture {
+                                HapticsService.shared.buttonTap()
+                            }
                         }
                     }
                 }
-                .padding(ElegantDesign.Spacing.md)
-                .padding(.bottom, ElegantDesign.Spacing.xl)
+                .padding(ModernDesignSystem.Spacing.md)
+                .padding(.bottom, ModernDesignSystem.Spacing.xl)
+            }
+        }
+        .navigationTitle("Consonants (హల్లులు)")
+        .navigationBarTitleDisplayMode(.inline)
+        .navigationBarBackButtonHidden(true)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                BackButton {
+                    dismiss()
+                }
             }
         }
         .onAppear { 
-            Task {
-                await load()
-            }
+            load()
             session.sessionTimer.start()
         }
         .onDisappear {
@@ -52,8 +65,8 @@ struct ConsonantsView: View {
         }
     }
     
-    private func load() async {
-        let all = await session.dataRepository.letters
+    private func load() {
+        let all = session.dataRepository.letters
         let filtered = all.filter { consonantOrder.contains($0.character) }
         consonants = filtered.sorted { a, b in
             guard let ia = consonantOrder.firstIndex(of: a.character), let ib = consonantOrder.firstIndex(of: b.character) else { return false }
@@ -61,25 +74,3 @@ struct ConsonantsView: View {
         }
     }
 }
-
-// MARK: - Letter Card View
-struct LetterCardView: View {
-    let letter: Letter
-    
-    var body: some View {
-        VStack(spacing: ElegantDesign.Spacing.xs) {
-            Text(letter.character)
-                .font(.system(size: 32, weight: .medium))
-                .foregroundColor(ElegantDesign.Colors.primary)
-            
-            Text(letter.romanization)
-                .font(ElegantDesign.Typography.caption)
-                .foregroundColor(ElegantDesign.Colors.textSecondary)
-                .lineLimit(1)
-        }
-        .padding(ElegantDesign.Spacing.sm)
-        .frame(width: 80, height: 80)
-        .elegantCard()
-    }
-}
-

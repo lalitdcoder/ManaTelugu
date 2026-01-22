@@ -1,346 +1,515 @@
 import SwiftUI
 
-// MARK: - Professional Alphabet Hub View
-// Clean, professional layout with proper alphabet learning structure
-
+// MARK: - Modern Alphabet Hub View
 struct ProfessionalAlphabetHubView: View {
     @EnvironmentObject var session: AppSession
+    @Environment(\.dismiss) private var dismiss
     @State private var letters: [Letter] = []
     @State private var isLoading = true
-    
+    @State private var navigateToQuiz = false
+    @State private var navigateToVowels = false
+    @State private var navigateToConsonants = false
+    @State private var navigateToTracing = false
+    @State private var navigateToGudinthalu = false
+    @State private var animateStats = false
+    @State private var animateProgress = false
+
+    var vowels: [Letter] { letters.filter { $0.category == .vowel } }
+    var consonants: [Letter] { letters.filter { $0.category == .consonant } }
+    var learnedCount: Int { letters.filter { $0.isLearned }.count }
+    var progressPercentage: Double {
+        letters.isEmpty ? 0 : Double(learnedCount) / Double(letters.count)
+    }
+
     var body: some View {
-        NavigationStack {
-            ZStack {
-                // Professional gradient background
-                LinearGradient(
-                    colors: [
-                        Color(red: 0.2, green: 0.4, blue: 0.9),
-                        Color(red: 0.4, green: 0.2, blue: 0.8),
-                        Color(red: 0.8, green: 0.3, blue: 0.6)
-                    ],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-                .ignoresSafeArea(.all, edges: .all)
-                
-                if isLoading {
-                    ProfessionalCard(type: .hero) {
-                        VStack(spacing: ProfessionalSpacing.large.value) {
-                            ProgressView()
-                                .scaleEffect(1.5)
-                                .tint(.professionalBlue)
-                            
-                            ProfessionalText(
-                                "Loading alphabet...",
-                                style: .cardTitle,
-                                color: .textPrimary,
-                                alignment: .center
-                            )
-                        }
-                        .padding(ProfessionalSpacing.extraLarge.value)
-                    }
-                    .padding(.horizontal, ProfessionalSpacing.large.value)
-                } else {
-                    ScrollView {
-                        LazyVStack(spacing: ProfessionalSpacing.large.value) {
-                            // Hero Header
-                            heroHeaderSection
-                                .padding(.top, ProfessionalSpacing.extraLarge.value)
-                            
-                            // Alphabet Stats
-                            alphabetStatsSection
-                            
-                            // Learning Modes
-                            learningModesSection
-                            
-                            // Quick Access Letters
-                            quickAccessSection
-                            
-                            // Bottom padding for tab bar
-                            Color.clear
-                                .frame(height: 120)
-                        }
-                        .padding(.horizontal, ProfessionalSpacing.medium.value)
-                    }
-                    .scrollIndicators(.hidden)
+        ZStack {
+            // Stronger gradient background
+            LinearGradient(
+                colors: [
+                    Color(red: 0.4, green: 0.5, blue: 0.9).opacity(0.3),
+                    Color(red: 0.46, green: 0.29, blue: 0.64).opacity(0.2),
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .ignoresSafeArea()
+
+            if isLoading {
+                VStack(spacing: 20) {
+                    ProgressView()
+                        .scaleEffect(1.5)
+                        .tint(AppleHIGDesign.Colors.primary)
+                    Text("Loading alphabet...")
+                        .font(.headline)
+                        .foregroundColor(.secondary)
                 }
+            } else {
+                ScrollView {
+                    LazyVStack(spacing: 24) {
+                        // Compact Hero Section
+                        compactHeroSection
+                            .padding(.top, -20)
+
+                        // Learning Modes
+                        learningModesSection
+
+                        // Bottom padding
+                        Color.clear.frame(height: 100)
+                    }
+                    .padding(.horizontal, 20)
+                }
+                .scrollIndicators(.hidden)
             }
-            .navigationBarHidden(true)
         }
         .onAppear {
-            Task {
-                await loadLetters()
+            loadLetters()
+            withAnimation(.spring(response: 0.8, dampingFraction: 0.8).delay(0.2)) {
+                animateStats = true
+            }
+            withAnimation(.spring(response: 1.0, dampingFraction: 0.8).delay(0.4)) {
+                animateProgress = true
             }
         }
-    }
-    
-    // MARK: - Hero Header Section
-    private var heroHeaderSection: some View {
-        ProfessionalCard(type: .hero) {
-            VStack(alignment: .leading, spacing: ProfessionalSpacing.large.value) {
-                ProfessionalText(
-                    "Telugu Alphabet",
-                    style: .heroTitle,
-                    color: .textPrimary
-                )
-                
-                ProfessionalText(
-                    "Master the beautiful Telugu script with interactive learning",
-                    style: .bodyText,
-                    color: .textSecondary
-                )
-                
-                HStack(spacing: ProfessionalSpacing.large.value) {
-                    ProfessionalStatCard(
-                        icon: "textformat.abc",
-                        value: "\(vowels.count)",
-                        label: "Vowels",
-                        color: .professionalBlue
-                    )
-                    
-                    ProfessionalStatCard(
-                        icon: "textformat.abc",
-                        value: "\(consonants.count)",
-                        label: "Consonants",
-                        color: .professionalGreen
-                    )
-                    
-                    ProfessionalStatCard(
-                        icon: "textformat.abc",
-                        value: "\(letters.count)",
-                        label: "Total",
-                        color: .professionalOrange
-                    )
+        .fullScreenCover(isPresented: $navigateToVowels) {
+            NavigationStack {
+                VowelsView()
+            }
+        }
+        .fullScreenCover(isPresented: $navigateToConsonants) {
+            NavigationStack {
+                ConsonantsView()
+            }
+        }
+        .fullScreenCover(isPresented: $navigateToTracing) {
+            NavigationStack {
+                TraceGameView()
+            }
+        }
+        .fullScreenCover(isPresented: $navigateToGudinthalu) {
+            NavigationStack {
+                GudinthaluView()
+            }
+        }
+        .fullScreenCover(isPresented: $navigateToQuiz) {
+            NavigationStack {
+                LettersQuizView(scope: .all)
+            }
+        }
+        .navigationTitle("Telugu Alphabet")
+        .navigationBarTitleDisplayMode(.inline)
+        .navigationBarBackButtonHidden(true)
+        .toolbarBackground(
+            LinearGradient(
+                colors: [
+                    Color(red: 0.4, green: 0.5, blue: 0.9).opacity(0.1),
+                    Color(red: 0.46, green: 0.29, blue: 0.64).opacity(0.08),
+                ],
+                startPoint: .leading,
+                endPoint: .trailing
+            ),
+            for: .navigationBar
+        )
+        .toolbarBackground(.visible, for: .navigationBar)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                Button("Back") {
+                    dismiss()
                 }
+                .foregroundColor(.blue)
             }
         }
     }
-    
-    // MARK: - Alphabet Stats Section
-    private var alphabetStatsSection: some View {
-        VStack(alignment: .leading, spacing: ProfessionalSpacing.medium.value) {
-            ProfessionalSectionHeader(
-                title: "Learning Progress",
-                subtitle: "Track your alphabet mastery"
+
+    // MARK: - Compact Hero Section
+    private var compactHeroSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Master Telugu Script")
+                .font(.title2.bold())
+                .foregroundColor(.primary)
+
+            Text("Interactive learning with 52 letters")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.vertical, 16)
+    }
+
+    // MARK: - Stats Cards with Telugu Glyphs
+    private var statsCardsSection: some View {
+        HStack(spacing: 16) {
+            AlphabetStatCard(
+                glyph: "అ",
+                count: vowels.count,
+                label: "Vowels",
+                color: .blue
             )
-            
-            HStack(spacing: ProfessionalSpacing.medium.value) {
-                ProfessionalStatCard(
+            .scaleEffect(animateStats ? 1.0 : 0.8)
+            .opacity(animateStats ? 1.0 : 0.0)
+
+            AlphabetStatCard(
+                glyph: "క",
+                count: consonants.count,
+                label: "Consonants",
+                color: .green
+            )
+            .scaleEffect(animateStats ? 1.0 : 0.8)
+            .opacity(animateStats ? 1.0 : 0.0)
+            .animation(.spring().delay(0.1), value: animateStats)
+
+            AlphabetStatCard(
+                glyph: "అక్",
+                count: letters.count,
+                label: "Total",
+                color: .purple
+            )
+            .scaleEffect(animateStats ? 1.0 : 0.8)
+            .opacity(animateStats ? 1.0 : 0.0)
+            .animation(.spring().delay(0.2), value: animateStats)
+        }
+        .padding(.horizontal, 4)
+        .padding(.vertical, 16)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(.ultraThinMaterial)
+                .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 2)
+        )
+    }
+
+    // MARK: - Learning Progress Section
+    private var learningProgressSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack {
+                Image(systemName: "chart.line.uptrend.xyaxis")
+                    .font(.title3.bold())
+                    .foregroundColor(.blue)
+
+                Text("Learning Progress")
+                    .font(.headline.bold())
+                    .foregroundColor(.primary)
+
+                Spacer()
+
+                Text("\(learnedCount)/\(letters.count)")
+                    .font(.subheadline.bold())
+                    .foregroundColor(.secondary)
+            }
+
+            // Progress Bar
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    Text("\(Int(progressPercentage * 100))% Complete")
+                        .font(.subheadline.bold())
+                        .foregroundColor(.primary)
+
+                    Spacer()
+
+                    Image(systemName: "star.fill")
+                        .font(.caption)
+                        .foregroundColor(.orange)
+                }
+
+                GeometryReader { geometry in
+                    ZStack(alignment: .leading) {
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(Color.gray.opacity(0.2))
+                            .frame(height: 8)
+
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(
+                                LinearGradient(
+                                    colors: [.blue, .purple],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                            )
+                            .frame(
+                                width: animateProgress
+                                    ? geometry.size.width * progressPercentage : 0,
+                                height: 8
+                            )
+                            .animation(.easeInOut(duration: 1.2), value: animateProgress)
+                    }
+                }
+                .frame(height: 8)
+            }
+
+            // Quick Stats
+            HStack(spacing: 20) {
+                ProgressStatItem(
                     icon: "checkmark.circle.fill",
-                    value: "12",
+                    value: "\(learnedCount)",
                     label: "Learned",
-                    color: .professionalGreen
+                    color: .green
                 )
-                
-                ProfessionalStatCard(
+
+                ProgressStatItem(
                     icon: "clock.fill",
                     value: "5m",
                     label: "Today",
-                    color: .professionalBlue
+                    color: .blue
                 )
-                
-                ProfessionalStatCard(
-                    icon: "star.fill",
-                    value: "8",
+
+                ProgressStatItem(
+                    icon: "flame.fill",
+                    value: "\(session.currentStreak)",
                     label: "Streak",
-                    color: .professionalOrange
+                    color: .orange
                 )
             }
         }
+        .padding(20)
+        .background(
+            RoundedRectangle(cornerRadius: 20)
+                .fill(.regularMaterial)
+                .shadow(color: .black.opacity(0.08), radius: 12, x: 0, y: 4)
+        )
+        .scaleEffect(animateProgress ? 1.0 : 0.95)
+        .opacity(animateProgress ? 1.0 : 0.0)
     }
-    
+
+    // MARK: - Individual Letters Section
+    private var individualLettersSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Telugu Letters")
+                .font(.headline.bold())
+                .foregroundColor(.primary)
+                .padding(.horizontal, 4)
+
+            LazyVGrid(
+                columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: 6), spacing: 12
+            ) {
+                ForEach(Array(letters.enumerated()), id: \.element.id) { index, letter in
+                    NavigationLink {
+                        LetterDetailView(letters: letters, initialIndex: index)
+                    } label: {
+                        VStack(spacing: 4) {
+                            Text(letter.character)
+                                .font(.system(size: 24, weight: .medium))
+                                .foregroundColor(.primary)
+
+                            if letter.isLearned {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .font(.caption)
+                                    .foregroundColor(.green)
+                            }
+                        }
+                        .frame(width: 50, height: 50)
+                        .background(
+                            RoundedRectangle(cornerRadius: 8)
+                                .fill(letter.isLearned ? .green.opacity(0.1) : .gray.opacity(0.1))
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8)
+                                .stroke(
+                                    letter.isLearned ? .green.opacity(0.3) : .gray.opacity(0.2),
+                                    lineWidth: 1)
+                        )
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+        }
+    }
+
     // MARK: - Learning Modes Section
     private var learningModesSection: some View {
-        VStack(alignment: .leading, spacing: ProfessionalSpacing.medium.value) {
-            ProfessionalSectionHeader(
-                title: "Learning Modes",
-                subtitle: "Choose how to practice"
-            )
-            
-            VStack(spacing: ProfessionalSpacing.medium.value) {
-                ProfessionalLearningModeCard(
-                    title: "Learn Vowels",
-                    description: "Master the 16 basic vowel sounds",
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Learning Modes")
+                .font(.headline.bold())
+                .foregroundColor(.primary)
+                .padding(.horizontal, 4)
+
+            VStack(spacing: 12) {
+                LearningModeCard(
+                    title: "Vowels",
+                    description: "Learn Telugu vowel sounds",
                     icon: "textformat.abc",
-                    color: .professionalBlue,
-                    progress: 0.6
+                    color: .blue,
+                    action: { navigateToVowels = true }
                 )
-                
-                ProfessionalLearningModeCard(
-                    title: "Learn Consonants",
-                    description: "Practice the 36 consonant sounds",
+
+                LearningModeCard(
+                    title: "Consonants",
+                    description: "Master consonant letters",
                     icon: "textformat.abc",
-                    color: .professionalGreen,
-                    progress: 0.3
+                    color: .green,
+                    action: { navigateToConsonants = true }
                 )
-                
-                ProfessionalLearningModeCard(
+
+                LearningModeCard(
+                    title: "Gudinthalu",
+                    description: "Consonant-vowel combinations",
+                    icon: "character.textbox",
+                    color: .indigo,
+                    action: { navigateToGudinthalu = true }
+                )
+
+                LearningModeCard(
                     title: "Practice Writing",
-                    description: "Trace and write Telugu letters",
+                    description: "Trace and write letters",
                     icon: "pencil.tip",
-                    color: .professionalOrange,
-                    progress: 0.8
+                    color: .orange,
+                    action: { navigateToTracing = true }
+                )
+
+                LearningModeCard(
+                    title: "Letter Quiz",
+                    description: "Test your knowledge",
+                    icon: "questionmark.circle.fill",
+                    color: .purple,
+                    action: { navigateToQuiz = true }
                 )
             }
         }
     }
-    
-    // MARK: - Quick Access Section
-    private var quickAccessSection: some View {
-        VStack(alignment: .leading, spacing: ProfessionalSpacing.medium.value) {
-            ProfessionalSectionHeader(
-                title: "Quick Access",
-                subtitle: "Jump to specific letters"
-            )
-            
-                LazyVGrid(columns: [
-                    GridItem(.flexible()),
-                    GridItem(.flexible()),
-                    GridItem(.flexible()),
-                    GridItem(.flexible())
-                ], spacing: ProfessionalSpacing.medium.value) {
-                    ForEach(Array(letters.prefix(16).enumerated()), id: \.element.id) { index, letter in
-                        ProfessionalLetterCard(letter: letter, isLearned: index < 2)
-                    }
-                }
-        }
+
+    private func loadLetters() {
+        letters = session.dataRepository.letters
+        isLoading = false
     }
-    
-        // MARK: - Computed Properties
-        private var vowels: [Letter] {
-            // Mock vowel letters (first 4 letters)
-            Array(letters.prefix(4))
+}
+
+// MARK: - Supporting Views
+struct AlphabetStatCard: View {
+    let glyph: String
+    let count: Int
+    let label: String
+    let color: Color
+
+    var body: some View {
+        VStack(spacing: 8) {
+            Text(glyph)
+                .font(.title.bold())
+                .foregroundColor(color)
+
+            Text("\(count)")
+                .font(.title2.bold())
+                .foregroundColor(.primary)
+
+            Text(label)
+                .font(.caption.bold())
+                .foregroundColor(.secondary)
         }
-        
-        private var consonants: [Letter] {
-            // Mock consonant letters (remaining letters)
-            Array(letters.dropFirst(4))
-        }
-    
-    // MARK: - Data Loading
-    private func loadLetters() async {
-        // Simulate loading
-        try? await Task.sleep(nanoseconds: 1_000_000_000) // 1 second
-        
-            // Mock data for demonstration
-            letters = [
-                Letter(id: "te_letter_a", character: "అ", romanization: "a", meaning: "a", category: .vowel),
-                Letter(id: "te_letter_aa", character: "ఆ", romanization: "aa", meaning: "aa", category: .vowel),
-                Letter(id: "te_letter_i", character: "ఇ", romanization: "i", meaning: "i", category: .vowel),
-                Letter(id: "te_letter_ii", character: "ఈ", romanization: "ii", meaning: "ii", category: .vowel),
-                Letter(id: "te_letter_ka", character: "క", romanization: "ka", meaning: "ka", category: .consonant),
-                Letter(id: "te_letter_kha", character: "ఖ", romanization: "kha", meaning: "kha", category: .consonant),
-                Letter(id: "te_letter_ga", character: "గ", romanization: "ga", meaning: "ga", category: .consonant),
-                Letter(id: "te_letter_gha", character: "ఘ", romanization: "gha", meaning: "gha", category: .consonant)
-            ]
-        
-        await MainActor.run {
-            isLoading = false
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 16)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(color.opacity(0.1))
+        )
+    }
+}
+
+struct ProgressStatItem: View {
+    let icon: String
+    let value: String
+    let label: String
+    let color: Color
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Image(systemName: icon)
+                .font(.caption.bold())
+                .foregroundColor(color)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(value)
+                    .font(.subheadline.bold())
+                    .foregroundColor(.primary)
+
+                Text(label)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
         }
     }
 }
 
-// MARK: - Professional Learning Mode Card
-struct ProfessionalLearningModeCard: View {
+struct LearningModeCard: View {
     let title: String
     let description: String
     let icon: String
     let color: Color
-    let progress: Double
-    
+    let action: () -> Void
+
     var body: some View {
-        ProfessionalCard(type: .interactive, isInteractive: true) {
-            HStack(spacing: ProfessionalSpacing.medium.value) {
+        Button(action: action) {
+            HStack(spacing: 16) {
                 Image(systemName: icon)
-                    .font(.system(size: 24, weight: .semibold))
+                    .font(.title2.bold())
                     .foregroundColor(color)
                     .frame(width: 40, height: 40)
                     .background(
                         Circle()
                             .fill(color.opacity(0.15))
                     )
-                
-                VStack(alignment: .leading, spacing: ProfessionalSpacing.small.value) {
-                    ProfessionalText(
-                        title,
-                        style: .cardTitle,
-                        color: .textPrimary
-                    )
-                    
-                    ProfessionalText(
-                        description,
-                        style: .caption,
-                        color: .textSecondary
-                    )
-                    
-                    // Progress bar
-                    GeometryReader { geometry in
-                        ZStack(alignment: .leading) {
-                            RoundedRectangle(cornerRadius: 2)
-                                .fill(Color.black.opacity(0.1))
-                                .frame(height: 4)
-                            
-                            RoundedRectangle(cornerRadius: 2)
-                                .fill(color)
-                                .frame(width: geometry.size.width * progress, height: 4)
-                        }
-                    }
-                    .frame(height: 4)
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(title)
+                        .font(.headline.bold())
+                        .foregroundColor(.primary)
+
+                    Text(description)
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
                 }
-                
+
                 Spacer()
-                
+
                 Image(systemName: "chevron.right")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(.textSecondary)
+                    .font(.subheadline.bold())
+                    .foregroundColor(.secondary)
             }
+            .padding(16)
+            .background(
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(.regularMaterial)
+                    .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
+            )
         }
+        .buttonStyle(.plain)
     }
 }
 
-    // MARK: - Professional Letter Card
-    struct ProfessionalLetterCard: View {
-        let letter: Letter
-        let isLearned: Bool
-        
-        var body: some View {
-            ProfessionalCard(type: .compact, isInteractive: true) {
-                VStack(spacing: ProfessionalSpacing.small.value) {
-                    Text(letter.character)
-                        .font(.system(size: 32, weight: .bold))
-                        .foregroundColor(.textPrimary)
-                    
-                    Text(letter.romanization)
-                        .font(.system(size: 12, weight: .medium))
-                        .foregroundColor(.textSecondary)
-                    
-                    if isLearned {
-                        Image(systemName: "checkmark.circle.fill")
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(.professionalGreen)
-                    }
-                }
-                .frame(maxWidth: .infinity)
-            }
-        }
-    }
+struct LearningModeCardView: View {
+    let title: String
+    let description: String
+    let icon: String
+    let color: Color
 
-// MARK: - Letter Type Extension
-extension Letter {
-    enum LetterType {
-        case vowel
-        case consonant
-    }
-    
-    var type: LetterType {
-        // Determine if it's a vowel or consonant based on the letter
-        let vowelGlyphs = ["అ", "ఆ", "ఇ", "ఈ", "ఉ", "ఊ", "ఎ", "ఏ", "ఋ", "ౠ", "ఐ", "ఒ", "ఓ", "ఔ", "అం", "అః"]
-        return vowelGlyphs.contains(character) ? .vowel : .consonant
-    }
-    
-    var isLearned: Bool {
-        // Mock implementation - in real app this would come from user progress
-        return false
+    var body: some View {
+        HStack(spacing: 16) {
+            Image(systemName: icon)
+                .font(.title2.bold())
+                .foregroundColor(color)
+                .frame(width: 40, height: 40)
+                .background(
+                    Circle()
+                        .fill(color.opacity(0.15))
+                )
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title)
+                    .font(.headline.bold())
+                    .foregroundColor(.primary)
+
+                Text(description)
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+            }
+
+            Spacer()
+
+            Image(systemName: "chevron.right")
+                .font(.subheadline.bold())
+                .foregroundColor(.secondary)
+        }
+        .padding(16)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(.regularMaterial)
+                .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
+        )
     }
 }
 

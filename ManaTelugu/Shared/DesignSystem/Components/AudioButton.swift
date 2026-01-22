@@ -20,10 +20,13 @@ struct AudioButton: View {
     }
     
     var body: some View {
-        Button(action: playAudio) {
+        Button(action: {
+HapticsManager.shared.impact(.light)
+            playAudio()
+        }) {
             ZStack {
                 Circle()
-                    .fill(isPlaying ? MTColors.success : MTColors.primary)
+                    .fill(isPlaying ? ModernDesignSystem.Colors.success : ModernDesignSystem.Colors.primary)
                     .frame(width: size.frameSize, height: size.frameSize)
                     .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 1)
                 
@@ -40,12 +43,10 @@ struct AudioButton: View {
         .accessibilityHint(accessibilityHint)
         .accessibilityAddTraits(.isButton)
         .accessibilityValue(isPlaying ? "Playing" : "Stopped")
-        .onLongPressGesture(minimumDuration: 0, maximumDistance: .infinity, pressing: { pressing in
-            isPressed = pressing
-        }, perform: {})
         .simultaneousGesture(
             LongPressGesture(minimumDuration: 0.5)
                 .onEnded { _ in
+HapticsManager.shared.impact(.medium)
                     playSlowAudio()
                 }
         )
@@ -71,7 +72,6 @@ struct AudioButton: View {
         
         isPlaying = true
         session.audioService.play(name: audioFile, rate: 1.0)
-        session.hapticsService.lightImpact()
         
         // Announce for accessibility
         if let word = word {
@@ -91,7 +91,6 @@ struct AudioButton: View {
         
         showSlowPlayback = true
         session.audioService.play(name: audioFile, rate: 0.75)
-        session.hapticsService.mediumImpact()
         
         // Announce for accessibility
         session.announceForAccessibility("Playing slowly")
@@ -134,11 +133,11 @@ struct EnhancedAudioButton: View {
             hint: "Double tap to hear pronunciation. Long press for slow playback.",
             action: playAudio
         ) {
-            HStack(spacing: MTSpacing.small) {
+            HStack(spacing: ModernDesignSystem.Spacing.sm) {
                 ZStack {
                     Circle()
-                        .fill(isPlaying ? MTColors.success : MTColors.primary)
-                        .frame(width: MTSpacing.minimumTouchTarget, height: MTSpacing.minimumTouchTarget)
+                        .fill(isPlaying ? ModernDesignSystem.Colors.success : ModernDesignSystem.Colors.primary)
+                        .frame(width: ModernDesignSystem.Spacing.minimumTouchTarget, height: ModernDesignSystem.Spacing.minimumTouchTarget)
                     
                     Image(systemName: isPlaying ? "stop.fill" : "play.fill")
                         .foregroundColor(.white)
@@ -150,7 +149,7 @@ struct EnhancedAudioButton: View {
                     HStack(spacing: 2) {
                         ForEach(0..<5) { index in
                             RoundedRectangle(cornerRadius: 1)
-                                .fill(MTColors.primary.opacity(0.6))
+                                .fill(ModernDesignSystem.Colors.primary.opacity(0.6))
                                 .frame(width: 3, height: waveformHeight(for: index))
                                 .animation(
                                     .easeInOut(duration: 0.5)
@@ -167,14 +166,14 @@ struct EnhancedAudioButton: View {
                     word,
                     style: .body,
                     weight: .medium,
-                    color: MTColors.primaryText
+                    color: ModernDesignSystem.Colors.primaryText
                 )
             }
-            .padding(.horizontal, MTSpacing.medium)
-            .padding(.vertical, MTSpacing.small)
+            .padding(.horizontal, ModernDesignSystem.Spacing.md)
+            .padding(.vertical, ModernDesignSystem.Spacing.sm)
             .background(
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(MTColors.surface)
+                    .fill(ModernDesignSystem.Colors.surface)
                     .shadow(color: .black.opacity(0.05), radius: 2, x: 0, y: 1)
             )
         }
@@ -191,7 +190,7 @@ struct EnhancedAudioButton: View {
     
     private func waveformHeight(for index: Int) -> CGFloat {
         let baseHeight: CGFloat = 8
-        let maxHeight: CGFloat = 20
+_ = 20 as CGFloat
         let heights: [CGFloat] = [12, 20, 16, 18, 14]
         
         if isPlaying {
@@ -209,7 +208,7 @@ struct EnhancedAudioButton: View {
         
         isPlaying = true
         session.audioService.play(name: audioFile, rate: 1.0)
-        session.hapticsService.lightImpact()
+HapticsManager.shared.impact(.light)
         session.announceForAccessibility("Playing \(word)")
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
@@ -223,7 +222,7 @@ struct EnhancedAudioButton: View {
         guard !isPlaying else { return }
         
         session.audioService.play(name: audioFile, rate: 0.75)
-        session.hapticsService.mediumImpact()
+HapticsManager.shared.impact(.medium)
         session.announceForAccessibility("Playing \(word) slowly")
     }
     

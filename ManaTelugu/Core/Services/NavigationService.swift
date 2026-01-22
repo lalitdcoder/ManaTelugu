@@ -18,6 +18,12 @@ class NavigationService: ObservableObject {
     
     private init() {}
     
+    // MARK: - Simple Navigation
+    func navigate<Destination: Hashable>(to destination: Destination) {
+        DebugLogger.log("NavigationService.navigate called for: \(destination)")
+        navigationPath.append(destination)
+    }
+    
     // MARK: - Navigation with Loading State
     func navigateWithLoading<Destination: Hashable>(
         to destination: Destination,
@@ -263,7 +269,7 @@ struct ErrorToast: View {
                         .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: 4)
                 )
                 .padding(.horizontal, 16)
-                .padding(.bottom, 100) // Account for tab bar
+                .padding(.bottom, 24) // Small bottom inset for tab bar
             }
             .transition(.move(edge: .bottom).combined(with: .opacity))
         }

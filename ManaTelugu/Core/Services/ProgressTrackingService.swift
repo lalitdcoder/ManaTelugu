@@ -4,9 +4,26 @@ class ProgressTrackingService: ObservableObject {
     @Published var lessonProgress: [LessonProgress] = []
     
     private let userDefaultsKey = "lessonProgress"
+    private let lessonsRepository: LessonsRepository // Add LessonsRepository dependency
     
-    init() {
+    init(lessonsRepository: LessonsRepository) { // Update initializer
+        self.lessonsRepository = lessonsRepository
         loadProgress()
+    }
+    
+    var completedLessonsCount: Int {
+        lessonProgress.filter { $0.isCompleted }.count
+    }
+    
+    var totalLessonsCount: Int {
+        lessonsRepository.levels.reduce(0) { $0 + $1.lessons.count }
+    }
+    
+    /// Computes the overall accuracy across all completed lessons.
+    var overallAccuracy: Double {
+        let totalCorrect = lessonProgress.reduce(0) { $0 + $1.correctAnswers }
+        let totalQuestions = lessonProgress.reduce(0) { $0 + $1.totalQuestions }
+        return totalQuestions > 0 ? Double(totalCorrect) / Double(totalQuestions) : 0
     }
     
     func saveProgress(for lesson: Lesson, with responses: [ActivityResponse], timeSpent: TimeInterval) {
@@ -30,10 +47,11 @@ class ProgressTrackingService: ObservableObject {
         saveProgressToUserDefaults()
     }
     
-    private func saveProgressToUserDefaults() {
+    func saveProgressToUserDefaults() {
         if let encoded = try? JSONEncoder().encode(lessonProgress) {
             UserDefaults.standard.set(encoded, forKey: userDefaultsKey)
         }
+        objectWillChange.send()
     }
     
     private func loadProgress() {

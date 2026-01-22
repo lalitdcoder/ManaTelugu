@@ -18,11 +18,11 @@ enum MTColors {
     static let tertiaryText = Color(.tertiaryLabel)
     
     // Professional accent colors - sophisticated and mature
-    static let accent = Color(red: 0.0, green: 0.48, blue: 0.8) // Professional blue
-    static let funBlue = Color(red: 0.1, green: 0.5, blue: 0.9) // Deep blue
-    static let funGreen = Color(red: 0.1, green: 0.6, blue: 0.3) // Forest green
-    static let funYellow = Color(red: 0.9, green: 0.7, blue: 0.1) // Muted gold
-    static let funPink = Color(red: 0.8, green: 0.3, blue: 0.5) // Deep rose
+    static let accent = Color("MTAccentColor") // Professional blue
+    static let funBlue = Color("MTFunBlueColor") // Deep blue
+    static let funGreen = Color("MTFunGreenColor") // Forest green
+    static let funYellow = Color("MTFunYellowColor") // Muted gold
+    static let funPink = Color("MTFunPinkColor") // Deep rose
     static let funPurple = Color(red: 0.5, green: 0.3, blue: 0.8) // Royal purple
     
     // Telugu cultural colors - sophisticated and elegant

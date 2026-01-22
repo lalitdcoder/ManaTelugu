@@ -11,42 +11,42 @@ struct RecentBadgesView: View {
     }
     
     var body: some View {
-        VStack(alignment: .leading, spacing: ElegantDesign.Spacing.md) {
+        VStack(alignment: .leading, spacing: ModernDesignSystem.Spacing.md) {
             Text("Recent Badges")
-                .font(ElegantDesign.Typography.headline)
-                .foregroundColor(ElegantDesign.Colors.textPrimary)
+                .font(ModernDesignSystem.Typography.headline)
+                .foregroundColor(ModernDesignSystem.Colors.textPrimary)
             
             if recentBadges.isEmpty {
-                VStack(spacing: ElegantDesign.Spacing.md) {
+                VStack(spacing: ModernDesignSystem.Spacing.md) {
                     Text("🏆")
                         .font(.system(size: 40))
                     
                     Text("No badges yet")
-                        .font(ElegantDesign.Typography.body)
-                        .foregroundColor(ElegantDesign.Colors.textSecondary)
+                        .font(ModernDesignSystem.Typography.body)
+                        .foregroundColor(ModernDesignSystem.Colors.textSecondary)
                     
                     Text("Complete lessons to earn your first badge!")
-                        .font(ElegantDesign.Typography.caption)
-                        .foregroundColor(ElegantDesign.Colors.textTertiary)
+                        .font(ModernDesignSystem.Typography.caption)
+                        .foregroundColor(ModernDesignSystem.Colors.textTertiary)
                         .multilineTextAlignment(.center)
                 }
                 .frame(maxWidth: .infinity)
-                .padding(ElegantDesign.Spacing.lg)
+                .padding(ModernDesignSystem.Spacing.lg)
             } else {
-                HStack(spacing: ElegantDesign.Spacing.md) {
+                HStack(spacing: ModernDesignSystem.Spacing.md) {
                     ForEach(Array(recentBadges.enumerated()), id: \.offset) { index, badge in
-                        VStack(spacing: ElegantDesign.Spacing.sm) {
+                        VStack(spacing: ModernDesignSystem.Spacing.sm) {
                             Text(badge.emoji)
                                 .font(.system(size: 30))
                                 .frame(width: 50, height: 50)
                                 .background(
                                     Circle()
-                                        .fill(ElegantDesign.Colors.primary.opacity(0.1))
+                                        .fill(ModernDesignSystem.Colors.primary.opacity(0.1))
                                 )
                             
                             Text(badge.name)
-                                .font(ElegantDesign.Typography.caption)
-                                .foregroundColor(ElegantDesign.Colors.textSecondary)
+                                .font(ModernDesignSystem.Typography.caption)
+                                .foregroundColor(ModernDesignSystem.Colors.textSecondary)
                                 .lineLimit(2)
                                 .multilineTextAlignment(.center)
                         }
@@ -55,6 +55,6 @@ struct RecentBadgesView: View {
                 }
             }
         }
-        .elegantCard()
+        .modernCard()
     }
 }

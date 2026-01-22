@@ -63,7 +63,7 @@ enum StoryDifficulty: String, CaseIterable, Codable {
 
 // MARK: - Story
 struct TeluguStory: Identifiable, Codable {
-    let id = UUID()
+    var id = UUID()
     let title: String
     let titleEnglish: String
     let author: String
@@ -174,7 +174,7 @@ struct ReadingProgress: Codable {
 
 // MARK: - Story Collection
 struct StoryCollection: Identifiable, Codable {
-    let id = UUID()
+    var id = UUID()
     let name: String
     let nameEnglish: String
     let description: String
@@ -196,7 +196,7 @@ struct StoryCollection: Identifiable, Codable {
 
 // MARK: - Cultural Note
 struct CulturalNote: Identifiable, Codable {
-    let id = UUID()
+    var id = UUID()
     let keyword: String
     let keywordMeaning: String
     let context: String

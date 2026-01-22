@@ -30,8 +30,7 @@ struct StreamlinedHomeView: View {
                         // Learning Paths
                         learningPaths
                         
-                        // Continue Learning
-                        continueSection
+
                         
                         // Recent Achievements
                         recentAchievements
@@ -189,22 +188,7 @@ struct StreamlinedHomeView: View {
         )
     }
     
-    private var continueSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Continue Learning")
-                .font(.headline)
-                .fontWeight(.semibold)
-                .foregroundColor(.primary)
-            
-            ContinueLearningCard(mode: HorizontalLearningCards.LearningMode(title: "Vowels", description: "Learn Telugu vowels", iconName: "textformat", color: .blue, progress: 0.75))
-        }
-        .padding(20)
-        .background(
-            RoundedRectangle(cornerRadius: 20)
-                .fill(Color.white)
-                .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 4)
-        )
-    }
+
     
     private var recentAchievements: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -217,7 +201,7 @@ struct StreamlinedHomeView: View {
                 Spacer()
                 
                 NavigationLink("View All") {
-                    // Navigate to full achievements
+                    ProgressDashboardView()
                 }
                 .font(.body)
                 .foregroundColor(.blue)

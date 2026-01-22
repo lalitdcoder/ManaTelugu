@@ -17,6 +17,7 @@ struct ListeningChallengeGameView: View {
     @State private var streak = 0
     @State private var feedbackMessage = ""
     @State private var xpEarned = 0
+    @State private var questions: [ListeningQuestion] = []
     
     enum GameState {
         case playing, paused, gameOver
@@ -32,47 +33,57 @@ struct ListeningChallengeGameView: View {
     
     var body: some View {
         ZStack {
-            // Enhanced background gradient for Liquid Glass effect
-            Color.clear
-                .liquidGlassBackground()
-                .ignoresSafeArea()
+            Group {
+                if session.isDarkModeActive {
+                    Color.adaptiveBackground.ignoresSafeArea()
+                } else {
+                    ModernDesignSystem.Colors.backgroundGradient.ignoresSafeArea()
+                }
+            }
             
             VStack(spacing: 24) {
                 // Header
                 HStack {
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Listening Challenge")
-                            .font(MTTypography.title(kidMode: session.userProfile.kidMode))
-                            .foregroundColor(MTColors.text)
+                            .font(ModernDesignSystem.Typography.title1)
+                            .foregroundColor(session.isDarkModeActive ? Color.teluguTextPrimary : ModernDesignSystem.Colors.textPrimary)
                         Text("Round \(currentRound + 1)")
-                            .font(MTTypography.body(kidMode: session.userProfile.kidMode))
-                            .foregroundColor(MTColors.text.opacity(0.7))
+                            .font(ModernDesignSystem.Typography.body)
+                            .foregroundColor(session.isDarkModeActive ? Color.teluguTextSecondary : ModernDesignSystem.Colors.textPrimary.opacity(0.7))
                     }
                     Spacer()
                     
-                    // Game controls
-                    HStack(spacing: 16) {
-                        // Pause button
-                        Button(action: { gameState = .paused }) {
-                            Image(systemName: "pause.fill")
-                                .font(.system(size: 20, weight: .medium))
-                                .foregroundColor(MTColors.funBlue)
-                                .padding(12)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 12)
-                                        .fill(Color.white.opacity(0.9))
-                                )
-                        }
-                        .buttonStyle(.plain)
+                    Button("Exit") {
+                        dismiss()
                     }
+                    .foregroundColor(session.isDarkModeActive ? Color.teluguAccent : ModernDesignSystem.Colors.primary)
                 }
                 .padding(.horizontal)
                 
                 // Game stats
                 HStack(spacing: 32) {
-                    LiquidGlassStatsCard(title: "Score", value: "\(score)", icon: "star.fill", color: MTColors.funGreen)
-                    LiquidGlassStatsCard(title: "Streak", value: "\(streak)", icon: "flame.fill", color: MTColors.funYellow)
-                    LiquidGlassStatsCard(title: "Time", value: "\(timeRemaining)s", icon: "clock.fill", color: MTColors.funPink)
+                    VStack {
+                        Text("Score")
+                            .font(.caption)
+                        Text("\(score)")
+                            .font(.title2)
+                            .fontWeight(.bold)
+                    }
+                    VStack {
+                        Text("Streak")
+                            .font(.caption)
+                        Text("\(streak)")
+                            .font(.title2)
+                            .fontWeight(.bold)
+                    }
+                    VStack {
+                        Text("Time")
+                            .font(.caption)
+                        Text("\(timeRemaining)s")
+                            .font(.title2)
+                            .fontWeight(.bold)
+                    }
                 }
                 .padding(.horizontal)
                 
@@ -80,18 +91,19 @@ struct ListeningChallengeGameView: View {
                     // Audio player section
                     VStack(spacing: 20) {
                         Text("Listen carefully to the word:")
-                            .font(MTTypography.heading(kidMode: session.userProfile.kidMode))
-                            .foregroundColor(MTColors.text)
+                            .font(ModernDesignSystem.Typography.headline)
+                            .foregroundColor(ModernDesignSystem.Colors.textPrimary)
                         
                         // Audio button
                         Button(action: {
+                            HapticsService.shared.audioPlay()
                             playAudio(question.audioFile)
                         }) {
                             HStack(spacing: 16) {
                                 Image(systemName: isPlaying ? "stop.fill" : "speaker.wave.3.fill")
                                     .font(.system(size: 32, weight: .medium))
                                 Text(isPlaying ? "Stop" : "Play Word")
-                                    .font(MTTypography.body(kidMode: session.userProfile.kidMode))
+                                    .font(ModernDesignSystem.Typography.body)
                                     .fontWeight(.medium)
                             }
                             .foregroundColor(.white)
@@ -99,133 +111,199 @@ struct ListeningChallengeGameView: View {
                             .padding(.vertical, 20)
                             .background(
                                 RoundedRectangle(cornerRadius: 20)
-                                    .fill(MTColors.funBlue)
+                                    .fill(ModernDesignSystem.Colors.primary)
                             )
-                            .shadow(color: MTColors.funBlue.opacity(0.3), radius: 12, x: 0, y: 6)
                         }
                         .buttonStyle(.plain)
                         
                         Text("Tap the correct meaning:")
-                            .font(MTTypography.body(kidMode: session.userProfile.kidMode))
-                            .foregroundColor(MTColors.text.opacity(0.8))
+                            .font(ModernDesignSystem.Typography.body)
+                            .foregroundColor(ModernDesignSystem.Colors.textPrimary.opacity(0.8))
                     }
                     .padding(.horizontal)
                     
                     // Answer options
                     VStack(spacing: 16) {
                         ForEach(question.options, id: \.self) { option in
-                            AnswerOptionView(
-                                text: option,
-                                isSelected: selectedAnswer == option,
-                                isCorrect: showingFeedback && option == question.correctAnswer,
-                                isWrong: showingFeedback && selectedAnswer == option && option != question.correctAnswer,
-                                onTap: {
-                                    selectAnswer(option, correctAnswer: question.correctAnswer)
-                                }
-                            )
+                            Button(action: {
+                                selectAnswer(option, correctAnswer: question.correctAnswer)
+                            }) {
+                                Text(option)
+                                    .font(ModernDesignSystem.Typography.body)
+                                    .foregroundColor(.black)
+                                    .padding()
+                                    .frame(maxWidth: .infinity)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 12)
+                                            .fill(selectedAnswer == option ? Color.blue.opacity(0.3) : ModernDesignSystem.Colors.surface)
+                                    )
+                            }
+.buttonStyle(HapticPlainButtonStyle())
                         }
                     }
                     .padding(.horizontal)
-                    .disabled(showingFeedback)
-                    
-                    // Standardized feedback
-                    if showingFeedback {
-                        GameFeedbackView(
-                            isCorrect: isCorrect,
-                            message: feedbackMessage,
-                            xpEarned: xpEarned,
-                            correctAnswer: isCorrect ? nil : currentQuestion?.correctAnswer,
-                            explanation: isCorrect ? "Great listening skills!" : "Listen carefully to the pronunciation and try again.",
-                            onContinue: {
-                                Task {
-                                    await nextQuestion()
-                                }
-                            }
-                        )
+                } else {
+                    // Loading state
+                    VStack(spacing: 20) {
+                        ProgressView()
+                        Text("Loading question...")
+                            .font(ModernDesignSystem.Typography.body)
                     }
                 }
                 
                 Spacer()
             }
             .padding(.vertical)
-        }
-        .onAppear {
-            Task {
-                await setupGame()
+            
+            // Feedback overlay
+            if showingFeedback {
+                Color.black.opacity(0.3)
+                    .ignoresSafeArea()
+                
+                VStack(spacing: 16) {
+                    Image(systemName: isCorrect ? "checkmark.circle.fill" : "xmark.circle.fill")
+                        .font(.system(size: 60))
+                        .foregroundColor(isCorrect ? .green : .red)
+                    
+                    Text(feedbackMessage)
+                        .font(.title2)
+                        .fontWeight(.bold)
+                        .foregroundColor(isCorrect ? .green : .red)
+                    
+                    if isCorrect {
+                        Text("+\(xpEarned) XP")
+                            .font(.body)
+                            .foregroundColor(.secondary)
+                    }
+                }
+                .padding(32)
+                .background(
+                    RoundedRectangle(cornerRadius: 16)
+                        .fill(.ultraThinMaterial)
+                )
+                .scaleEffect(showingFeedback ? 1.0 : 0.8)
+                .animation(.spring(response: 0.5, dampingFraction: 0.7), value: showingFeedback)
             }
         }
-        .onReceive(Timer.publish(every: 1, on: .main, in: .common).autoconnect()) { _ in
-            if gameState == .playing {
-                updateTimer()
+        .onAppear {
+            HapticsManager.shared.impact(.light) // game start
+            setupGame()
+        }
+        .onChange(of: showingGameOver) { _, isOver in
+            if isOver {
+                HapticsManager.shared.impact(.heavy)
+                HapticsManager.shared.notification(.success)
             }
         }
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
+        .navigationBarHidden(false)
+        .navigationBarBackButtonHidden(true)
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
                 Button("Exit") {
                     dismiss()
                 }
-                .foregroundColor(MTColors.funBlue)
-            }
-        }
-        .sheet(isPresented: $showingGameOver) {
-            ListeningChallengeGameOverView(score: score, streak: streak) {
-                Task {
-                    await restartGame()
-                }
+                .foregroundColor(.red)
             }
         }
     }
     
-    // Game Logic
-    
-    private func setupGame() async {
-        timeRemaining = 60
+    private func setupGame() {
+        // Use only questions with audio files that exist in Resources/Sounds
+        let availableQuestions: [ListeningQuestion] = [
+            ListeningQuestion(
+                word: Word(id: "dog", telugu: "కుక్క", transliteration: "kukka", english: "Dog", imageName: "dog", audioFile: "కుక్క.mp3", theme: "Animals"),
+                options: ["Dog", "Cat", "Bird", "Fish"],
+                correctAnswer: "Dog",
+                audioFile: "కుక్క.mp3"
+            ),
+            ListeningQuestion(
+                word: Word(id: "cat", telugu: "పిల్లి", transliteration: "pilli", english: "Cat", imageName: "cat", audioFile: "పిల్లి.mp3", theme: "Animals"),
+                options: ["Cat", "Dog", "Bird", "Fish"],
+                correctAnswer: "Cat",
+                audioFile: "పిల్లి.mp3"
+            ),
+            ListeningQuestion(
+                word: Word(id: "bird", telugu: "పక్షి", transliteration: "pakshi", english: "Bird", imageName: "bird", audioFile: "పక్షి.mp3", theme: "Animals"),
+                options: ["Bird", "Cat", "Dog", "Fish"],
+                correctAnswer: "Bird",
+                audioFile: "పక్షి.mp3"
+            ),
+            ListeningQuestion(
+                word: Word(id: "milk", telugu: "పాలు", transliteration: "paalu", english: "Milk", imageName: "milk", audioFile: "పాలు.mp3", theme: "Food"),
+                options: ["Milk", "Water", "Juice", "Tea"],
+                correctAnswer: "Milk",
+                audioFile: "పాలు.mp3"
+            ),
+            ListeningQuestion(
+                word: Word(id: "flower", telugu: "పువ్వు", transliteration: "puvvu", english: "Flower", imageName: "flower", audioFile: "పువ్వు.mp3", theme: "Nature"),
+                options: ["Flower", "Fruit", "Leaf", "Tree"],
+                correctAnswer: "Flower",
+                audioFile: "పువ్వు.mp3"
+            ),
+            ListeningQuestion(
+                word: Word(id: "tree", telugu: "వృక్షం", transliteration: "vriksham", english: "Tree", imageName: "tree", audioFile: "వృక్షం.mp3", theme: "Nature"),
+                options: ["Tree", "Flower", "Fruit", "Leaf"],
+                correctAnswer: "Tree",
+                audioFile: "వృక్షం.mp3"
+            ),
+            ListeningQuestion(
+                word: Word(id: "sun", telugu: "సూర్యుడు", transliteration: "sooryudu", english: "Sun", imageName: "sun", audioFile: "సూర్యుడు.mp3", theme: "Nature"),
+                options: ["Sun", "Moon", "Star", "Sky"],
+                correctAnswer: "Sun",
+                audioFile: "సూర్యుడు.mp3"
+            ),
+            ListeningQuestion(
+                word: Word(id: "banana", telugu: "అరటి పండు", transliteration: "arati pandu", english: "Banana", imageName: "banana", audioFile: "అరటి పండు.mp3", theme: "Food"),
+                options: ["Banana", "Apple", "Mango", "Grape"],
+                correctAnswer: "Banana",
+                audioFile: "అరటి పండు.mp3"
+            ),
+            ListeningQuestion(
+                word: Word(id: "cow", telugu: "ఆవు", transliteration: "aavu", english: "Cow", imageName: "cow", audioFile: "ఆవు.mp3", theme: "Animals"),
+                options: ["Cow", "Buffalo", "Goat", "Sheep"],
+                correctAnswer: "Cow",
+                audioFile: "ఆవు.mp3"
+            ),
+            ListeningQuestion(
+                word: Word(id: "goat", telugu: "మేక", transliteration: "meka", english: "Goat", imageName: "goat", audioFile: "మేక.mp3", theme: "Animals"),
+                options: ["Goat", "Cow", "Buffalo", "Sheep"],
+                correctAnswer: "Goat",
+                audioFile: "మేక.mp3"
+            ),
+            ListeningQuestion(
+                word: Word(id: "rice", telugu: "అన్నం", transliteration: "annam", english: "Rice", imageName: "rice", audioFile: "అన్నం.mp3", theme: "Food"),
+                options: ["Rice", "Milk", "Water", "Soup"],
+                correctAnswer: "Rice",
+                audioFile: "అన్నం.mp3"
+            ),
+            ListeningQuestion(
+                word: Word(id: "red", telugu: "ఎరుపు", transliteration: "erupu", english: "Red", imageName: "red", audioFile: "ఎరుపు.mp3", theme: "Colors"),
+                options: ["Red", "Blue", "Green", "White"],
+                correctAnswer: "Red",
+                audioFile: "ఎరుపు.mp3"
+            )
+        ]
+        questions = availableQuestions.shuffled()
+        currentRound = 0
         score = 0
         streak = 0
-        await loadNextQuestion()
+        loadCurrentQuestion()
     }
     
-    private func loadNextQuestion() async {
-        let animalWords = await session.dataRepository.words.filter { $0.theme == "Animals" }
-        let colorWords = await session.dataRepository.words.filter { $0.theme == "Colors" }
-        let numberWords = await session.dataRepository.words.filter { $0.theme == "Numbers" }
-        let allWords = animalWords + colorWords + numberWords
-        
-        guard let randomWord = allWords.randomElement() else { return }
-            
-            // Create wrong options (other words from different themes)
-            var wrongOptions: [String] = []
-            let otherWords = allWords.filter { $0.id != randomWord.id }
-            
-            for _ in 0..<3 {
-                if let wrongWord = otherWords.randomElement() {
-                    wrongOptions.append(wrongWord.english)
-                }
-            }
-            
-            // Create question with correct and wrong answers
-            var options = [randomWord.english] + wrongOptions
-            options.shuffle()
-            
-            currentQuestion = ListeningQuestion(
-                word: randomWord,
-                options: options,
-                correctAnswer: randomWord.english,
-                audioFile: randomWord.audioFile
-            )
-            
-            selectedAnswer = nil
-            showingFeedback = false
+    private func loadCurrentQuestion() {
+        if currentRound < questions.count {
+            currentQuestion = questions[currentRound]
+        } else {
+            showingGameOver = true
+        }
     }
     
     private func playAudio(_ audioFile: String) {
         isPlaying = true
         session.audioService.play(name: audioFile, rate: 1.0)
-        
-        // Simulate playback completion
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
             isPlaying = false
         }
     }
@@ -235,218 +313,34 @@ struct ListeningChallengeGameView: View {
         isCorrect = answer == correctAnswer
         
         if isCorrect {
-            session.hapticsService.success()
-            score += 10 + (streak * 2) // Bonus for streaks
+            FeedbackCenter.correct()
+            session.audioService.play(name: "success.mp3", rate: 1.0)
+            score += 10
             streak += 1
             feedbackMessage = "Correct! Well done!"
-            xpEarned = 5 + (streak * 2)
-            session.gamificationService.awardXP(xpEarned, type: .quizCompleted, description: "Listening challenge correct")
+            xpEarned = 5
+            session.gamificationService.awardXP(xpEarned, type: .quizCompleted, description: "Listening correct")
+            session.gamificationService.onActivityCompleted()
         } else {
-            session.hapticsService.warning()
+            FeedbackCenter.wrong()
+            session.audioService.play(name: "tryagain.mp3", rate: 1.0)
             streak = 0
             feedbackMessage = "Not quite right, but keep trying!"
             xpEarned = 0
         }
         
         showingFeedback = true
-    }
-    
-    private func nextQuestion() async {
-        currentQuestion = nil
-        selectedAnswer = nil
-        showingFeedback = false
-        feedbackMessage = ""
-        xpEarned = 0
-        await loadNextQuestion()
-    }
-    
-    private func updateTimer() {
-        if timeRemaining > 0 {
-            timeRemaining -= 1
-        } else {
-            endGame()
-        }
-    }
-    
-    private func endGame() {
-        gameState = .gameOver
-        showingGameOver = true
         
-        // Award XP based on score
-        let xpEarned = score / 2
-        session.gamificationService.awardXP(xpEarned, type: .quizCompleted, description: "Listening challenge completed")
-    }
-    
-    private func restartGame() async {
-        await setupGame()
-    }
-}
-
-// MARK: - Listening Challenge Stat Card
-struct ListeningChallengeStatCard: View {
-    let title: String
-    let value: String
-    let color: Color
-    
-    var body: some View {
-        VStack(spacing: 8) {
-            Text(value)
-                .font(MTTypography.heading(kidMode: false))
-                .foregroundColor(color)
-                .fontWeight(.bold)
-            Text(title)
-                .font(MTTypography.caption(kidMode: false))
-                .foregroundColor(MTColors.text.opacity(0.7))
-        }
-        .padding()
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color.white.opacity(0.9))
-                .shadow(color: color.opacity(0.2), radius: 4, x: 0, y: 2)
-        )
-    }
-}
-
-// MARK: - Answer Option View
-struct AnswerOptionView: View {
-    let text: String
-    let isSelected: Bool
-    let isCorrect: Bool
-    let isWrong: Bool
-    let onTap: () -> Void
-    
-    var body: some View {
-        Button(action: onTap) {
-            HStack {
-                Text(text)
-                    .font(MTTypography.body(kidMode: false))
-                    .foregroundColor(textColor)
-                    .multilineTextAlignment(.leading)
-                    .lineLimit(2)
-                Spacer()
-                
-                if isCorrect {
-                    Image(systemName: "checkmark.circle.fill")
-                        .foregroundColor(MTColors.funGreen)
-                        .font(.title2)
-                } else if isWrong {
-                    Image(systemName: "xmark.circle.fill")
-                        .foregroundColor(.red)
-                        .font(.title2)
-                }
-            }
-            .padding()
-            .frame(maxWidth: .infinity)
-            .background(
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(backgroundColor)
-                    .shadow(color: shadowColor, radius: shadowRadius, x: 0, y: shadowOffset)
-            )
-            .scaleEffect(isSelected ? 1.02 : 1.0)
-            .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isSelected)
-        }
-        .buttonStyle(.plain)
-    }
-    
-    private var backgroundColor: Color {
-        if isCorrect {
-            return MTColors.funGreen.opacity(0.2)
-        } else if isWrong {
-            return Color.red.opacity(0.1)
-        } else if isSelected {
-            return MTColors.funBlue.opacity(0.2)
-        } else {
-            return Color.white.opacity(0.95)
+        // Move to next question after delay
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
+            nextQuestion()
         }
     }
     
-    private var textColor: Color {
-        if isCorrect || isWrong {
-            return MTColors.text
-        } else {
-            return MTColors.text
-        }
-    }
-    
-    private var shadowColor: Color {
-        if isCorrect {
-            return MTColors.funGreen.opacity(0.3)
-        } else if isWrong {
-            return Color.red.opacity(0.2)
-        } else if isSelected {
-            return MTColors.funBlue.opacity(0.3)
-        } else {
-            return MTColors.funBlue.opacity(0.1)
-        }
-    }
-    
-    private var shadowRadius: CGFloat {
-        if isCorrect || isWrong || isSelected {
-            return 8
-        } else {
-            return 4
-        }
-    }
-    
-    private var shadowOffset: CGFloat {
-        if isCorrect || isWrong || isSelected {
-            return 4
-        } else {
-            return 2
-        }
-    }
-}
-
-// MARK: - Listening Challenge Game Over View
-struct ListeningChallengeGameOverView: View {
-    let score: Int
-    let streak: Int
-    let onPlayAgain: () -> Void
-    @Environment(\.dismiss) private var dismiss
-    
-    var body: some View {
-        VStack(spacing: 32) {
-            Image(systemName: "ear.fill")
-                .font(.system(size: 64))
-                .foregroundColor(MTColors.funBlue)
-            
-            Text("Listening Challenge Complete!")
-                .font(MTTypography.title(kidMode: false))
-                .foregroundColor(MTColors.text)
-            
-            VStack(spacing: 16) {
-                Text("Final Score")
-                    .font(MTTypography.body(kidMode: false))
-                    .foregroundColor(MTColors.text.opacity(0.7))
-                Text("\(score)")
-                    .font(.system(size: 48, weight: .bold, design: .rounded))
-                    .foregroundColor(MTColors.funGreen)
-                
-                Text("Best Streak: \(streak)")
-                    .font(MTTypography.body(kidMode: false))
-                    .foregroundColor(MTColors.funYellow)
-            }
-            
-            VStack(spacing: 16) {
-                Button("Play Again") {
-                    onPlayAgain()
-                    dismiss()
-                }
-                .buttonStyle(.borderedProminent)
-                .tint(MTColors.funGreen)
-                .controlSize(.large)
-                
-                Button("Exit to Hub") {
-                    dismiss()
-                }
-                .tint(MTColors.funBlue)
-            }
-        }
-        .padding(32)
-        .background(
-            RoundedRectangle(cornerRadius: 20)
-                .fill(Color.white.opacity(0.95))
-                .shadow(color: MTColors.funBlue.opacity(0.2), radius: 16, x: 0, y: 8)
-        )
+    private func nextQuestion() {
+        showingFeedback = false
+        selectedAnswer = nil
+        currentRound += 1
+        loadCurrentQuestion()
     }
 }

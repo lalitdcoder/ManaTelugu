@@ -2,6 +2,7 @@ import SwiftUI
 
 struct LearningInsightsView: View {
     @EnvironmentObject var session: AppSession
+    @Environment(\.dismiss) private var dismiss
     
     @State private var insights: [LearningInsight] = []
     
@@ -25,6 +26,16 @@ struct LearningInsightsView: View {
             } else {
                 ForEach(insights, id: \.title) { insight in
                     InsightCard(insight: insight)
+                }
+            }
+        }
+        .navigationTitle("Learning Insights")
+        .navigationBarTitleDisplayMode(.inline)
+        .navigationBarBackButtonHidden(true)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                BackButton {
+                    dismiss()
                 }
             }
         }

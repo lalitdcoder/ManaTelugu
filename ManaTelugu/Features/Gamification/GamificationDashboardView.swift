@@ -20,7 +20,7 @@ struct GamificationDashboardView: View {
                     .ignoresSafeArea()
                 
                 EnhancedScrollView {
-                    VStack(spacing: MTSpacing.large) {
+                    VStack(spacing: ModernDesignSystem.Spacing.lg) {
                         // Header with level and XP
                         LevelProgressCard(gamification: gamification, animateXP: $animateXP)
                             .padding(.horizontal)
@@ -30,7 +30,7 @@ struct GamificationDashboardView: View {
                             .padding(.horizontal)
                         
                         // Streak Card
-                        StreakCard(title: "Streak", value: "\(gamification.streakCount)", icon: "flame.fill", color: MTColors.funYellow)
+                        StreakCard(title: "Streak", value: "\(gamification.streakCount)", icon: "flame.fill", color: ModernDesignSystem.Colors.funYellow)
                             .padding(.horizontal)
                         
                         // Recent Badges
@@ -56,7 +56,7 @@ struct GamificationDashboardView: View {
                                         VStack {
                                             Text(badge.emoji)
                                                 .font(.title2)
-                                                .foregroundColor(ElegantDesign.Colors.primary)
+                                                .foregroundColor(ModernDesignSystem.Colors.primary)
                                             Text(badge.name)
                                                 .font(.caption)
                                                 .multilineTextAlignment(.center)
@@ -111,14 +111,14 @@ struct LevelProgressCard: View {
     @Binding var animateXP: Bool
     
     var body: some View {
-        VStack(spacing: MTSpacing.medium) {
+        VStack(spacing: ModernDesignSystem.Spacing.md) {
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Level \(gamification.currentLevel.level)")
-                        .font(MTTypography.heading())
+                        .font(ModernDesignSystem.Typography.headline)
                         .foregroundColor(.primary)
                     Text(gamification.currentLevel.teluguName)
-                        .font(MTTypography.body())
+                        .font(ModernDesignSystem.Typography.body)
                         .foregroundColor(.secondary)
                 }
                 
@@ -126,12 +126,12 @@ struct LevelProgressCard: View {
                 
                 VStack(alignment: .trailing, spacing: 4) {
                     Text("\(gamification.totalXP) XP")
-                        .font(MTTypography.heading())
+                        .font(ModernDesignSystem.Typography.headline)
                         .foregroundColor(.primary)
                         .scaleEffect(animateXP ? 1.1 : 1.0)
                         .animation(.spring(response: 0.3, dampingFraction: 0.6), value: animateXP)
                     Text("Total Experience")
-                        .font(MTTypography.caption())
+                        .font(ModernDesignSystem.Typography.caption)
                         .foregroundColor(.secondary)
                 }
             }
@@ -140,23 +140,23 @@ struct LevelProgressCard: View {
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
                     Text("Progress to Next Level")
-                        .font(MTTypography.caption())
+                        .font(ModernDesignSystem.Typography.caption)
                         .foregroundColor(.secondary)
                     Spacer()
                     if let nextLevel = gamification.nextLevel {
                         Text("\(nextLevel.teluguName)")
-                            .font(MTTypography.caption())
+                            .font(ModernDesignSystem.Typography.caption)
                             .fontWeight(.medium)
                             .foregroundColor(.accentColor)
                     }
                 }
                 
                 ProgressView(value: gamification.progressToNextLevel)
-                    .progressViewStyle(LinearProgressViewStyle(tint: MTColors.primary))
+                    .progressViewStyle(LinearProgressViewStyle(tint: ModernDesignSystem.Colors.primary))
                     .scaleEffect(x: 1, y: 2, anchor: .center)
             }
         }
-        .padding(MTSpacing.medium)
+        .padding(ModernDesignSystem.Spacing.md)
         .background(
             RoundedRectangle(cornerRadius: 16)
                 .fill(Color(.secondarySystemGroupedBackground))
@@ -170,18 +170,18 @@ struct DailyGoalCard: View {
     @ObservedObject var gamification: GamificationState
     
     var body: some View {
-        VStack(spacing: MTSpacing.medium) {
+        VStack(spacing: ModernDesignSystem.Spacing.md) {
             HStack {
                 Image(systemName: "target")
                     .font(.title2)
-                    .foregroundColor(MTColors.funGreen)
+                    .foregroundColor(ModernDesignSystem.Colors.funGreen)
                 
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Daily Goal")
-                        .font(MTTypography.heading())
+                        .font(ModernDesignSystem.Typography.headline)
                         .foregroundColor(.primary)
                     Text("Learn \(gamification.dailyGoal.wordsToLearn) words today")
-                        .font(MTTypography.body())
+                        .font(ModernDesignSystem.Typography.body)
                         .foregroundColor(.secondary)
                 }
                 
@@ -189,10 +189,10 @@ struct DailyGoalCard: View {
                 
                 VStack(alignment: .trailing, spacing: 4) {
                     Text("\(gamification.dailyGoal.xpTarget) XP")
-                        .font(MTTypography.heading())
-                        .foregroundColor(MTColors.funGreen)
+                        .font(ModernDesignSystem.Typography.headline)
+                        .foregroundColor(ModernDesignSystem.Colors.funGreen)
                     Text("Reward")
-                        .font(MTTypography.caption())
+                        .font(ModernDesignSystem.Typography.caption)
                         .foregroundColor(.secondary)
                 }
             }
@@ -201,13 +201,13 @@ struct DailyGoalCard: View {
             HStack {
                 ForEach(0..<gamification.dailyGoal.wordsToLearn, id: \.self) { index in
                     Circle()
-                        .fill(index < 3 ? MTColors.funGreen : Color(.systemGray4))
+                        .fill(index < 3 ? ModernDesignSystem.Colors.funGreen : Color(.systemGray4))
                         .frame(width: 12, height: 12)
                 }
                 Spacer()
             }
         }
-        .padding(MTSpacing.medium)
+        .padding(ModernDesignSystem.Spacing.md)
         .background(
             RoundedRectangle(cornerRadius: 16)
                 .fill(Color(.secondarySystemGroupedBackground))
@@ -228,10 +228,10 @@ struct RecentBadgesCard: View {
     }
     
     var body: some View {
-        VStack(alignment: .leading, spacing: MTSpacing.medium) {
+        VStack(alignment: .leading, spacing: ModernDesignSystem.Spacing.md) {
             HStack {
                 Text("Recent Badges")
-                    .font(MTTypography.heading())
+                    .font(ModernDesignSystem.Typography.headline)
                     .foregroundColor(.primary)
                 
                 Spacer()
@@ -239,7 +239,7 @@ struct RecentBadgesCard: View {
                 Button("View All") {
                     // Show badge gallery
                 }
-                .font(MTTypography.caption())
+                .font(ModernDesignSystem.Typography.caption)
                 .foregroundColor(.accentColor)
             }
             
@@ -249,13 +249,13 @@ struct RecentBadgesCard: View {
                         .font(.title2)
                         .foregroundColor(.secondary)
                     Text("Complete activities to earn badges!")
-                        .font(MTTypography.body())
+                        .font(ModernDesignSystem.Typography.body)
                         .foregroundColor(.secondary)
                 }
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, MTSpacing.medium)
+                .padding(.vertical, ModernDesignSystem.Spacing.md)
             } else {
-                HStack(spacing: MTSpacing.medium) {
+                HStack(spacing: ModernDesignSystem.Spacing.md) {
                     ForEach(recentBadges) { badge in
                         BadgeIconView(badge: badge, size: 60)
                             .scaleEffect(animateBadge ? 1.1 : 1.0)
@@ -264,7 +264,7 @@ struct RecentBadgesCard: View {
                 }
             }
         }
-        .padding(MTSpacing.medium)
+        .padding(ModernDesignSystem.Spacing.md)
         .background(
             RoundedRectangle(cornerRadius: 16)
                 .fill(Color(.secondarySystemGroupedBackground))
@@ -279,24 +279,24 @@ struct QuickActionsCard: View {
     @Binding var showingXPHistory: Bool
     
     var body: some View {
-        VStack(spacing: MTSpacing.medium) {
+        VStack(spacing: ModernDesignSystem.Spacing.md) {
             Text("Quick Actions")
-                .font(MTTypography.heading())
+                .font(ModernDesignSystem.Typography.headline)
                 .foregroundColor(.primary)
                 .frame(maxWidth: .infinity, alignment: .leading)
             
-            HStack(spacing: MTSpacing.medium) {
+            HStack(spacing: ModernDesignSystem.Spacing.md) {
                 Button(action: { showingBadgeGallery = true }) {
                     VStack(spacing: 8) {
                         Image(systemName: "star.fill")
                             .font(.title2)
-                            .foregroundColor(MTColors.funYellow)
+                            .foregroundColor(ModernDesignSystem.Colors.funYellow)
                         Text("Badges")
-                            .font(MTTypography.caption())
+                            .font(ModernDesignSystem.Typography.caption)
                             .foregroundColor(.primary)
                     }
                     .frame(maxWidth: .infinity)
-                    .padding(.vertical, MTSpacing.medium)
+                    .padding(.vertical, ModernDesignSystem.Spacing.md)
                     .background(
                         RoundedRectangle(cornerRadius: 12)
                             .fill(Color(.tertiarySystemGroupedBackground))
@@ -308,13 +308,13 @@ struct QuickActionsCard: View {
                     VStack(spacing: 8) {
                         Image(systemName: "chart.line.uptrend.xyaxis")
                             .font(.title2)
-                            .foregroundColor(MTColors.funGreen)
+                            .foregroundColor(ModernDesignSystem.Colors.funGreen)
                         Text("XP History")
-                            .font(MTTypography.caption())
+                            .font(ModernDesignSystem.Typography.caption)
                             .foregroundColor(.primary)
                     }
                     .frame(maxWidth: .infinity)
-                    .padding(.vertical, MTSpacing.medium)
+                    .padding(.vertical, ModernDesignSystem.Spacing.md)
                     .background(
                         RoundedRectangle(cornerRadius: 12)
                             .fill(Color(.tertiarySystemGroupedBackground))
@@ -323,7 +323,7 @@ struct QuickActionsCard: View {
                 .buttonStyle(.plain)
             }
         }
-        .padding(MTSpacing.medium)
+        .padding(ModernDesignSystem.Spacing.md)
         .background(
             RoundedRectangle(cornerRadius: 16)
                 .fill(Color(.secondarySystemGroupedBackground))
@@ -351,7 +351,7 @@ struct BadgeIconView: View {
             }
             
             Text(badge.name)
-                .font(MTTypography.caption2())
+                .font(ModernDesignSystem.Typography.caption2)
                 .foregroundColor(.primary)
                 .multilineTextAlignment(.center)
                 .lineLimit(2)

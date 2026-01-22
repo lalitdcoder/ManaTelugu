@@ -148,8 +148,8 @@ struct MotivationalMessage: View {
     
     var body: some View {
         Text(message)
-            .font(isTelugu ? MTTypography.teluguBody() : MTTypography.encouragement())
-            .foregroundColor(isTelugu ? MTColors.culturalGold : MTColors.funBlue)
+            .font(isTelugu ? ModernDesignSystem.Typography.teluguBody : ModernDesignSystem.Typography.encouragement)
+            .foregroundColor(isTelugu ? ModernDesignSystem.Colors.culturalGold : ModernDesignSystem.Colors.funBlue)
             .multilineTextAlignment(.center)
             .padding(.horizontal, 16)
             .padding(.vertical, 12)
@@ -160,7 +160,7 @@ struct MotivationalMessage: View {
                         RoundedRectangle(cornerRadius: 16)
                             .stroke(
                                 LinearGradient(
-                                    colors: [MTColors.culturalGold.opacity(0.3), MTColors.culturalOrange.opacity(0.3)],
+                                    colors: [ModernDesignSystem.Colors.culturalGold.opacity(0.3), ModernDesignSystem.Colors.culturalOrange.opacity(0.3)],
                                     startPoint: .topLeading,
                                     endPoint: .bottomTrailing
                                 ),
@@ -188,21 +188,21 @@ struct ProgressCelebration: View {
     var body: some View {
         VStack(spacing: 12) {
             Text(message)
-                .font(MTTypography.celebration())
-                .foregroundColor(MTColors.culturalGold)
+                .font(ModernDesignSystem.Typography.celebration)
+                .foregroundColor(ModernDesignSystem.Colors.culturalGold)
                 .multilineTextAlignment(.center)
             
             // Animated progress ring
             ZStack {
                 Circle()
-                    .stroke(MTColors.culturalGold.opacity(0.2), lineWidth: 8)
+                    .stroke(ModernDesignSystem.Colors.culturalGold.opacity(0.2), lineWidth: 8)
                     .frame(width: 60, height: 60)
                 
                 Circle()
                     .trim(from: 0, to: progress)
                     .stroke(
                         LinearGradient(
-                            colors: [MTColors.culturalGold, MTColors.culturalOrange],
+                            colors: [ModernDesignSystem.Colors.culturalGold, ModernDesignSystem.Colors.culturalOrange],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         ),
@@ -213,8 +213,8 @@ struct ProgressCelebration: View {
                     .animation(.easeInOut(duration: 1.0), value: progress)
                 
                 Text("\(Int(progress * 100))%")
-                    .font(MTTypography.progress())
-                    .foregroundColor(MTColors.culturalGold)
+                    .font(ModernDesignSystem.Typography.progress)
+                    .foregroundColor(ModernDesignSystem.Colors.culturalGold)
             }
             .scaleEffect(isAnimating ? 1.1 : 1.0)
             .animation(.easeInOut(duration: 0.6).repeatForever(autoreverses: true), value: isAnimating)

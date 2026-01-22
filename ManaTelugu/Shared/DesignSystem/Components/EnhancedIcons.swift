@@ -274,10 +274,10 @@ struct EnhancedIcons {
 extension EnhancedIcons {
     
     // MARK: - Learning Icons
-    static let alphabet = CustomIcon(systemName: "textformat.abc", size: 28, color: MTColors.funBlue, weight: .semibold)
-    static let vocabulary = CustomIcon(systemName: "book.fill", size: 28, color: MTColors.funGreen, weight: .semibold)
-    static let stories = CustomIcon(systemName: "books.vertical.fill", size: 28, color: MTColors.funPurple, weight: .semibold)
-    static let games = CustomIcon(systemName: "gamecontroller.fill", size: 28, color: MTColors.funPink, weight: .semibold)
+    static let alphabet = CustomIcon(systemName: "textformat.abc", size: 28, color: ModernDesignSystem.Colors.funBlue, weight: .semibold)
+    static let vocabulary = CustomIcon(systemName: "book.fill", size: 28, color: ModernDesignSystem.Colors.funGreen, weight: .semibold)
+    static let stories = CustomIcon(systemName: "books.vertical.fill", size: 28, color: ModernDesignSystem.Colors.funPurple, weight: .semibold)
+    static let games = CustomIcon(systemName: "gamecontroller.fill", size: 28, color: ModernDesignSystem.Colors.funPink, weight: .semibold)
     static let progress = CustomIcon(systemName: "chart.bar.fill", size: 28, color: RefinedColors.warmYellow, weight: .semibold)
     
     // MARK: - Navigation Icons

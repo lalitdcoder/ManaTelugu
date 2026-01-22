@@ -6,6 +6,12 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		8BFC5E3C2EB4C3DA00C72CBE /* Localized.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BFC5E3B2EB4C3DA00C72CBE /* Localized.swift */; };
+		8BFC5E3E2EB4C3DD00C72CBE /* ColorContrastAudit.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BFC5E3D2EB4C3DD00C72CBE /* ColorContrastAudit.swift */; };
+		8BFC5E402EB4C3DF00C72CBE /* AccessibilityModalExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BFC5E3F2EB4C3DF00C72CBE /* AccessibilityModalExtensions.swift */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		8B7C89692E6028FD008F05C9 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -28,6 +34,9 @@
 		8B7C89682E6028FD008F05C9 /* ManaTeluguTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ManaTeluguTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		8B7C89722E6028FD008F05C9 /* ManaTeluguUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ManaTeluguUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		8B7C89DC2E6034BC008F05C9 /* ManaTelugu.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = ManaTelugu.xcodeproj; sourceTree = SOURCE_ROOT; };
+		8BFC5E3B2EB4C3DA00C72CBE /* Localized.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Localized.swift; sourceTree = "<group>"; };
+		8BFC5E3D2EB4C3DD00C72CBE /* ColorContrastAudit.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColorContrastAudit.swift; sourceTree = "<group>"; };
+		8BFC5E3F2EB4C3DF00C72CBE /* AccessibilityModalExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessibilityModalExtensions.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -82,6 +91,9 @@
 				8B7C89752E6028FD008F05C9 /* ManaTeluguUITests */,
 				8B7C895C2E6028FC008F05C9 /* Products */,
 				8BA7D0002E6B4B7400F2660E /* Recovered References */,
+				8BFC5E3B2EB4C3DA00C72CBE /* Localized.swift */,
+				8BFC5E3D2EB4C3DD00C72CBE /* ColorContrastAudit.swift */,
+				8BFC5E3F2EB4C3DF00C72CBE /* AccessibilityModalExtensions.swift */,
 			);
 			sourceTree = "<group>";
 		};
@@ -186,7 +198,7 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 1640;
-				LastUpgradeCheck = 1640;
+				LastUpgradeCheck = 2600;
 				TargetAttributes = {
 					8B7C895A2E6028FC008F05C9 = {
 						CreatedOnToolsVersion = 16.4;
@@ -259,6 +271,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8BFC5E402EB4C3DF00C72CBE /* AccessibilityModalExtensions.swift in Sources */,
+				8BFC5E3C2EB4C3DA00C72CBE /* Localized.swift in Sources */,
+				8BFC5E3E2EB4C3DD00C72CBE /* ColorContrastAudit.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -350,6 +365,7 @@
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
@@ -406,6 +422,7 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				VALIDATE_PRODUCT = YES;
 			};
@@ -426,12 +443,12 @@
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 2.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.LalitDusanapudi.ManaTelugu;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
@@ -455,12 +472,12 @@
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 2.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.LalitDusanapudi.ManaTelugu;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;

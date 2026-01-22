@@ -95,6 +95,7 @@ struct GlossaryView: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Close") {
+                        HapticsService.shared.navigationTap()
                         dismiss()
                     }
                 }
@@ -169,7 +170,10 @@ struct GlossaryItemView: View {
                         .foregroundColor(.secondary)
                 }
                 Spacer()
-                Button(action: { isExpanded.toggle() }) {
+                Button(action: { 
+                    HapticsService.shared.buttonTap()
+                    isExpanded.toggle() 
+                }) {
                     Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
                         .font(.caption)
                         .foregroundColor(.secondary)

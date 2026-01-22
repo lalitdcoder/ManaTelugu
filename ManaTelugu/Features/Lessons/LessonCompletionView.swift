@@ -6,22 +6,23 @@ struct LessonCompletionView: View {
     let totalXP: Int
     let timeSpent: TimeInterval
     let onDismiss: () -> Void
-    
+
     @EnvironmentObject var session: AppSession
+    @Environment(\.dismiss) private var dismiss
     @State private var showingXPAnimation = false
     @State private var showingStreakAnimation = false
     @State private var animatedXP = 0
     @State private var showingStars = false
-    
+
     private var correctAnswers: Int {
         responses.filter { $0.isCorrect }.count
     }
-    
+
     private var accuracy: Double {
         guard !responses.isEmpty else { return 0 }
         return Double(correctAnswers) / Double(responses.count)
     }
-    
+
     private var starRating: Int {
         switch accuracy {
         case 0.9...1.0: return 3
@@ -30,110 +31,146 @@ struct LessonCompletionView: View {
         default: return 0
         }
     }
-    
+
     var body: some View {
         NavigationStack {
-            VStack(spacing: MTSpacing.large) {
-                Spacer()
-                
-                // Success Animation
-                VStack(spacing: MTSpacing.medium) {
-                    // Stars
-                    HStack(spacing: MTSpacing.small) {
-                        ForEach(0..<3, id: \.self) { index in
-                            Image(systemName: index < starRating ? "star.fill" : "star")
-                                .font(.system(size: 30))
-                                .foregroundColor(index < starRating ? .yellow : MTColors.text.opacity(0.3))
-                                .scaleEffect(showingStars && index < starRating ? 1.3 : 1.0)
-                                .animation(.spring(response: 0.6, dampingFraction: 0.8).delay(Double(index) * 0.1), value: showingStars)
+            ZStack {
+                // Stronger gradient background
+                LinearGradient(
+                    colors: [
+                        Color(red: 0.4, green: 0.5, blue: 0.9).opacity(0.3),
+                        Color(red: 0.46, green: 0.29, blue: 0.64).opacity(0.2),
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                .ignoresSafeArea()
+
+                VStack(spacing: ModernDesignSystem.Spacing.lg) {
+                    Spacer()
+
+                    // Success Animation
+                    VStack(spacing: ModernDesignSystem.Spacing.md) {
+                        // Stars
+                        HStack(spacing: ModernDesignSystem.Spacing.sm) {
+                            ForEach(0..<3, id: \.self) { index in
+                                Image(systemName: index < starRating ? "star.fill" : "star")
+                                    .font(.system(size: 30))
+                                    .foregroundColor(
+                                        index < starRating
+                                            ? .yellow
+                                            : ModernDesignSystem.Colors.textPrimary.opacity(0.3)
+                                    )
+                                    .scaleEffect(showingStars && index < starRating ? 1.3 : 1.0)
+                                    .animation(
+                                        .spring(response: 0.6, dampingFraction: 0.8).delay(
+                                            Double(index) * 0.1), value: showingStars)
+                            }
                         }
+
+                        Text("Lesson Complete!")
+                            .font(ModernDesignSystem.Typography.title1)
+                            .foregroundColor(ModernDesignSystem.Colors.textPrimary)
+                            .opacity(showingXPAnimation ? 1 : 0)
+                            .animation(.easeIn(duration: 0.5), value: showingXPAnimation)
                     }
-                    
-                    Text("Lesson Complete!")
-                        .font(MTTypography.title(kidMode: session.userProfile.kidMode))
-                        .foregroundColor(MTColors.text)
-                        .opacity(showingXPAnimation ? 1 : 0)
-                        .animation(.easeIn(duration: 0.5), value: showingXPAnimation)
-                }
-                
-                // Stats Grid
-                LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 2), spacing: MTSpacing.medium) {
-                    LessonStatCard(
-                        title: "XP Earned",
-                        value: "\(animatedXP)",
-                        icon: "star.fill",
-                        color: .yellow
+
+                    // Stats Grid
+                    LazyVGrid(
+                        columns: Array(repeating: GridItem(.flexible()), count: 2),
+                        spacing: ModernDesignSystem.Spacing.md
+                    ) {
+                        LessonStatCard(
+                            title: "XP Earned",
+                            value: "\(animatedXP)",
+                            icon: "star.fill",
+                            color: .yellow
+                        )
+
+                        LessonStatCard(
+                            title: "Accuracy",
+                            value: "\(Int(accuracy * 100))%",
+                            icon: "target",
+                            color: .green
+                        )
+
+                        LessonStatCard(
+                            title: "Correct",
+                            value: "\(correctAnswers)/\(responses.count)",
+                            icon: "checkmark.circle.fill",
+                            color: .green
+                        )
+
+                        LessonStatCard(
+                            title: "Streak",
+                            value: "\(session.userProfile.streakDays + 1)",
+                            icon: "flame.fill",
+                            color: .orange
+                        )
+                    }
+
+                    // Performance Message
+                    VStack(spacing: ModernDesignSystem.Spacing.sm) {
+                        Text(performanceMessage)
+                            .font(ModernDesignSystem.Typography.headline)
+                            .foregroundColor(ModernDesignSystem.Colors.textPrimary)
+                            .multilineTextAlignment(.center)
+
+                        Text(encouragementMessage)
+                            .font(ModernDesignSystem.Typography.body)
+                            .foregroundColor(ModernDesignSystem.Colors.textPrimary.opacity(0.7))
+                            .multilineTextAlignment(.center)
+                    }
+                    .padding()
+                    .background(ModernDesignSystem.Colors.surfaceSecondary)
+                    .cornerRadius(12)
+
+                    Spacer()
+
+                    // Continue Button
+                    EnhancedButton(
+                        interaction: .medium,
+                        isLoading: false,
+                        isEnabled: true,
+                        action: onDismiss,
+                        content: {
+                            Text("Continue Learning")
+                                .font(ModernDesignSystem.Typography.body)
+                                .fontWeight(.bold)
+                                .foregroundColor(.white)
+                                .frame(maxWidth: .infinity)
+                                .padding()
+                                .background(ModernDesignSystem.Colors.primary)
+                                .cornerRadius(12)
+                        }
                     )
-                    
-                    LessonStatCard(
-                        title: "Accuracy",
-                        value: "\(Int(accuracy * 100))%",
-                        icon: "target",
-                        color: .green
-                    )
-                    
-                    LessonStatCard(
-                        title: "Time",
-                        value: formatTime(timeSpent),
-                        icon: "clock.fill",
-                        color: .blue
-                    )
-                    
-                    LessonStatCard(
-                        title: "Streak",
-                        value: "\(session.userProfile.streakDays + 1)",
-                        icon: "flame.fill",
-                        color: .orange
-                    )
-                }
-                
-                // Performance Message
-                VStack(spacing: MTSpacing.small) {
-                    Text(performanceMessage)
-                        .font(MTTypography.heading(kidMode: session.userProfile.kidMode))
-                        .foregroundColor(MTColors.text)
-                        .multilineTextAlignment(.center)
-                    
-                    Text(encouragementMessage)
-                        .font(MTTypography.body(kidMode: session.userProfile.kidMode))
-                        .foregroundColor(MTColors.text.opacity(0.7))
-                        .multilineTextAlignment(.center)
                 }
                 .padding()
-                .background(MTColors.surfaceAlt)
-                .cornerRadius(12)
-                
-                Spacer()
-                
-                // Continue Button
-                EnhancedButton(
-                    interaction: .medium,
-                    isLoading: false,
-                    isEnabled: true,
-                    action: onDismiss,
-                    content: {
-                        Text("Continue Learning")
-                            .font(MTTypography.body(kidMode: session.userProfile.kidMode))
-                            .fontWeight(.bold)
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(MTColors.primary)
-                            .cornerRadius(12)
+                .navigationTitle("Lesson Complete")
+                .navigationBarTitleDisplayMode(.inline)
+                .navigationBarBackButtonHidden(true)
+                .toolbar {
+                    ToolbarItem(placement: .navigationBarLeading) {
+                        BackButton {
+                            onDismiss()
+                        }
                     }
-                )
-            }
-            .padding()
-            .navigationBarHidden(true)
-            .onAppear {
-                // TODO: Save lesson progress
-                // session.progressTrackingService.saveProgress(for: lesson, with: responses, timeSpent: timeSpent)
-                print("LessonCompletionView appeared with lesson: \(lesson.title), totalXP: \(totalXP), timeSpent: \(timeSpent)")
-                startAnimations()
+                }
+                .onAppear {
+                    // Save lesson progress
+                    session.progressTrackingService.saveProgress(
+                        for: lesson, with: responses, timeSpent: timeSpent)
+
+                    // Update app session progress
+                    session.updateProgress(xp: totalXP, lessons: 1)
+                    HapticsManager.shared.impact(.heavy)
+                    HapticsManager.shared.notification(.success)
+                    startAnimations()
+                }
             }
         }
     }
-    
+
     private var performanceMessage: String {
         switch starRating {
         case 3: return "Perfect! 🎉"
@@ -142,7 +179,7 @@ struct LessonCompletionView: View {
         default: return "Keep practicing! 💪"
         }
     }
-    
+
     private var encouragementMessage: String {
         switch starRating {
         case 3: return "You mastered this lesson! Ready for the next challenge?"
@@ -151,13 +188,13 @@ struct LessonCompletionView: View {
         default: return "Practice makes perfect. Don't give up!"
         }
     }
-    
+
     private func startAnimations() {
         // XP Animation
         withAnimation(.easeOut(duration: 1.0)) {
             showingXPAnimation = true
         }
-        
+
         // Animate XP counter
         let _ = Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) { timer in
             if animatedXP < totalXP {
@@ -168,14 +205,14 @@ struct LessonCompletionView: View {
                 }
             }
         }
-        
+
         // Stars Animation (delayed)
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
             withAnimation {
                 showingStars = true
             }
         }
-        
+
         // Streak Animation (delayed)
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
             withAnimation(.spring(response: 0.6, dampingFraction: 0.7)) {
@@ -183,7 +220,7 @@ struct LessonCompletionView: View {
             }
         }
     }
-    
+
     private func formatTime(_ timeInterval: TimeInterval) -> String {
         let minutes = Int(timeInterval) / 60
         let seconds = Int(timeInterval) % 60
@@ -197,24 +234,24 @@ struct LessonStatCard: View {
     let icon: String
     let color: Color
     @EnvironmentObject var session: AppSession
-    
+
     var body: some View {
-        VStack(spacing: MTSpacing.small) {
+        VStack(spacing: ModernDesignSystem.Spacing.sm) {
             Image(systemName: icon)
                 .font(.title2)
                 .foregroundColor(color)
-            
+
             Text(value)
-                .font(MTTypography.heading(kidMode: session.userProfile.kidMode))
-                .foregroundColor(MTColors.text)
-            
+                .font(ModernDesignSystem.Typography.headline)
+                .foregroundColor(ModernDesignSystem.Colors.textPrimary)
+
             Text(title)
-                .font(MTTypography.caption(kidMode: session.userProfile.kidMode))
-                .foregroundColor(MTColors.text.opacity(0.7))
+                .font(ModernDesignSystem.Typography.caption)
+                .foregroundColor(ModernDesignSystem.Colors.textPrimary.opacity(0.7))
         }
         .frame(maxWidth: .infinity)
         .padding()
-        .background(MTColors.surfaceAlt)
+        .background(ModernDesignSystem.Colors.surfaceSecondary)
         .cornerRadius(12)
     }
 }

@@ -2,33 +2,35 @@ import SwiftUI
 
 struct VocabularyThemesView: View {
     @EnvironmentObject var session: AppSession
+    @Environment(\.dismiss) private var dismiss
     @State private var themes: [String] = []
-    let allThemes = [
-        "Numbers",
-        "Colors", 
-        "Animals",
-        "Family",
-        "Food",
-        "School Objects",
-        "Greetings",
-        "Daily Actions",
-        "Body Parts",
-        "Weather"
-    ]
     
     var body: some View {
-        EnhancedScrollView {
+        ZStack {
+            // Stronger gradient background
+            LinearGradient(
+                colors: [
+                    Color(red: 0.4, green: 0.5, blue: 0.9).opacity(0.3),
+                    Color(red: 0.46, green: 0.29, blue: 0.64).opacity(0.2)
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .ignoresSafeArea()
+            
+            EnhancedScrollView {
             VStack(alignment: .leading, spacing: 28) {
                 // Header
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Vocabulary Quest")
-                        .font(MTTypography.title(kidMode: session.userProfile.kidMode))
+                        .font(ModernDesignSystem.Typography.title1)
                         .foregroundColor(.primary)
                     Text("Explore different themes to expand your vocabulary")
-                        .font(MTTypography.body(kidMode: session.userProfile.kidMode))
+                        .font(ModernDesignSystem.Typography.body)
                         .foregroundColor(.secondary)
                 }
                 .padding(.horizontal)
+                .padding(.top, -20)
                 
                 // Theme Grid
                 LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 16), count: 2), spacing: 16) {
@@ -38,6 +40,7 @@ struct VocabularyThemesView: View {
                         } label: {
                             ModernThemeCardView(theme: theme)
                         }
+                        .buttonStyle(HapticButtonStyle())
                     }
                 }
                 .padding(.horizontal)
@@ -46,10 +49,36 @@ struct VocabularyThemesView: View {
         }
         .softGradientBackground()
         .onAppear {
-            themes = allThemes
+            DebugLogger.log("VocabularyThemesView appeared")
+            // Load themes dynamically from actual data
+            let allThemes = Set(session.dataRepository.words.map { $0.theme })
+            themes = Array(allThemes).sorted()
+            DebugLogger.log("Available vocabulary themes: \(themes)")
         }
         .navigationTitle("Vocabulary")
-        .navigationBarTitleDisplayMode(.large)
+        .navigationBarTitleDisplayMode(.inline)
+        .navigationBarBackButtonHidden(true)
+        .toolbarBackground(
+            LinearGradient(
+                colors: [
+                    Color(red: 0.4, green: 0.5, blue: 0.9).opacity(0.1),
+                    Color(red: 0.46, green: 0.29, blue: 0.64).opacity(0.08)
+                ],
+                startPoint: .leading,
+                endPoint: .trailing
+            ),
+            for: .navigationBar
+        )
+        .toolbarBackground(.visible, for: .navigationBar)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                Button("Back") {
+                    dismiss()
+                }
+                .foregroundColor(.blue)
+            }
+        }
+        }
     }
 }
 
@@ -61,15 +90,15 @@ struct ModernThemeCardView: View {
     var body: some View {
         VStack(spacing: 12) {
             ZStack {
-                MTColors.funGreen.opacity(0.10)
+                ModernDesignSystem.Colors.funGreen.opacity(0.10)
                     .frame(width: 56, height: 56)
                     .cornerRadius(16)
                 Image(systemName: iconForTheme(theme))
                     .font(.system(size: 28, weight: .medium))
-                    .foregroundColor(MTColors.funGreen)
+                    .foregroundColor(ModernDesignSystem.Colors.funGreen)
             }
             Text(theme)
-                .font(MTTypography.body(kidMode: session.userProfile.kidMode))
+                .font(ModernDesignSystem.Typography.body)
                 .fontWeight(.semibold)
                 .foregroundColor(.primary)
                 .multilineTextAlignment(.center)

@@ -2,6 +2,7 @@ import SwiftUI
 
 struct AlphabetGridView: View {
     @EnvironmentObject var session: AppSession
+    @Environment(\.dismiss) private var dismiss
     @State private var letters: [Letter] = []
     
     // MARK: - Letter Categorization
@@ -22,32 +23,32 @@ struct AlphabetGridView: View {
                 .liquidGlassBackground()
                 .ignoresSafeArea()
             EnhancedScrollView(bottomPadding: 140) {
-                VStack(alignment: .leading, spacing: MTSpacing.xLarge) {
+                VStack(alignment: .leading, spacing: ModernDesignSystem.Spacing.xLarge) {
                     // Header
-                    VStack(alignment: .leading, spacing: MTSpacing.tiny) {
+                    VStack(alignment: .leading, spacing: ModernDesignSystem.Spacing.tiny) {
                         (Text("Alphabet Adventure") as Text)
-                            .font(MTTypography.title(kidMode: session.userProfile.kidMode))
-                            .foregroundColor(MTColors.primaryText)
+                            .font(ModernDesignSystem.Typography.title1)
+                            .foregroundColor(ModernDesignSystem.Colors.primaryText)
                         Text("Learn the Telugu script and sounds")
-                            .font(MTTypography.body(kidMode: session.userProfile.kidMode))
-                            .foregroundColor(MTColors.secondaryText)
+                            .font(ModernDesignSystem.Typography.body)
+                            .foregroundColor(ModernDesignSystem.Colors.secondaryText)
                     }
-                    .padding(.horizontal, MTSpacing.medium)
+                    .padding(.horizontal, ModernDesignSystem.Spacing.md)
                     
                     // Vowels Section
-                    VStack(alignment: .leading, spacing: MTSpacing.medium) {
+                    VStack(alignment: .leading, spacing: ModernDesignSystem.Spacing.md) {
                         HStack {
                             Text("Vowels (అచ్చులు)")
-                                .font(MTTypography.heading(kidMode: session.userProfile.kidMode))
-                                .foregroundColor(MTColors.funBlue)
+                                .font(ModernDesignSystem.Typography.headline)
+                                .foregroundColor(ModernDesignSystem.Colors.funBlue)
                             Spacer()
                             Text("\(vowels.count) letters")
-                                .font(MTTypography.caption(kidMode: session.userProfile.kidMode))
-                                .foregroundColor(MTColors.secondaryText)
+                                .font(ModernDesignSystem.Typography.caption)
+                                .foregroundColor(ModernDesignSystem.Colors.secondaryText)
                         }
-                        .padding(.horizontal, MTSpacing.medium)
+                        .padding(.horizontal, ModernDesignSystem.Spacing.md)
                         
-                        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: MTSpacing.medium), count: 4), spacing: MTSpacing.medium) {
+                        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: ModernDesignSystem.Spacing.md), count: 4), spacing: ModernDesignSystem.Spacing.md) {
                             ForEach(Array(vowels), id: \.id) { letter in
                                 let originalIndex = letters.firstIndex(where: { $0.id == letter.id }) ?? 0
                                 NavigationLink {
@@ -57,38 +58,37 @@ struct AlphabetGridView: View {
                                 }
                                 .simultaneousGesture(
                                     TapGesture()
-                                        .onEnded { _ in
+                                .onEnded { _ in
                                             // Haptic feedback
-                                            let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
-                                            impactFeedback.impactOccurred()
+                                            HapticsManager.shared.impact(.medium)
                                             
                                             // Audio feedback
-                                            session.audioService.play(name: letter.audioFileName ?? "default_audio", rate: 1.0)
+                                            session.audioService.play(name: (letter.audioFileName?.isEmpty == false ? letter.audioFileName! : "default_audio.mp3"), rate: 1.0)
                                         }
                                 )
-                            .frame(minWidth: MTSpacing.minimumTouchTarget, minHeight: MTSpacing.minimumTouchTarget)
-                            .accessibilityLabel("Telugu vowel \(letter.character)")
-                            .accessibilityHint("Double tap to learn more about this vowel")
-                            .accessibilityAddTraits(.isButton)
+                                .frame(minWidth: ModernDesignSystem.Spacing.minimumTouchTarget, minHeight: ModernDesignSystem.Spacing.minimumTouchTarget)
+                                .accessibilityLabel("Telugu vowel \(letter.character)")
+                                .accessibilityHint("Double tap to learn more about this vowel")
+                                .accessibilityAddTraits(.isButton)
                             }
                         }
-                        .padding(.horizontal, MTSpacing.medium)
+                        .padding(.horizontal, ModernDesignSystem.Spacing.md)
                     }
                     
                     // Consonants Section
-                    VStack(alignment: .leading, spacing: MTSpacing.medium) {
+                    VStack(alignment: .leading, spacing: ModernDesignSystem.Spacing.md) {
                         HStack {
                             Text("Consonants (హల్లులు)")
-                                .font(MTTypography.heading(kidMode: session.userProfile.kidMode))
-                                .foregroundColor(MTColors.funGreen)
+                                .font(ModernDesignSystem.Typography.headline)
+                                .foregroundColor(ModernDesignSystem.Colors.funGreen)
                             Spacer()
                             Text("\(consonants.count) letters")
-                                .font(MTTypography.caption(kidMode: session.userProfile.kidMode))
-                                .foregroundColor(MTColors.secondaryText)
+                                .font(ModernDesignSystem.Typography.caption)
+                                .foregroundColor(ModernDesignSystem.Colors.secondaryText)
                         }
-                        .padding(.horizontal, MTSpacing.medium)
+                        .padding(.horizontal, ModernDesignSystem.Spacing.md)
                         
-                        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: MTSpacing.medium), count: 4), spacing: MTSpacing.medium) {
+                        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: ModernDesignSystem.Spacing.md), count: 4), spacing: ModernDesignSystem.Spacing.md) {
                             ForEach(consonants.indices, id: \.self) { index in
                                 let letter = consonants[index]
                                 let originalIndex = letters.firstIndex(where: { $0.id == letter.id }) ?? 0
@@ -101,41 +101,46 @@ struct AlphabetGridView: View {
                                     TapGesture()
                                         .onEnded { _ in
                                             // Haptic feedback
-                                            let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
-                                            impactFeedback.impactOccurred()
+                                            HapticsManager.shared.impact(.medium)
                                             
                                             // Audio feedback
                                             session.audioService.play(name: letter.audioFileName ?? "default_audio", rate: 1.0)
                                         }
                                 )
-                            .frame(minWidth: MTSpacing.minimumTouchTarget, minHeight: MTSpacing.minimumTouchTarget)
-                            .accessibilityLabel("Telugu consonant \(letter.character)")
-                            .accessibilityHint("Double tap to learn more about this consonant")
-                            .accessibilityAddTraits(.isButton)
+                                .frame(minWidth: ModernDesignSystem.Spacing.minimumTouchTarget, minHeight: ModernDesignSystem.Spacing.minimumTouchTarget)
+                                .accessibilityLabel("Telugu consonant \(letter.character)")
+                                .accessibilityHint("Double tap to learn more about this consonant")
+                                .accessibilityAddTraits(.isButton)
                             }
                         }
-                        .padding(.horizontal, MTSpacing.medium)
+                        .padding(.horizontal, ModernDesignSystem.Spacing.md)
                     }
                 }
-                .padding(.vertical, MTSpacing.large)
+                .padding(.vertical, ModernDesignSystem.Spacing.lg)
             }
         }
         .onAppear {
-            Task {
-                letters = await session.dataRepository.letters
-                if letters.isEmpty {
-                    // Fallback test letters if data loading fails
-                    letters = [
-                        Letter(id: "test_a", character: "అ", romanization: "a", meaning: "a", category: .vowel, audioFileName: "letter_a.mp3"),
-                        Letter(id: "test_aa", character: "ఆ", romanization: "aa", meaning: "aa", category: .vowel, audioFileName: "letter_aa.mp3"),
-                        Letter(id: "test_i", character: "ఇ", romanization: "i", meaning: "i", category: .vowel, audioFileName: "letter_i.mp3"),
-                        Letter(id: "test_ii", character: "ఈ", romanization: "ii", meaning: "ii", category: .vowel, audioFileName: "letter_ii.mp3")
-                    ]
-                }
+            letters = session.dataRepository.letters
+            if letters.isEmpty {
+                // Fallback test letters if data loading fails
+                letters = [
+                    Letter(id: "test_a", character: "అ", romanization: "a", meaning: "a", category: .vowel, audioFileName: "letter_a.mp3"),
+                    Letter(id: "test_aa", character: "ఆ", romanization: "aa", meaning: "aa", category: .vowel, audioFileName: "letter_aa.mp3"),
+                    Letter(id: "test_i", character: "ఇ", romanization: "i", meaning: "i", category: .vowel, audioFileName: "letter_i.mp3"),
+                    Letter(id: "test_ii", character: "ఈ", romanization: "ii", meaning: "ii", category: .vowel, audioFileName: "letter_ii.mp3")
+                ]
             }
         }
         .navigationTitle("Alphabet Adventure")
         .navigationBarTitleDisplayMode(.large)
+        .navigationBarBackButtonHidden(true)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                BackButton {
+                    dismiss()
+                }
+            }
+        }
     }
 }
 
@@ -153,11 +158,11 @@ struct ModernLetterCardView: View {
     }
     
     private var cardColor: Color {
-        isVowel ? MTColors.funBlue : MTColors.funGreen
+        isVowel ? ModernDesignSystem.Colors.funBlue : ModernDesignSystem.Colors.funGreen
     }
     
     var body: some View {
-        VStack(spacing: MTSpacing.small) {
+        VStack(spacing: ModernDesignSystem.Spacing.sm) {
             ZStack {
                 // Enhanced Liquid Glass Background
                 RoundedRectangle(cornerRadius: 20)
@@ -187,27 +192,27 @@ struct ModernLetterCardView: View {
             
             // Transliteration with better styling
             (Text(letter.romanization) as Text)
-                .font(MTTypography.caption(kidMode: session.userProfile.kidMode))
-                .foregroundColor(MTColors.text)
+                .font(ModernDesignSystem.Typography.caption)
+                .foregroundColor(ModernDesignSystem.Colors.textPrimary)
                 .multilineTextAlignment(.center)
         }
         .frame(height: 90)
         .frame(maxWidth: .infinity)
-        .frame(minWidth: MTSpacing.minimumTouchTarget, minHeight: MTSpacing.minimumTouchTarget)
-            .background(
-                RoundedRectangle(cornerRadius: 24, style: .continuous)
-                    .fill(
-                        LinearGradient(
-                            colors: [
-                                cardColor.opacity(0.12),
-                                cardColor.opacity(0.05)
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
+        .frame(minWidth: ModernDesignSystem.Spacing.minimumTouchTarget, minHeight: ModernDesignSystem.Spacing.minimumTouchTarget)
+        .background(
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .fill(
+                    LinearGradient(
+                        colors: [
+                            cardColor.opacity(0.12),
+                            cardColor.opacity(0.05)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
                     )
-                    .glassEffect(.regular, shape: .rect(cornerRadius: 24))
-            )
+                )
+                .glassEffect(.regular, shape: .rect(cornerRadius: 24))
+        )
         .scaleEffect(isPressed ? 0.95 : 1.0)
         .animation(.spring(response: 0.3, dampingFraction: 0.6, blendDuration: 0), value: isPressed)
         .onTapGesture {
@@ -226,7 +231,7 @@ struct ModernLetterCardView: View {
             }
             
             // Audio feedback
-            session.audioService.play(name: letter.audioFileName ?? "default_audio", rate: 1.0)
+            session.audioService.play(name: (letter.audioFileName?.isEmpty == false ? letter.audioFileName! : "default_audio.mp3"), rate: 1.0)
             
             // Reset states
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {

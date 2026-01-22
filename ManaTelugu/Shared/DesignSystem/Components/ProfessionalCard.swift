@@ -88,19 +88,7 @@ struct ProfessionalCard<Content: View>: View {
             )
             .scaleEffect(isPressed ? 0.96 : 1.0)
             .opacity(isPressed ? 0.9 : 1.0)
-            .onTapGesture {
-                if isInteractive {
-                    ProfessionalHaptics.medium()
-                    withAnimation(ProfessionalAnimation.cardPress) {
-                        isPressed = true
-                    }
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                        withAnimation(ProfessionalAnimation.cardRelease) {
-                            isPressed = false
-                        }
-                    }
-                }
-            }
+
     }
 }
 
@@ -418,7 +406,10 @@ struct ProfessionalSectionHeader: View {
             Spacer()
             
             if let action = action, let actionTitle = actionTitle {
-                Button(action: action) {
+                Button(action: {
+                    ProfessionalHaptics.light()
+                    action()
+                }) {
                     HStack(spacing: ProfessionalSpacing.tiny.value) {
                         ProfessionalText(
                             actionTitle,

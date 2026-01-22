@@ -136,6 +136,15 @@ extension Color {
     static let professionalGreen = Color(red: 0.2, green: 0.8, blue: 0.4)
     static let professionalPurple = Color(red: 0.6, green: 0.3, blue: 0.9)
     static let professionalPink = Color(red: 1.0, green: 0.3, blue: 0.6)
+    static let professionalRed = Color(red: 0.9, green: 0.3, blue: 0.3)
+    static let professionalTeal = Color(red: 0.2, green: 0.6, blue: 0.7)
+    
+    // Background gradients
+    static let primaryGradient = LinearGradient(
+        colors: [professionalBlue.opacity(0.1), professionalPurple.opacity(0.05)],
+        startPoint: .topLeading,
+        endPoint: .bottomTrailing
+    )
     
     // Glass card backgrounds
     static let cardPrimary = Color.white.opacity(0.25)

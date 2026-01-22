@@ -10,30 +10,30 @@ struct CardView: View {
     @State private var animate = false
     
     var body: some View {
-        VStack(spacing: MTSpacing.regular) {
+        VStack(spacing: ModernDesignSystem.Spacing.regular) {
             Text(telugu)
                 .font(.system(size: 48, weight: .bold, design: .rounded))
-                .foregroundColor(MTColors.primary)
+                .foregroundColor(ModernDesignSystem.Colors.primary)
                 .minimumScaleFactor(0.5)
                 .lineLimit(1)
             (Text(transliteration) as Text)
-                .font(MTTypography.body())
+                .font(ModernDesignSystem.Typography.body)
                 .fontWeight(.medium)
-                .foregroundColor(MTColors.secondaryText)
+                .foregroundColor(ModernDesignSystem.Colors.secondaryText)
                 .minimumScaleFactor(0.8)
                 .lineLimit(2)
             if showTranslation {
                 Text(english)
-                    .font(MTTypography.heading())
+                    .font(ModernDesignSystem.Typography.headline)
                     .fontWeight(.semibold)
-                    .foregroundColor(MTColors.accent)
+                    .foregroundColor(ModernDesignSystem.Colors.accent)
                     .multilineTextAlignment(.center)
                     .lineLimit(3)
             }
         }
-        .padding(MTSpacing.large)
+        .padding(ModernDesignSystem.Spacing.lg)
         .frame(maxWidth: .infinity, minHeight: 120)
-        .frame(minWidth: MTSpacing.comfortableTouchTarget, minHeight: MTSpacing.comfortableTouchTarget)
+        .frame(minWidth: ModernDesignSystem.Spacing.comfortableTouchTarget, minHeight: ModernDesignSystem.Spacing.comfortableTouchTarget)
         .glassEffect(.regular, shape: .rect(cornerRadius: 24))
         .scaleEffect(animate ? 1.05 : 1.0)
         .animation(.spring(response: 0.3, dampingFraction: 0.6, blendDuration: 0), value: animate)
@@ -54,6 +54,6 @@ struct CardView: View {
         .accessibilityAddTraits(.isButton)
         .accessibilityLabel("Telugu word: \(telugu), \(transliteration)")
         .accessibilityHint(showTranslation ? "Hide English translation" : "Tap to show English translation")
-        .accessibilityValue(showTranslation ? "Translation: \(english)" : "Tap to reveal translation")
+        .accessibilityValue(showTranslation ? "Translation: \(english)" : "Translation not yet revealed")
     }
 }

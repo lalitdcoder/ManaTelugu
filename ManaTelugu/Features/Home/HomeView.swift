@@ -1,459 +1,508 @@
 import SwiftUI
 
-// MARK: - Parental Gate State
-struct ParentalGateState {
-    var isUnlocked: Bool = false
-    var isPresented: Bool = false
-    var isCompleted: Bool = false
-}
-
-// MARK: - Professional Home View
-// Complete redesign with proper visual hierarchy and professional styling
-
+// MARK: - Modern Home View with Apple HIG
 struct HomeView: View {
     @EnvironmentObject var session: AppSession
-    @StateObject private var navigationService = NavigationService.shared
-    @State private var parentalGateState = ParentalGateState()
-    @State private var isLoading = false
-    @State private var scrollOffset: CGFloat = 0
-    
-    // Mock data for professional presentation
-    private let dailyTip = DailyTip(
-        title: "Word of the Day",
-        content: "సంతోషం (santōṣaṁ) - Happiness",
-        iconName: "sun.max.fill",
-        color: .professionalOrange
-    )
-    
-    private let learningModes: [ProfessionalLearningMode] = [
-        ProfessionalLearningMode(
-            title: "Alphabet Adventure",
-            description: "Master Telugu letters through interactive activities",
-            iconName: "textformat.abc",
-            color: .professionalBlue,
-            progress: 0.75,
-            difficulty: .beginner
-        ),
-        ProfessionalLearningMode(
-            title: "Vocabulary Quest",
-            description: "Build your Telugu vocabulary with essential words",
-            iconName: "book.fill",
-            color: .professionalGreen,
-            progress: 0.45,
-            difficulty: .intermediate
-        ),
-        ProfessionalLearningMode(
-            title: "Story Time",
-            description: "Immerse yourself in rich Telugu stories and folklore",
-            iconName: "book.closed.fill",
-            color: .professionalPurple,
-            progress: 0.30,
-            difficulty: .advanced
-        ),
-        ProfessionalLearningMode(
-            title: "Game Zone",
-            description: "Learn through fun and engaging Telugu games",
-            iconName: "gamecontroller.fill",
-            color: .professionalOrange,
-            progress: 0.60,
-            difficulty: .beginner
-        )
-    ]
+    @State private var learnModules: [LearnModule] = []
+    @State private var animateCards = false
+    @State private var animateStreak = false
+    @State private var navigationPath = NavigationPath()
     
     var body: some View {
-        NavigationStack(path: $navigationService.navigationPath) {
+        NavigationStack(path: $navigationPath) {
             ZStack {
-                // Professional gradient background
-                LinearGradient(
-                    colors: [
-                        Color(red: 0.2, green: 0.4, blue: 0.9),   // Professional blue
-                        Color(red: 0.4, green: 0.2, blue: 0.8),   // Professional purple
-                        Color(red: 0.8, green: 0.3, blue: 0.6)    // Professional pink
-                    ],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-                .ignoresSafeArea(.all, edges: .all)
-                
-                // Professional scroll view with proper hierarchy
-                ScrollView {
-                    LazyVStack(spacing: ProfessionalSpacing.large.value) {
-                        // Hero Welcome Section
-                        heroWelcomeSection
-                            .padding(.top, ProfessionalSpacing.extraLarge.value)
+            // Stronger gradient background
+            LinearGradient(
+                colors: [
+                    Color(red: 0.4, green: 0.5, blue: 0.9).opacity(0.3),
+                    Color(red: 0.46, green: 0.29, blue: 0.64).opacity(0.2)
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .ignoresSafeArea()
+            
+            ScrollView {
+                LazyVStack(spacing: 24) {
+                    // Compact Header
+                    headerSection
                         
-                        // Stats Dashboard
-                        statsDashboardSection
+                        // Progress Metrics
+                        progressMetricsSection
                         
-                        // Continue Learning Hero Card
-                        continueLearningHeroSection
+                        // Learn Section
+                        learnSection
                         
-                        // Learning Modes Grid
-                        learningModesSection
-                        
-                        // Word of the Day Feature
-                        wordOfTheDaySection
-                        
-                        // Recent Achievements
-                        recentAchievementsSection
-                        
-                        // Bottom padding for tab bar
-                        Color.clear
-                            .frame(height: 120)
+                        // Bottom padding
+                        Color.clear.frame(height: 100)
                     }
-                    .padding(.horizontal, ProfessionalSpacing.medium.value)
+                    .padding(.horizontal, 20)
                 }
                 .scrollIndicators(.hidden)
-                
-                // Professional loading overlay
-                if isLoading {
-                    ZStack {
-                        Color.black.opacity(0.4)
-                            .ignoresSafeArea(.all, edges: .all)
-                        
-                        ProfessionalCard(type: .hero) {
-                            VStack(spacing: ProfessionalSpacing.large.value) {
-                                ProgressView()
-                                    .scaleEffect(1.5)
-                                    .tint(.professionalBlue)
-                                
-                                ProfessionalText(
-                                    "Loading your Telugu journey...",
-                                    style: .cardTitle,
-                                    color: .textPrimary,
-                                    alignment: .center
-                                )
-                            }
-                            .padding(ProfessionalSpacing.extraLarge.value)
-                        }
-                        .padding(.horizontal, ProfessionalSpacing.large.value)
-                    }
-                }
             }
-            .navigationBarHidden(true)
             .onAppear {
-                // Simulate loading for demonstration
-                isLoading = true
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                    withAnimation(ProfessionalAnimation.pageTransition) {
-                        isLoading = false
-                    }
+                updateLearnModules()
+                withAnimation(.spring(response: 0.6, dampingFraction: 0.7).delay(0.1)) {
+                    animateCards = true
+                }
+                withAnimation(.spring(response: 0.5, dampingFraction: 0.6).delay(0.3)) {
+                    animateStreak = true
                 }
             }
-            .navigationDestination(for: HomeNavigationDestination.self) { destination in
-                destinationView(for: destination)
+            .onReceive(session.objectWillChange) { _ in
+                updateLearnModules()
             }
+            .navigationDestination(for: String.self) { moduleTitle in
+                destinationViewForTitle(moduleTitle)
+            }
+            .navigationTitle("Mana Telugu")
+            .navigationBarTitleDisplayMode(.inline)
         }
     }
     
-    // MARK: - Hero Welcome Section
-    private var heroWelcomeSection: some View {
-        ProfessionalCard(type: .hero) {
-            VStack(alignment: .leading, spacing: ProfessionalSpacing.large.value) {
-                // Welcome message
-                VStack(alignment: .leading, spacing: ProfessionalSpacing.small.value) {
-                    ProfessionalText(
-                        "Welcome back!",
-                        style: .heroTitle,
-                        color: .textPrimary
-                    )
-                    
-                    ProfessionalText(
-                        "Ready to continue your Telugu learning journey?",
-                        style: .bodyText,
-                        color: .textSecondary
-                    )
-                }
-                
-                // Motivational message
-                ProfessionalText(
-                    "🌟 Every word you learn brings you closer to fluency!",
-                    style: .bodyText,
-                    color: .professionalOrange,
-                    alignment: .leading
-                )
-            }
-        }
+    // MARK: - Navigation
+    private func navigateToModule(_ module: LearnModule) {
+        navigationPath.append(module.title)
     }
     
-    // MARK: - Stats Dashboard Section
-    private var statsDashboardSection: some View {
-        VStack(alignment: .leading, spacing: ProfessionalSpacing.medium.value) {
-            ProfessionalSectionHeader(
-                title: "Your Progress",
-                subtitle: "Track your learning journey"
-            )
-            
-            HStack(spacing: ProfessionalSpacing.medium.value) {
-                ProfessionalStatCard(
-                    icon: "flame.fill",
-                    value: "7",
-                    label: "Day Streak",
-                    color: .professionalOrange
-                )
-                
-                ProfessionalStatCard(
-                    icon: "star.fill",
-                    value: "\(session.gamificationService.gamificationState.totalXP)",
-                    label: "Total XP",
-                    color: .professionalBlue
-                )
-                
-                ProfessionalStatCard(
-                    icon: "trophy.fill",
-                    value: "\(session.gamificationService.gamificationState.badges.count)",
-                    label: "Badges",
-                    color: .professionalPurple
-                )
-            }
-        }
-    }
-    
-    // MARK: - Continue Learning Hero Section
-    private var continueLearningHeroSection: some View {
-        VStack(alignment: .leading, spacing: ProfessionalSpacing.medium.value) {
-            ProfessionalSectionHeader(
-                title: "Continue Learning",
-                subtitle: "Pick up where you left off"
-            )
-            
-            ProfessionalCard(type: .hero, isInteractive: true) {
-                HStack(spacing: ProfessionalSpacing.large.value) {
-                    // Icon
-                    Image(systemName: "play.circle.fill")
-                        .font(.system(size: 48, weight: .semibold))
-                        .foregroundColor(.professionalGreen)
-                        .frame(width: 64, height: 64)
-                        .background(
-                            Circle()
-                                .fill(Color.professionalGreen.opacity(0.15))
-                        )
-                    
-                    // Content
-                    VStack(alignment: .leading, spacing: ProfessionalSpacing.small.value) {
-                        ProfessionalText(
-                            "Alphabet Adventure",
-                            style: .cardTitle,
-                            color: .textPrimary
-                        )
-                        
-                        ProfessionalText(
-                            "Continue learning Telugu letters",
-                            style: .bodyText,
-                            color: .textSecondary
-                        )
-                        
-                        // Progress bar
-                        HStack {
-                            ProfessionalText(
-                                "75% Complete",
-                                style: .caption,
-                                color: .professionalGreen
-                            )
-                            
-                            Spacer()
-                            
-                            ProfessionalText(
-                                "12 of 16 lessons",
-                                style: .caption,
-                                color: .textSecondary
-                            )
-                        }
-                        
-                        // Progress bar
-                        GeometryReader { geometry in
-                            ZStack(alignment: .leading) {
-                                RoundedRectangle(cornerRadius: 4)
-                                    .fill(Color.black.opacity(0.1))
-                                    .frame(height: 8)
-                                
-                                RoundedRectangle(cornerRadius: 4)
-                                    .fill(Color.professionalGreen)
-                                    .frame(width: geometry.size.width * 0.75, height: 8)
-                            }
-                        }
-                        .frame(height: 8)
-                    }
-                    
-                    Spacer()
-                    
-                    // Arrow
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(.textSecondary)
-                }
-            }
-        }
-    }
-    
-    // MARK: - Learning Modes Section
-    private var learningModesSection: some View {
-        VStack(alignment: .leading, spacing: ProfessionalSpacing.medium.value) {
-            ProfessionalSectionHeader(
-                title: "Learning Modes",
-                subtitle: "Choose your learning style"
-            )
-            
-            VStack(spacing: ProfessionalSpacing.medium.value) {
-                                    ForEach(Array(learningModes.enumerated()), id: \.offset) { index, mode in
-                                        ProfessionalLearningModeCard(
-                                            title: mode.title,
-                                            description: mode.description,
-                                            icon: mode.iconName,
-                                            color: mode.color,
-                                            progress: mode.progress
-                                        )
-                                    }
-            }
-        }
-    }
-    
-    // MARK: - Word of the Day Section
-    private var wordOfTheDaySection: some View {
-        VStack(alignment: .leading, spacing: ProfessionalSpacing.medium.value) {
-            ProfessionalSectionHeader(
-                title: "Word of the Day",
-                subtitle: "Expand your vocabulary daily"
-            )
-            
-            ProfessionalCard(type: .primary) {
-                HStack(spacing: ProfessionalSpacing.large.value) {
-                    // Telugu word
-                    VStack(alignment: .leading, spacing: ProfessionalSpacing.small.value) {
-                        ProfessionalText(
-                            "సంతోషం",
-                            style: .teluguTitle,
-                            color: .textPrimary
-                        )
-                        
-                        ProfessionalText(
-                            "santōṣaṁ",
-                            style: .bodyText,
-                            color: .textSecondary
-                        )
-                        
-                        ProfessionalText(
-                            "Happiness",
-                            style: .cardTitle,
-                            color: .professionalOrange
-                        )
-                    }
-                    
-                    Spacer()
-                    
-                    // Icon
-                    Image(systemName: "sun.max.fill")
-                        .font(.system(size: 32, weight: .semibold))
-                        .foregroundColor(.professionalOrange)
-                        .frame(width: 48, height: 48)
-                        .background(
-                            Circle()
-                                .fill(Color.professionalOrange.opacity(0.15))
-                        )
-                }
-            }
-        }
-    }
-    
-    // MARK: - Recent Achievements Section
-    private var recentAchievementsSection: some View {
-        VStack(alignment: .leading, spacing: ProfessionalSpacing.medium.value) {
-            ProfessionalSectionHeader(
-                title: "Recent Achievements",
-                subtitle: "Celebrate your progress"
-            )
-            
-            VStack(spacing: ProfessionalSpacing.medium.value) {
-                ForEach(0..<3) { index in
-                    ProfessionalCard(type: .secondary) {
-                        HStack(spacing: ProfessionalSpacing.medium.value) {
-                            Image(systemName: "trophy.fill")
-                                .font(.system(size: 24, weight: .semibold))
-                                .foregroundColor(.professionalOrange)
-                                .frame(width: 40, height: 40)
-                                .background(
-                                    Circle()
-                                        .fill(Color.professionalOrange.opacity(0.15))
-                                )
-                            
-                            VStack(alignment: .leading, spacing: ProfessionalSpacing.tiny.value) {
-                                ProfessionalText(
-                                    "Badge \(index + 1)",
-                                    style: .cardTitle,
-                                    color: .textPrimary
-                                )
-                                
-                                ProfessionalText(
-                                    "Earned today",
-                                    style: .caption,
-                                    color: .textSecondary
-                                )
-                            }
-                            
-                            Spacer()
-                        }
-                    }
-                }
-            }
-        }
-    }
-    
-    // MARK: - Navigation Destination
     @ViewBuilder
-    private func destinationView(for destination: HomeNavigationDestination) -> some View {
-        switch destination {
-        case .alphabet:
+    private func destinationViewForTitle(_ title: String) -> some View {
+        switch title {
+        case "Alphabet":
             AlphabetHubView()
-        case .lesson(let id):
-            // Navigate to lessons hub for now
-            LessonsHubView()
-        case .story(let id):
-            // Navigate to story hub for now
-            StorybookHubView()
-        case .games:
+        case "Lessons":
+            ElegantLessonsView()
+        case "Stories":
+            ProfessionalStorybookHubView()
+        case "Games":
             GamesHubView()
-        case .vocabulary:
+        case "Vocabulary":
             VocabularyThemesView()
-        case .progress:
-            ProgressDashboardView()
         default:
-            EmptyView()
+            AlphabetHubView()
         }
     }
-}
-
-// MARK: - Professional Learning Mode Model
-struct ProfessionalLearningMode {
-    let title: String
-    let description: String
-    let iconName: String
-    let color: Color
-    let progress: Double
-    let difficulty: DifficultyLevel
     
-    enum DifficultyLevel {
-        case beginner
-        case intermediate
-        case advanced
-        
-        var displayName: String {
-            switch self {
-            case .beginner: return "Beginner"
-            case .intermediate: return "Intermediate"
-            case .advanced: return "Advanced"
+    // MARK: - Header Section
+    private var headerSection: some View {
+        HStack(alignment: .top) {
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Mana Telugu")
+                    .font(.title.bold())
+                    .foregroundColor(.primary)
+                
+                Text("Welcome back! Continue your Telugu journey.")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+            }
+            
+            Spacer()
+            
+            // Streak Chip
+            HStack(spacing: 6) {
+                Image(systemName: "flame.fill")
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundColor(.orange)
+                
+                Text("\(session.currentStreak)")
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundColor(.primary)
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .background(
+                Capsule()
+                    .fill(.orange.opacity(0.15))
+            )
+            .scaleEffect(animateStreak ? 1.0 : 0.8)
+            .opacity(animateStreak ? 1.0 : 0.0)
+        }
+        .padding(.vertical, 12)
+    }
+    
+    // MARK: - Progress Metrics Section
+    private var progressMetricsSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Your Progress")
+                .font(.headline.bold())
+                .foregroundColor(.primary)
+            
+            HStack(spacing: 12) {
+                CompactProgressCard(
+                    label: "Letters",
+                    value: "\(session.learnedLetters)/\(session.totalLetters)",
+                    progress: Double(session.learnedLetters) / Double(max(session.totalLetters, 1)),
+                    color: .blue,
+                    showProgress: true
+                )
+                
+                CompactProgressCard(
+                    label: "Words",
+                    value: "\(session.masteredWords)",
+                    progress: 0,
+                    color: .green,
+                    showProgress: false
+                )
+                
+                CompactProgressCard(
+                    label: "XP",
+                    value: "\(session.gamificationService.gamificationState.totalXP)",
+                    progress: 0,
+                    color: .orange,
+                    showProgress: false
+                )
             }
         }
-        
-        var color: Color {
-            switch self {
-            case .beginner: return .professionalGreen
-            case .intermediate: return .professionalOrange
-            case .advanced: return .professionalPurple
+        .scaleEffect(animateCards ? 1.0 : 0.95)
+        .opacity(animateCards ? 1.0 : 0.0)
+    }
+    
+    // MARK: - Learn Section
+    private var learnSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Learn")
+                .font(.headline.bold())
+                .foregroundColor(.primary)
+            
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: 2), spacing: 12) {
+                ForEach(Array(learnModules.enumerated()), id: \.element.id) { index, module in
+                    Button {
+                        HapticsService.shared.buttonTap()
+                        navigateToModule(module)
+                    } label: {
+                        HeroModuleCard(
+                            module: module,
+                            isPrimary: false
+                        )
+                    }
+                    .buttonStyle(HeroCardButtonStyle())
+                    .scaleEffect(animateCards ? 1.0 : 0.9)
+                    .opacity(animateCards ? 1.0 : 0.0)
+                    .animation(.spring(response: 0.6, dampingFraction: 0.7).delay(Double(index) * 0.05), value: animateCards)
+                }
             }
+        }
+    }
+    
+    // MARK: - Navigation
+    @ViewBuilder
+    private func destinationView(for module: LearnModule) -> some View {
+        switch module.title {
+        case "Alphabet":
+            AlphabetHubView()
+        case "Lessons":
+            ElegantLessonsView()
+        case "Stories":
+            ProfessionalStorybookHubView()
+        case "Games":
+            GamesHubView()
+        case "Vocabulary":
+            VocabularyThemesView()
+        default:
+            AlphabetHubView()
+        }
+    }
+    
+    private func updateLearnModules() {
+        let alphabetLessonIds = ["lesson_1_1", "lesson_1_2", "lesson_1_3"]
+        
+        let completedAlphabetLessons = session.progressTrackingService.lessonProgress.filter { progress in
+            alphabetLessonIds.contains(progress.lessonId) && progress.isCompleted
+        }.count
+        let totalAlphabetLessons = alphabetLessonIds.count
+        let alphabetProgress = totalAlphabetLessons > 0 ? Double(completedAlphabetLessons) / Double(totalAlphabetLessons) : 0
+        
+        let completedOtherLessons = session.progressTrackingService.completedLessonsCount - completedAlphabetLessons
+        let totalOtherLessons = session.progressTrackingService.totalLessonsCount - totalAlphabetLessons
+        let lessonsProgress = totalOtherLessons > 0 ? Double(completedOtherLessons) / Double(totalOtherLessons) : 0
+        
+        let storiesProgress = session.storyService.stories.count > 0 ? Double(session.storyService.completedStoriesCount) / Double(session.storyService.stories.count) : 0
+        
+        let vocabularyProgress = session.dataRepository.words.count > 0 ? Double(session.gamificationService.getLearningStats().totalWords) / Double(session.dataRepository.words.count) : 0
+        
+        let gamesProgress = 0.0 // Removed badge-based progress calculation
+
+        let newModules = [
+            LearnModule(title: "Alphabet", progress: alphabetProgress, icon: "text.book.closed.fill", color: .blue, isEnabled: true),
+            LearnModule(title: "Lessons", progress: lessonsProgress, icon: "graduationcap.fill", color: .green, isEnabled: true),
+            LearnModule(title: "Stories", progress: storiesProgress, icon: "book.fill", color: .orange, isEnabled: true),
+            LearnModule(title: "Games", progress: gamesProgress, icon: "gamecontroller.fill", color: .purple, isEnabled: true),
+            LearnModule(title: "Vocabulary", progress: vocabularyProgress, icon: "character.book.closed.fill", color: .red, isEnabled: true)
+        ]
+        
+        DispatchQueue.main.async {
+            self.learnModules = newModules
         }
     }
 }
 
+// MARK: - Compact Progress Card
+struct CompactProgressCard: View {
+    let label: String
+    let value: String
+    let progress: Double
+    let color: Color
+    let showProgress: Bool
+    
+    var body: some View {
+        VStack(spacing: 8) {
+            Text(label)
+                .font(.caption.bold())
+                .foregroundColor(.secondary)
+            
+            Text(value)
+                .font(.title3.bold())
+                .foregroundColor(.primary)
+            
+            if showProgress {
+                ZStack(alignment: .leading) {
+                    Capsule()
+                        .fill(color.opacity(0.2))
+                        .frame(height: 4)
+                    
+                    Capsule()
+                        .fill(color)
+                        .frame(width: 60 * progress, height: 4)
+                }
+                .frame(width: 60)
+                
+                Text("\(Int(progress * 100))%")
+                    .font(.caption2.bold())
+                    .foregroundColor(color)
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 16)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(.regularMaterial)
+                .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
+        )
+    }
+}
+
+// MARK: - Learn Module Card
+struct LearnModuleCard: View {
+    let module: LearnModule
+    let isPrimary: Bool
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: {
+            HapticsService.shared.buttonTap()
+            action()
+        }) {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack {
+                    Image(systemName: module.icon)
+                        .font(.title2.bold())
+                        .foregroundColor(module.color)
+                    
+                    Spacer()
+                    
+                    if module.progress > 0 {
+                        Text("\(Int(module.progress * 100))%")
+                            .font(.caption.bold())
+                            .foregroundColor(.secondary)
+                    }
+                }
+                
+                Text(module.title)
+                    .font(.headline.bold())
+                    .foregroundColor(.primary)
+                
+                if module.progress > 0 {
+                    ZStack(alignment: .leading) {
+                        Capsule()
+                            .fill(module.color.opacity(0.2))
+                            .frame(height: 4)
+                        
+                        GeometryReader { geometry in
+                            Capsule()
+                                .fill(module.color)
+                                .frame(width: geometry.size.width * module.progress, height: 4)
+                        }
+                        .frame(height: 4)
+                    }
+                }
+            }
+            .padding(16)
+            .background(
+                Group {
+                    if isPrimary {
+                        RoundedRectangle(cornerRadius: 16)
+                            .fill(module.color.opacity(0.1))
+                    } else {
+                        RoundedRectangle(cornerRadius: 16)
+                            .fill(.regularMaterial)
+                    }
+                }
+                .shadow(
+                    color: isPrimary ? module.color.opacity(0.2) : .black.opacity(0.05),
+                    radius: isPrimary ? 8 : 4,
+                    x: 0,
+                    y: isPrimary ? 4 : 2
+                )
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(isPrimary ? module.color.opacity(0.3) : .clear, lineWidth: 1)
+            )
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+// MARK: - Learn Module Model
+struct LearnModule: Identifiable {
+    let id = UUID()
+    let title: String
+    let progress: Double
+    let icon: String
+    let color: Color
+    let isEnabled: Bool
+}
+
+struct LearnModuleCardView: View {
+    let module: LearnModule
+    let isPrimary: Bool
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Image(systemName: module.icon)
+                    .font(.title2.bold())
+                    .foregroundColor(module.color)
+                
+                Spacer()
+                
+                if module.progress > 0 {
+                    Text("\(Int(module.progress * 100))%")
+                        .font(.caption.bold())
+                        .foregroundColor(.secondary)
+                }
+            }
+            
+            Text(module.title)
+                .font(.headline.bold())
+                .foregroundColor(.primary)
+                .multilineTextAlignment(.leading)
+            
+            if module.progress > 0 {
+                GeometryReader { geometry in
+                    ZStack(alignment: .leading) {
+                        RoundedRectangle(cornerRadius: 2)
+                            .fill(.quaternary)
+                        
+                        RoundedRectangle(cornerRadius: 2)
+                            .fill(module.color)
+                            .frame(width: geometry.size.width * module.progress, height: 4)
+                    }
+                    .frame(height: 4)
+                }
+            }
+        }
+        .padding(16)
+        .background(
+            Group {
+                if isPrimary {
+                    RoundedRectangle(cornerRadius: 16)
+                        .fill(module.color.opacity(0.1))
+                } else {
+                    RoundedRectangle(cornerRadius: 16)
+                        .fill(.regularMaterial)
+                }
+            }
+            .shadow(
+                color: isPrimary ? module.color.opacity(0.2) : .black.opacity(0.05),
+                radius: isPrimary ? 8 : 4,
+                x: 0,
+                y: isPrimary ? 4 : 2
+            )
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(isPrimary ? module.color.opacity(0.3) : .clear, lineWidth: 1)
+        )
+        .foregroundStyle(.primary)
+        .contentShape(Rectangle())
+    }
+}
+
+// MARK: - Hero Module Card (Best HIG Design)
+struct HeroModuleCard: View {
+    let module: LearnModule
+    let isPrimary: Bool
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Image(systemName: module.icon)
+                    .font(.title2.bold())
+                    .foregroundColor(module.color)
+                
+                Spacer()
+                
+                if module.progress > 0 {
+                    Text("\(Int(module.progress * 100))%")
+                        .font(.caption.bold())
+                        .foregroundColor(.secondary)
+                }
+            }
+            
+            Text(module.title)
+                .font(.headline.bold())
+                .foregroundColor(.primary)
+                .multilineTextAlignment(.leading)
+            
+            if module.progress > 0 {
+                GeometryReader { geometry in
+                    ZStack(alignment: .leading) {
+                        RoundedRectangle(cornerRadius: 2)
+                            .fill(.quaternary)
+                        
+                        RoundedRectangle(cornerRadius: 2)
+                            .fill(module.color)
+                            .frame(width: geometry.size.width * module.progress, height: 4)
+                    }
+                    .frame(height: 4)
+                }
+            }
+        }
+        .padding(16)
+        .background(
+            Group {
+                if isPrimary {
+                    RoundedRectangle(cornerRadius: 16)
+                        .fill(module.color.opacity(0.1))
+                } else {
+                    RoundedRectangle(cornerRadius: 16)
+                        .fill(.regularMaterial)
+                }
+            }
+            .shadow(
+                color: isPrimary ? module.color.opacity(0.2) : .black.opacity(0.05),
+                radius: isPrimary ? 8 : 4,
+                x: 0,
+                y: isPrimary ? 4 : 2
+            )
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(isPrimary ? module.color.opacity(0.3) : .clear, lineWidth: 1)
+        )
+    }
+}
+
+// MARK: - Hero Card Button Style (HIG Compliant)
+struct HeroCardButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
+            .opacity(configuration.isPressed ? 0.8 : 1.0)
+            .animation(.easeInOut(duration: 0.1), value: configuration.isPressed)
+    }
+}
 
 // MARK: - Preview
 #Preview {

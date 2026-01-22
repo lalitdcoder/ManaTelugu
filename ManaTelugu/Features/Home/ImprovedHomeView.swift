@@ -9,7 +9,7 @@ struct ImprovedHomeView: View {
             ZStack {
                 // Clean background
                 LinearGradient(
-                    colors: [MTColors.teluguBlue.opacity(0.1), MTColors.teluguSaffron.opacity(0.05)],
+                    colors: [ModernDesignSystem.Colors.teluguBlue.opacity(0.1), ModernDesignSystem.Colors.teluguSaffron.opacity(0.05)],
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing
                 )
@@ -26,9 +26,6 @@ struct ImprovedHomeView: View {
                         quickStatsSection
                     }
                     
-                    // Continue Learning - Primary Action
-                    continueLearningSection
-                    
                     // Learning Modes - Secondary Actions
                     learningModesSection
                 }
@@ -44,36 +41,36 @@ struct ImprovedHomeView: View {
             subtitle: "Ready to continue your Telugu journey?"
         ) {
             HStack {
-                VStack(alignment: .leading, spacing: MTSpacing.small) {
+                VStack(alignment: .leading, spacing: ModernDesignSystem.Spacing.sm) {
                     Text("Current Streak")
                         .font(.caption)
-                        .foregroundColor(MTColors.secondaryText)
+                        .foregroundColor(ModernDesignSystem.Colors.secondaryText)
                     
                     Text("\(session.userProfile.currentStreak) days")
                         .font(.title2)
                         .fontWeight(.bold)
-                        .foregroundColor(MTColors.teluguSaffron)
+                        .foregroundColor(ModernDesignSystem.Colors.teluguSaffron)
                 }
                 
                 Spacer()
                 
                 Image(systemName: "flame.fill")
                     .font(.system(size: 32))
-                    .foregroundColor(MTColors.teluguSaffron)
+                    .foregroundColor(ModernDesignSystem.Colors.teluguSaffron)
             }
         }
     }
     
     private var quickStatsSection: some View {
-        ImprovedGrid(columns: 3, spacing: MTSpacing.small) {
-            statCard("XP", "\(session.userProfile.totalXP)", MTColors.teluguBlue)
-            statCard("Level", "\(session.userProfile.level)", MTColors.teluguGreen)
-            statCard("Badges", "\(session.gamificationService.gamificationState.badges.filter { $0.isUnlocked }.count)", MTColors.teluguSaffron)
+        ImprovedGrid(columns: 3, spacing: ModernDesignSystem.Spacing.sm) {
+            statCard("XP", "\(session.userProfile.totalXP)", ModernDesignSystem.Colors.teluguBlue)
+            statCard("Level", "\(session.userProfile.level)", ModernDesignSystem.Colors.teluguGreen)
+            statCard("Badges", "\(session.gamificationService.gamificationState.badges.filter { $0.isUnlocked }.count)", ModernDesignSystem.Colors.teluguSaffron)
         }
     }
     
     private func statCard(_ title: String, _ value: String, _ color: Color) -> some View {
-        VStack(spacing: MTSpacing.tiny) {
+        VStack(spacing: ModernDesignSystem.Spacing.tiny) {
             Text(value)
                 .font(.title3)
                 .fontWeight(.bold)
@@ -81,61 +78,31 @@ struct ImprovedHomeView: View {
             
             Text(title)
                 .font(.caption)
-                .foregroundColor(MTColors.secondaryText)
+                .foregroundColor(ModernDesignSystem.Colors.secondaryText)
         }
-        .padding(MTSpacing.medium)
-        .background(MTColors.cardBackground)
+        .padding(ModernDesignSystem.Spacing.md)
+        .background(ModernDesignSystem.Colors.cardBackground)
         .cornerRadius(12)
     }
     
-    private var continueLearningSection: some View {
-        ImprovedCard(priority: .primary) {
-            VStack(alignment: .leading, spacing: MTSpacing.medium) {
-                HStack {
-                    Text("Continue Learning")
-                        .font(.title3)
-                        .fontWeight(.semibold)
-                        .foregroundColor(MTColors.primaryText)
-                    
-                    Spacer()
-                    
-                    Image(systemName: "arrow.right.circle.fill")
-                        .font(.title2)
-                        .foregroundColor(MTColors.teluguBlue)
-                }
-                
-                Text("Pick up where you left off")
-                    .font(.body)
-                    .foregroundColor(MTColors.secondaryText)
-                
-                HIGPrimaryButton(
-                    "Start Learning",
-                    icon: "play.fill"
-                ) {
-                    // Navigate to last activity
-                }
-            }
-        }
-    }
-    
     private var learningModesSection: some View {
-        VStack(alignment: .leading, spacing: MTSpacing.medium) {
+        VStack(alignment: .leading, spacing: ModernDesignSystem.Spacing.md) {
             Text("Learning Modes")
                 .font(.title3)
                 .fontWeight(.semibold)
-                .foregroundColor(MTColors.primaryText)
+                .foregroundColor(ModernDesignSystem.Colors.primaryText)
             
             ImprovedGrid(columns: 2) {
-                learningModeCard("Alphabet", "textformat.abc", MTColors.teluguBlue, 0.75)
-                learningModeCard("Vocabulary", "book.fill", MTColors.teluguGreen, 0.45)
-                learningModeCard("Stories", "books.vertical.fill", MTColors.teluguSaffron, 0.30)
-                learningModeCard("Games", "gamecontroller.fill", MTColors.culturalRed, 0.60)
+                learningModeCard("Alphabet", "textformat.abc", ModernDesignSystem.Colors.teluguBlue, 0.75)
+                learningModeCard("Vocabulary", "book.fill", ModernDesignSystem.Colors.teluguGreen, 0.45)
+                learningModeCard("Stories", "books.vertical.fill", ModernDesignSystem.Colors.teluguSaffron, 0.30)
+                learningModeCard("Games", "gamecontroller.fill", ModernDesignSystem.Colors.culturalRed, 0.60)
             }
         }
     }
     
     private func learningModeCard(_ title: String, _ icon: String, _ color: Color, _ progress: Double) -> some View {
-        VStack(alignment: .leading, spacing: MTSpacing.small) {
+        VStack(alignment: .leading, spacing: ModernDesignSystem.Spacing.sm) {
             HStack {
                 Image(systemName: icon)
                     .font(.title2)
@@ -146,19 +113,19 @@ struct ImprovedHomeView: View {
                 Text("\(Int(progress * 100))%")
                     .font(.caption)
                     .fontWeight(.medium)
-                    .foregroundColor(MTColors.secondaryText)
+                    .foregroundColor(ModernDesignSystem.Colors.secondaryText)
             }
             
             Text(title)
                 .font(.body)
                 .fontWeight(.medium)
-                .foregroundColor(MTColors.primaryText)
+                .foregroundColor(ModernDesignSystem.Colors.primaryText)
             
             ProgressView(value: progress)
                 .tint(color)
         }
-        .padding(MTSpacing.medium)
-        .background(MTColors.cardBackground)
+        .padding(ModernDesignSystem.Spacing.md)
+        .background(ModernDesignSystem.Colors.cardBackground)
         .cornerRadius(12)
     }
 }

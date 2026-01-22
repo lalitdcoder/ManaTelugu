@@ -5,18 +5,18 @@ struct XPHistoryView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var selectedTimeframe: TimeFrame = .week
     @State private var showingStats = false
-    
+
     enum TimeFrame: String, CaseIterable {
         case day = "Today"
         case week = "This Week"
         case month = "This Month"
         case all = "All Time"
     }
-    
+
     var filteredEvents: [XPEvent] {
         let calendar = Calendar.current
         let now = Date()
-        
+
         switch selectedTimeframe {
         case .day:
             return gamification.xpHistory.filter { calendar.isDate($0.timestamp, inSameDayAs: now) }
@@ -30,11 +30,11 @@ struct XPHistoryView: View {
             return gamification.xpHistory
         }
     }
-    
+
     var totalXPInTimeframe: Int {
         filteredEvents.reduce(0) { $0 + $1.amount }
     }
-    
+
     var body: some View {
         NavigationStack {
             ZStack {
@@ -42,10 +42,10 @@ struct XPHistoryView: View {
                 Color.clear
                     .liquidGlassBackground()
                     .ignoresSafeArea()
-                
+
                 VStack(spacing: 0) {
                     // Stats Header
-                    VStack(spacing: MTSpacing.medium) {
+                    VStack(spacing: ModernDesignSystem.Spacing.md) {
                         // Timeframe Selector
                         Picker("Timeframe", selection: $selectedTimeframe) {
                             ForEach(TimeFrame.allCases, id: \.self) { timeframe in
@@ -53,43 +53,46 @@ struct XPHistoryView: View {
                             }
                         }
                         .pickerStyle(.segmented)
-                        
+                        .onChange(of: selectedTimeframe) { _, _ in
+                            HapticsManager.shared.selection()
+                        }
+
                         // XP Summary
                         HStack {
                             VStack(alignment: .leading, spacing: 4) {
                                 Text("\(totalXPInTimeframe) XP")
-                                    .font(MTTypography.title())
+                                    .font(ModernDesignSystem.Typography.title1)
                                     .foregroundColor(.primary)
                                 Text("Earned \(selectedTimeframe.rawValue.lowercased())")
-                                    .font(MTTypography.body())
+                                    .font(ModernDesignSystem.Typography.body)
                                     .foregroundColor(.secondary)
                             }
-                            
+
                             Spacer()
-                            
+
                             Button(action: { showingStats = true }) {
                                 Image(systemName: "chart.bar.fill")
                                     .font(.title2)
-                                    .foregroundColor(MTColors.primary)
+                                    .foregroundColor(ModernDesignSystem.Colors.primary)
                             }
                         }
-                        .padding(.horizontal, MTSpacing.medium)
+                        .padding(.horizontal, ModernDesignSystem.Spacing.md)
                     }
-                    .padding(.vertical, MTSpacing.medium)
+                    .padding(.vertical, ModernDesignSystem.Spacing.md)
                     .background(Color(.systemGroupedBackground))
-                    
+
                     // XP Events List
                     if filteredEvents.isEmpty {
                         EmptyStateView(timeframe: selectedTimeframe)
                     } else {
                         EnhancedScrollView {
-                            LazyVStack(spacing: MTSpacing.small) {
+                            LazyVStack(spacing: ModernDesignSystem.Spacing.sm) {
                                 ForEach(filteredEvents.reversed()) { event in
                                     XPEventRowView(event: event)
                                 }
                             }
-                            .padding(.horizontal, MTSpacing.medium)
-                            .padding(.bottom, MTSpacing.large)
+                            .padding(.horizontal, ModernDesignSystem.Spacing.md)
+                            .padding(.bottom, ModernDesignSystem.Spacing.lg)
                         }
                     }
                 }
@@ -113,51 +116,51 @@ struct XPHistoryView: View {
 // MARK: - XP Event Row View
 struct XPEventRowView: View {
     let event: XPEvent
-    
+
     var body: some View {
-        HStack(spacing: MTSpacing.medium) {
+        HStack(spacing: ModernDesignSystem.Spacing.md) {
             // Event Icon
             ZStack {
                 Circle()
                     .fill(Color(event.type.color))
                     .frame(width: 40, height: 40)
-                
+
                 Image(systemName: event.type.icon)
                     .font(.system(size: 18, weight: .medium))
                     .foregroundColor(.white)
             }
-            
+
             // Event Details
             VStack(alignment: .leading, spacing: 4) {
                 Text(event.description)
-                    .font(MTTypography.body())
+                    .font(ModernDesignSystem.Typography.body)
                     .foregroundColor(.primary)
-                
+
                 if let associatedData = event.associatedData {
                     Text(associatedData)
-                        .font(MTTypography.caption())
+                        .font(ModernDesignSystem.Typography.caption)
                         .foregroundColor(.secondary)
                 }
-                
+
                 Text(event.timestamp, style: .relative)
-                    .font(MTTypography.caption2())
+                    .font(ModernDesignSystem.Typography.caption2)
                     .foregroundColor(.secondary)
             }
-            
+
             Spacer()
-            
+
             // XP Amount
             HStack(spacing: 4) {
                 Image(systemName: "star.fill")
                     .font(.caption)
-                    .foregroundColor(MTColors.funYellow)
+                    .foregroundColor(ModernDesignSystem.Colors.funYellow)
                 Text("+\(event.amount)")
-                    .font(MTTypography.body())
+                    .font(ModernDesignSystem.Typography.body)
                     .fontWeight(.semibold)
-                    .foregroundColor(MTColors.funYellow)
+                    .foregroundColor(ModernDesignSystem.Colors.funYellow)
             }
         }
-        .padding(MTSpacing.medium)
+        .padding(ModernDesignSystem.Spacing.md)
         .background(
             RoundedRectangle(cornerRadius: 12)
                 .fill(Color(.secondarySystemGroupedBackground))
@@ -169,20 +172,20 @@ struct XPEventRowView: View {
 // MARK: - Empty State View
 struct EmptyStateView: View {
     let timeframe: XPHistoryView.TimeFrame
-    
+
     var body: some View {
-        VStack(spacing: MTSpacing.large) {
+        VStack(spacing: ModernDesignSystem.Spacing.lg) {
             Image(systemName: "star")
                 .font(.system(size: 64))
                 .foregroundColor(.secondary)
-            
-            VStack(spacing: MTSpacing.small) {
+
+            VStack(spacing: ModernDesignSystem.Spacing.sm) {
                 Text("No XP Yet")
-                    .font(MTTypography.heading())
+                    .font(ModernDesignSystem.Typography.headline)
                     .foregroundColor(.primary)
-                
+
                 Text("Complete activities to start earning XP!")
-                    .font(MTTypography.body())
+                    .font(ModernDesignSystem.Typography.body)
                     .foregroundColor(.secondary)
                     .multilineTextAlignment(.center)
             }
@@ -197,11 +200,11 @@ struct XPStatsView: View {
     @ObservedObject var gamification: GamificationState
     let timeframe: XPHistoryView.TimeFrame
     @Environment(\.dismiss) private var dismiss
-    
+
     var filteredEvents: [XPEvent] {
         let calendar = Calendar.current
         let now = Date()
-        
+
         switch timeframe {
         case .day:
             return gamification.xpHistory.filter { calendar.isDate($0.timestamp, inSameDayAs: now) }
@@ -215,25 +218,25 @@ struct XPStatsView: View {
             return gamification.xpHistory
         }
     }
-    
+
     var eventTypeStats: [(XPEventType, Int)] {
         let grouped = Dictionary(grouping: filteredEvents) { $0.type }
         return grouped.map { (type, events) in
             (type, events.reduce(0) { $0 + $1.amount })
         }.sorted { $0.1 > $1.1 }
     }
-    
+
     var body: some View {
         NavigationStack {
             EnhancedScrollView {
-                VStack(spacing: MTSpacing.large) {
+                VStack(spacing: ModernDesignSystem.Spacing.lg) {
                     // Total XP
-                    VStack(spacing: MTSpacing.small) {
+                    VStack(spacing: ModernDesignSystem.Spacing.sm) {
                         Text("\(filteredEvents.reduce(0) { $0 + $1.amount })")
                             .font(.system(size: 48, weight: .bold))
-                            .foregroundColor(MTColors.primary)
+                            .foregroundColor(ModernDesignSystem.Colors.primary)
                         Text("Total XP \(timeframe.rawValue.lowercased())")
-                            .font(MTTypography.body())
+                            .font(ModernDesignSystem.Typography.body)
                             .foregroundColor(.secondary)
                     }
                     .padding()
@@ -241,37 +244,37 @@ struct XPStatsView: View {
                         RoundedRectangle(cornerRadius: 16)
                             .fill(Color(.secondarySystemGroupedBackground))
                     )
-                    
+
                     // Event Type Breakdown
-                    VStack(alignment: .leading, spacing: MTSpacing.medium) {
+                    VStack(alignment: .leading, spacing: ModernDesignSystem.Spacing.md) {
                         Text("Breakdown by Activity")
-                            .font(MTTypography.heading())
+                            .font(ModernDesignSystem.Typography.headline)
                             .foregroundColor(.primary)
-                        
+
                         ForEach(eventTypeStats, id: \.0) { (type, totalXP) in
                             HStack {
                                 Image(systemName: type.icon)
                                     .font(.title3)
                                     .foregroundColor(Color(type.color))
                                     .frame(width: 30)
-                                
+
                                 VStack(alignment: .leading, spacing: 2) {
                                     Text(type.description)
-                                        .font(MTTypography.body())
+                                        .font(ModernDesignSystem.Typography.body)
                                         .foregroundColor(.primary)
                                     Text("\(filteredEvents.filter { $0.type == type }.count) times")
-                                        .font(MTTypography.caption())
+                                        .font(ModernDesignSystem.Typography.caption)
                                         .foregroundColor(.secondary)
                                 }
-                                
+
                                 Spacer()
-                                
+
                                 Text("\(totalXP) XP")
-                                    .font(MTTypography.body())
+                                    .font(ModernDesignSystem.Typography.body)
                                     .fontWeight(.semibold)
-                                    .foregroundColor(MTColors.primary)
+                                    .foregroundColor(ModernDesignSystem.Colors.primary)
                             }
-                            .padding(.vertical, MTSpacing.small)
+                            .padding(.vertical, ModernDesignSystem.Spacing.sm)
                         }
                     }
                     .padding()
@@ -308,9 +311,11 @@ extension XPEventType {
         case .firstWord: return "sparkles"
         case .weekStreak: return "calendar"
         case .monthStreak: return "crown.fill"
+        case .letterLearned: return "character"
+        case .storyCompleted: return "book.closed.fill"
         }
     }
-    
+
     var color: String {
         switch self {
         case .wordLearned: return "funBlue"
@@ -322,6 +327,8 @@ extension XPEventType {
         case .firstWord: return "accent"
         case .weekStreak: return "warning"
         case .monthStreak: return "error"
+        case .letterLearned: return "funBlue"
+        case .storyCompleted: return "funPink"
         }
     }
 }

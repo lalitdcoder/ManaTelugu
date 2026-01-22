@@ -9,11 +9,11 @@ struct BreathingRoomLayout<Content: View>: View {
     }
     
     var body: some View {
-        VStack(spacing: MTSpacing.xLarge) {
+        VStack(spacing: ModernDesignSystem.Spacing.xLarge) {
             content
         }
-        .padding(.horizontal, MTSpacing.large)
-        .padding(.vertical, MTSpacing.medium)
+        .padding(.horizontal, ModernDesignSystem.Spacing.lg)
+        .padding(.vertical, ModernDesignSystem.Spacing.md)
     }
 }
 
@@ -30,23 +30,23 @@ struct CleanCardLayout<Content: View>: View {
     }
     
     var body: some View {
-        VStack(alignment: .leading, spacing: MTSpacing.medium) {
-            VStack(alignment: .leading, spacing: MTSpacing.tiny) {
+        VStack(alignment: .leading, spacing: ModernDesignSystem.Spacing.md) {
+            VStack(alignment: .leading, spacing: ModernDesignSystem.Spacing.tiny) {
                 Text(title)
                     .font(Font.system(size: 20, weight: .semibold))
-                    .foregroundColor(MTColors.text)
+                    .foregroundColor(ModernDesignSystem.Colors.textPrimary)
                 
                 if let subtitle = subtitle {
                     Text(subtitle)
                         .font(Font.system(size: 14, weight: .regular))
-                        .foregroundColor(MTColors.secondaryText)
+                        .foregroundColor(ModernDesignSystem.Colors.secondaryText)
                 }
             }
             
             content
         }
-        .padding(MTSpacing.large)
-        .background(MTColors.surface)
+        .padding(ModernDesignSystem.Spacing.lg)
+        .background(ModernDesignSystem.Colors.surface)
         .cornerRadius(16)
         .shadow(color: .black.opacity(0.05), radius: 4)
     }
@@ -58,7 +58,7 @@ struct ImprovedGrid<Content: View>: View {
     let spacing: CGFloat
     let content: Content
     
-    init(columns: Int = 2, spacing: CGFloat = MTSpacing.medium, @ViewBuilder content: () -> Content) {
+    init(columns: Int = 2, spacing: CGFloat = ModernDesignSystem.Spacing.md, @ViewBuilder content: () -> Content) {
         self.columns = columns
         self.spacing = spacing
         self.content = content()

@@ -2,6 +2,7 @@ import SwiftUI
 
 struct CardMatchGameView: View {
     @EnvironmentObject var session: AppSession
+    @Environment(\.dismiss) private var dismiss
     @State private var words: [Word] = []
     @State private var cards: [Card] = []
     @State private var flippedIndices: Set<Int> = []
@@ -17,36 +18,45 @@ struct CardMatchGameView: View {
     
     var body: some View {
         ZStack {
-            // Enhanced background gradient for Liquid Glass effect
-            Color.clear
-                .liquidGlassBackground()
-                .ignoresSafeArea()
+            // Stronger gradient background
+            LinearGradient(
+                colors: [
+                    Color(red: 0.4, green: 0.5, blue: 0.9).opacity(0.3),
+                    Color(red: 0.46, green: 0.29, blue: 0.64).opacity(0.2)
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .ignoresSafeArea()
             
-            VStack(spacing: MTSpacing.large) {
+            VStack(spacing: ModernDesignSystem.Spacing.lg) {
             // Header with moves counter
             HStack {
                 Text("Moves: \(moves)")
-                    .font(MTTypography.body(kidMode: session.userProfile.kidMode))
+                    .font(ModernDesignSystem.Typography.body)
                     .fontWeight(.bold)
                 
                 Spacer()
                 
                 if gameCompleted {
                     Text("Completed!")
-                        .font(MTTypography.body(kidMode: session.userProfile.kidMode))
+                        .font(ModernDesignSystem.Typography.body)
                         .fontWeight(.bold)
-                        .foregroundColor(MTColors.success)
+                        .foregroundColor(ModernDesignSystem.Colors.success)
                 }
             }
             .padding(.horizontal)
             
             // Game board
             if !cards.isEmpty {
-                LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 3), spacing: MTSpacing.medium) {
+                LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 3), spacing: ModernDesignSystem.Spacing.md) {
                     ForEach(cards.indices, id: \.self) { index in
                         let card = cards[index]
                         let isFlipped = flippedIndices.contains(index)
                         let isMatched = matchedIndices.contains(index)
+                        
+                        // Check if card can be tapped (not already matched, not already flipped, and not 2 cards already flipped)
+                        let canTap = !isMatched && !isFlipped && flippedIndices.count < 2
                         
                         CardMatchCardView(
                             card: card,
@@ -54,27 +64,35 @@ struct CardMatchGameView: View {
                             isMatched: isMatched
                         )
                         .onTapGesture {
-                            flipCard(at: index)
+                            // Only respond to tap if card can be tapped
+                            if canTap {
+                                HapticsManager.shared.impact(.light)
+                                flipCard(at: index)
+                            }
                         }
-                        .disabled(isMatched || isFlipped || flippedIndices.count >= 2)
+                        // Don't use .disabled() as it prevents tap gestures from working
+                        .opacity(canTap ? 1.0 : 0.6)  // Visual feedback instead
                     }
                 }
                 .padding(.horizontal)
             } else {
                 Text("Loading game...")
-                    .font(MTTypography.body())
-                    .foregroundColor(MTColors.text)
+                    .font(ModernDesignSystem.Typography.body)
+                    .foregroundColor(ModernDesignSystem.Colors.textPrimary)
             }
             
             // Reset button
-            Button(action: resetGame) {
+            Button(action: {
+                HapticsService.shared.importantAction()
+                resetGame()
+            }) {
                 Text("Reset Game")
-                    .font(MTTypography.body(kidMode: session.userProfile.kidMode))
+                    .font(ModernDesignSystem.Typography.body)
                     .fontWeight(.bold)
                     .foregroundColor(.white)
-                    .padding(.horizontal, MTSpacing.large)
-                    .padding(.vertical, MTSpacing.medium)
-                    .background(MTColors.primary)
+                    .padding(.horizontal, ModernDesignSystem.Spacing.lg)
+                    .padding(.vertical, ModernDesignSystem.Spacing.md)
+                    .background(ModernDesignSystem.Colors.primary)
                     .cornerRadius(30)
             }
             
@@ -82,17 +100,25 @@ struct CardMatchGameView: View {
             }
         }
         .onAppear {
-            Task {
-                await loadData()
-                setupGame()
-            }
+            HapticsManager.shared.impact(.light) // game start
+            loadData()
+            setupGame()
         }
         .navigationTitle("Card Match")
         .navigationBarTitleDisplayMode(.large)
+        .navigationBarBackButtonHidden(true)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                Button("Exit") {
+                    dismiss()
+                }
+                .foregroundColor(.red)
+            }
+        }
     }
     
-    private func loadData() async {
-        words = await session.dataRepository.words.prefix(8).map { $0 }
+    private func loadData() {
+        words = Array(session.dataRepository.words.prefix(8))
     }
     
     private func setupGame() {
@@ -141,19 +167,23 @@ struct CardMatchGameView: View {
                 if isMatch {
                     // Add to matched indices
                     matchedIndices.formUnion(flippedIndices)
-                    session.hapticsService.success()
+                    HapticsManager.shared.notification(.success)
                     
                     // Award XP for successful match
                     session.gamificationService.awardXP(10, type: .quizCompleted, description: "Card match success")
+                    session.gamificationService.onActivityCompleted()
                     
                     // Check if game is completed
                     if matchedIndices.count == cards.count {
                         gameCompleted = true
+                        HapticsManager.shared.impact(.heavy)
+                        HapticsManager.shared.notification(.success)
                         // Award bonus XP for completing the game
                         session.gamificationService.awardXP(50, type: .quizCompleted, description: "Game completed")
+                        session.gamificationService.onActivityCompleted()
                     }
                 } else {
-                    session.hapticsService.warning()
+                    HapticsManager.shared.notification(.error)
                 }
                 
                 // Reset flipped indices
@@ -180,29 +210,29 @@ struct CardMatchCardView: View {
                 padding: 0
             ) {
                 RoundedRectangle(cornerRadius: 22, style: .continuous)
-                    .fill(isMatched ? MTColors.success.opacity(0.05) : Color.clear)
+                    .fill(isMatched ? ModernDesignSystem.Colors.success.opacity(0.05) : Color.clear)
                     .aspectRatio(1, contentMode: .fit)
             }
             
             if isFlipped || isMatched {
-                VStack(spacing: MTSpacing.small) {
+                VStack(spacing: ModernDesignSystem.Spacing.sm) {
                     Text(card.isTelugu ? card.word.telugu : card.word.english)
                         .font(card.isTelugu ? .title : .body)
                         .fontWeight(.semibold)
-                        .foregroundColor(MTColors.text)
+                        .foregroundColor(ModernDesignSystem.Colors.textPrimary)
                         .multilineTextAlignment(.center)
                     
                     if !card.isTelugu {
                         Text(card.word.transliteration)
                             .font(.caption)
-                            .foregroundColor(MTColors.text.opacity(0.7))
+                            .foregroundColor(ModernDesignSystem.Colors.textPrimary.opacity(0.7))
                     }
                 }
-                .padding(MTSpacing.small)
+                .padding(ModernDesignSystem.Spacing.sm)
             } else {
                 Image(systemName: "questionmark")
                     .font(.title)
-                    .foregroundColor(MTColors.text.opacity(0.5))
+                    .foregroundColor(ModernDesignSystem.Colors.textPrimary.opacity(0.5))
             }
         }
         .scaleEffect(isMatched ? 0.95 : 1.0)

@@ -5,22 +5,24 @@ struct SmoothDesign {
     
     // MARK: - Colors
     struct Colors {
-        static let primary = Color.blue
-        static let secondary = Color.green
-        static let accent = Color.orange
-        static let success = Color.green
-        static let warning = Color.orange
-        static let error = Color.red
+        static let primary = Color("AppPrimaryColor")
+        static let secondary = Color("AppSecondaryColor")
+        static let accent = Color("AccentColor")
+        static let success = Color("SuccessColor")
+        static let warning = Color("WarningColor")
+        static let error = Color("ErrorColor")
         
         // Background colors
-        static let backgroundPrimary = Color(red: 0.95, green: 0.97, blue: 1.0)
-        static let backgroundSecondary = Color(red: 0.92, green: 0.95, blue: 0.98)
-        static let cardBackground = Color.white
+        static let backgroundPrimary = Color("BackgroundPrimaryColor")
+        static let backgroundSecondary = Color("BackgroundSecondaryColor")
+        static let cardBackground = Color("CardBackgroundColor")
         
         // Text colors
-        static let textPrimary = Color.primary
-        static let textSecondary = Color.secondary
-        static let textTertiary = Color.gray
+        static let textPrimary = Color("AppTextPrimary")
+        static let textSecondary = Color("AppTextSecondary")
+        static let textTertiary = Color("AppTextTertiary")
+        static let surfaceOverlay = Color("SurfaceOverlayColor")
+        static let shadow = Color("ShadowColor")
     }
     
     // MARK: - Corner Radius
@@ -45,9 +47,9 @@ struct SmoothDesign {
     
     // MARK: - Shadows
     struct Shadow {
-        static let light = (color: Color.black.opacity(0.05), radius: CGFloat(4), x: CGFloat(0), y: CGFloat(2))
-        static let medium = (color: Color.black.opacity(0.1), radius: CGFloat(8), x: CGFloat(0), y: CGFloat(4))
-        static let heavy = (color: Color.black.opacity(0.15), radius: CGFloat(12), x: CGFloat(0), y: CGFloat(6))
+        static let light = (color: SmoothDesign.Colors.shadow.opacity(0.05), radius: CGFloat(4), x: CGFloat(0), y: CGFloat(2))
+        static let medium = (color: SmoothDesign.Colors.shadow.opacity(0.1), radius: CGFloat(8), x: CGFloat(0), y: CGFloat(4))
+        static let heavy = (color: SmoothDesign.Colors.shadow.opacity(0.15), radius: CGFloat(12), x: CGFloat(0), y: CGFloat(6))
     }
     
     // MARK: - Typography
@@ -147,7 +149,7 @@ struct SmoothButton: View {
         
         var foregroundColor: Color {
             switch self {
-            case .primary, .secondary, .accent: return .white
+            case .primary, .secondary, .accent: return SmoothDesign.Colors.textPrimary
             case .outline: return SmoothDesign.Colors.primary
             }
         }
@@ -173,7 +175,10 @@ struct SmoothButton: View {
     }
     
     var body: some View {
-        Button(action: action) {
+        Button(action: {
+            HapticFeedback.light()
+            action()
+        }) {
             HStack(spacing: SmoothDesign.Spacing.sm) {
                 if let icon = icon {
                     Image(systemName: icon)
@@ -233,10 +238,10 @@ struct SmoothTextField: View {
         .padding(SmoothDesign.Spacing.lg)
         .background(
             RoundedRectangle(cornerRadius: SmoothDesign.CornerRadius.medium)
-                .fill(Color.gray.opacity(0.1))
+                .fill(SmoothDesign.Colors.surfaceOverlay.opacity(0.1))
                 .overlay(
                     RoundedRectangle(cornerRadius: SmoothDesign.CornerRadius.medium)
-                        .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                        .stroke(SmoothDesign.Colors.surfaceOverlay.opacity(0.3), lineWidth: 1)
                 )
         )
     }
@@ -258,7 +263,7 @@ struct SmoothProgressBar: View {
         GeometryReader { geometry in
             ZStack(alignment: .leading) {
                 RoundedRectangle(cornerRadius: height / 2)
-                    .fill(Color.gray.opacity(0.2))
+                    .fill(SmoothDesign.Colors.surfaceOverlay.opacity(0.2))
                     .frame(height: height)
                 
                 RoundedRectangle(cornerRadius: height / 2)
@@ -296,7 +301,10 @@ struct SmoothIconButton: View {
     }
     
     var body: some View {
-        Button(action: action) {
+        Button(action: {
+            HapticFeedback.light()
+            action()
+        }) {
             Image(systemName: icon)
                 .font(.system(size: size, weight: .medium))
                 .foregroundColor(color)
@@ -323,7 +331,7 @@ struct SmoothBadge: View {
     let color: Color
     let backgroundColor: Color?
     
-    init(_ text: String, color: Color = .white, backgroundColor: Color? = SmoothDesign.Colors.primary) {
+    init(_ text: String, color: Color = SmoothDesign.Colors.textPrimary, backgroundColor: Color? = SmoothDesign.Colors.primary) {
         self.text = text
         self.color = color
         self.backgroundColor = backgroundColor

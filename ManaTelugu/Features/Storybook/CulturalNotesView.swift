@@ -33,6 +33,7 @@ struct CulturalNotesView: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Close") {
+                        HapticsService.shared.navigationTap()
                         dismiss()
                     }
                 }
@@ -44,7 +45,7 @@ struct CulturalNotesView: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Image(systemName: "info.circle.fill")
-                    .foregroundColor(MTColors.accent)
+                    .foregroundColor(ModernDesignSystem.Colors.accent)
                 Text("Cultural Context")
                     .font(.headline)
                     .fontWeight(.semibold)
@@ -111,7 +112,7 @@ struct CulturalNotesView: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Image(systemName: story.category.icon)
-                    .foregroundColor(MTColors.accent)
+                    .foregroundColor(ModernDesignSystem.Colors.accent)
                 Text("Story Category")
                     .font(.headline)
                     .fontWeight(.semibold)
@@ -123,7 +124,7 @@ struct CulturalNotesView: View {
                         .fontWeight(.medium)
                     Text(story.category.displayName)
                         .font(.subheadline)
-                        .foregroundColor(MTColors.accent)
+                        .foregroundColor(ModernDesignSystem.Colors.accent)
                 }
                 HStack {
                     Text("Difficulty:")
@@ -171,9 +172,9 @@ struct KeywordChip: View {
             .padding(.vertical, 6)
             .background(
                 RoundedRectangle(cornerRadius: 16)
-                    .fill(MTColors.accent.opacity(0.2))
+                    .fill(ModernDesignSystem.Colors.accent.opacity(0.2))
             )
-            .foregroundColor(MTColors.accent)
+            .foregroundColor(ModernDesignSystem.Colors.accent)
     }
 }
 

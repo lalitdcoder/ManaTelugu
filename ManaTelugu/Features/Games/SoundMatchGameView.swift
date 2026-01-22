@@ -10,6 +10,7 @@ struct SoundMatchQuestion {
 
 struct SoundMatchGameView: View {
     @EnvironmentObject var session: AppSession
+    @Environment(\.dismiss) private var dismiss
     @State private var letters: [Letter] = []
     @State private var words: [Word] = []
     @State private var quizItems: [QuizItem] = []
@@ -33,33 +34,37 @@ struct SoundMatchGameView: View {
     
     var body: some View {
         ZStack {
-            // Enhanced background gradient
-            LinearGradient(
-                colors: [Color.blue.opacity(0.1), Color.purple.opacity(0.1)],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            .ignoresSafeArea()
+            Group {
+                if session.isDarkModeActive {
+                    Color.adaptiveBackground.ignoresSafeArea()
+                } else {
+                    LinearGradient(
+                        colors: [Color.blue.opacity(0.1), Color.purple.opacity(0.1)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ).ignoresSafeArea()
+                }
+            }
             
             VStack(spacing: 20) {
             // Header with score and timer
             HStack {
                 HStack {
                     Image(systemName: "star.fill")
-                        .foregroundColor(.yellow)
+                        .foregroundColor(session.isDarkModeActive ? Color.teluguAccent : .yellow)
                     Text("\(score)")
                         .font(.title3)
                         .fontWeight(.bold)
+                        .foregroundColor(session.isDarkModeActive ? Color.teluguTextPrimary : .primary)
                 }
                 
                 Spacer()
                 
                 HStack {
                     Image(systemName: "clock.fill")
-                        .foregroundColor(.red)
+                        .foregroundColor(session.isDarkModeActive ? Color.teluguAccent : .red)
                     Text("\(timeRemaining)s")
-                        .font(.title3)
-                        .fontWeight(.bold)
+                        .foregroundColor(session.isDarkModeActive ? Color.teluguTextPrimary : .primary)
                 }
             }
             .padding(.horizontal)
@@ -72,6 +77,7 @@ struct SoundMatchGameView: View {
                         .foregroundColor(.primary)
                     
                     Button(action: {
+                        HapticsService.shared.audioPlay()
                         isPlaying = true
                         session.audioService.play(name: quizItem.prompt, rate: 1.0)
                         
@@ -114,6 +120,7 @@ struct SoundMatchGameView: View {
                         }
                         .disabled(selectedOption != nil)
                         .opacity(selectedOption != nil && selectedOption != optionId && isCorrect ? 1.0 : 1.0)
+                        .buttonStyle(HapticButtonStyle())
                     }
                 }
                 .padding(.horizontal)
@@ -139,6 +146,7 @@ struct SoundMatchGameView: View {
             }
         }
         .onAppear {
+            HapticsManager.shared.impact(.light)
             Task {
                 await loadData()
                 startNewGame()
@@ -150,16 +158,27 @@ struct SoundMatchGameView: View {
                 timeRemaining -= 1
             } else {
                 // Game over
+                HapticsManager.shared.impact(.heavy)
+                HapticsManager.shared.notification(.success)
                 timer.upstream.connect().cancel()
             }
         }
         .navigationTitle("Sound Match")
         .navigationBarTitleDisplayMode(.large)
+        .navigationBarBackButtonHidden(true)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                Button("Exit") {
+                    dismiss()
+                }
+                .foregroundColor(.red)
+            }
+        }
     }
     
     private func loadData() async {
-        letters = await session.dataRepository.letters
-        words = await session.dataRepository.words
+letters = session.dataRepository.letters
+words = session.dataRepository.words
         
         // Create sample quiz items
         createQuizItems()
@@ -167,203 +186,62 @@ struct SoundMatchGameView: View {
     
     private func createQuizItems() {
         var items: [QuizItem] = []
-        
-        // Predefined Telugu sound matching questions
-        let soundMatchQuestions = [
-            // Basic vowels
-            SoundMatchQuestion(
-                audioText: "అ",
-                audioFile: "అ.mp3",
-                options: [
-                    ("అ", "a"),
-                    ("ఆ", "aa"),
-                    ("ఇ", "i"),
-                    ("ఉ", "u")
-                ],
-                correctAnswer: "అ"
-            ),
-            SoundMatchQuestion(
-                audioText: "ఇ",
-                audioFile: "ఇ.mp3",
-                options: [
-                    ("ఇ", "i"),
-                    ("ఈ", "ii"),
-                    ("ఉ", "u"),
-                    ("ఎ", "e")
-                ],
-                correctAnswer: "ఇ"
-            ),
-            
-            // Basic consonants
-            SoundMatchQuestion(
-                audioText: "క",
-                audioFile: "క.mp3",
-                options: [
-                    ("క", "ka"),
-                    ("గ", "ga"),
-                    ("ఖ", "kha"),
-                    ("చ", "cha")
-                ],
-                correctAnswer: "క"
-            ),
-            SoundMatchQuestion(
-                audioText: "ప",
-                audioFile: "ప.mp3",
-                options: [
-                    ("ప", "pa"),
-                    ("బ", "ba"),
-                    ("ఫ", "pha"),
-                    ("మ", "ma")
-                ],
-                correctAnswer: "ప"
-            ),
-            SoundMatchQuestion(
-                audioText: "మ",
-                audioFile: "మ.mp3",
-                options: [
-                    ("మ", "ma"),
-                    ("న", "na"),
-                    ("వ", "va"),
-                    ("ల", "la")
-                ],
-                correctAnswer: "మ"
-            ),
-            
-            // Names and common words
-            SoundMatchQuestion(
-                audioText: "రామ",
-                audioFile: "రామ.mp3",
-                options: [
-                    ("రామ", "rāma"),
-                    ("కృష్ణ", "kṛṣṇa"),
-                    ("సీత", "sīta"),
-                    ("హనుమాన్", "hanumān")
-                ],
-                correctAnswer: "రామ"
-            ),
-            SoundMatchQuestion(
-                audioText: "అన్నం",
-                audioFile: "అన్నం.mp3",
-                options: [
-                    ("అన్నం", "annaṁ - rice"),
-                    ("పాలు", "pālu - milk"),
-                    ("నీరు", "nīru - water"),
-                    ("రసం", "rasam - soup")
-                ],
-                correctAnswer: "అన్నం"
-            ),
-            SoundMatchQuestion(
-                audioText: "పాలు",
-                audioFile: "పాలు.mp3",
-                options: [
-                    ("పాలు", "pālu - milk"),
-                    ("కాఫీ", "kāphī - coffee"),
-                    ("టీ", "ṭī - tea"),
-                    ("నీరు", "nīru - water")
-                ],
-                correctAnswer: "పాలు"
-            ),
-            
-            // Animals
-            SoundMatchQuestion(
-                audioText: "కుక్క",
-                audioFile: "కుక్క.mp3",
-                options: [
-                    ("కుక్క", "kukka - dog"),
-                    ("పిల్లి", "pilli - cat"),
-                    ("కోడి", "kōḍi - hen"),
-                    ("పక్షి", "pakṣi - bird")
-                ],
-                correctAnswer: "కుక్క"
-            ),
-            SoundMatchQuestion(
-                audioText: "పక్షి",
-                audioFile: "పక్షి.mp3",
-                options: [
-                    ("పక్షి", "pakṣi - bird"),
-                    ("కుక్క", "kukka - dog"),
-                    ("పిల్లి", "pilli - cat"),
-                    ("కోడి", "kōḍi - hen")
-                ],
-                correctAnswer: "పక్షి"
-            ),
-            
-            // Nature
-            SoundMatchQuestion(
-                audioText: "సూర్యుడు",
-                audioFile: "సూర్యుడు.mp3",
-                options: [
-                    ("సూర్యుడు", "sūryuḍu - sun"),
-                    ("చంద్రుడు", "candraḍu - moon"),
-                    ("నక్షత్రం", "nakṣatraṁ - star"),
-                    ("ఆకాశం", "ākāśaṁ - sky")
-                ],
-                correctAnswer: "సూర్యుడు"
-            ),
-            SoundMatchQuestion(
-                audioText: "వృక్షం",
-                audioFile: "వృక్షం.mp3",
-                options: [
-                    ("వృక్షం", "vr̥kṣaṁ - tree"),
-                    ("పువ్వు", "puvvu - flower"),
-                    ("పండు", "paṇḍu - fruit"),
-                    ("గడ్డి", "gaḍḍi - grass")
-                ],
-                correctAnswer: "వృక్షం"
-            ),
-            SoundMatchQuestion(
-                audioText: "పువ్వు",
-                audioFile: "పువ్వు.mp3",
-                options: [
-                    ("పువ్వు", "puvvu - flower"),
-                    ("పండు", "paṇḍu - fruit"),
-                    ("వృక్షం", "vr̥kṣaṁ - tree"),
-                    ("గడ్డి", "gaḍḍi - grass")
-                ],
-                correctAnswer: "పువ్వు"
-            ),
-            
-            // Transportation and people
-            SoundMatchQuestion(
-                audioText: "బండి",
-                audioFile: "బండి.mp3",
-                options: [
-                    ("బండి", "baṇḍi - cart"),
-                    ("కారు", "kāru - car"),
-                    ("బస్సు", "bassu - bus"),
-                    ("రైలు", "railu - train")
-                ],
-                correctAnswer: "బండి"
-            ),
-            SoundMatchQuestion(
-                audioText: "మనిషి",
-                audioFile: "మనిషి.mp3",
-                options: [
-                    ("మనిషి", "maniṣi - man"),
-                    ("పిల్లవాడు", "pillavāḍu - boy"),
-                    ("అమ్మాయి", "ammāyi - girl"),
-                    ("చిన్నపిల్ల", "cinna pilla - child")
-                ],
-                correctAnswer: "మనిషి"
-            )
+        // Only use audio files that exist in Resources/Sounds
+        let availableAudioFiles: Set<String> = [
+            "అ.mp3", "ఆ.mp3", "ఇ.mp3", "ఉ.mp3", "ఊ.mp3", "ఋ.mp3", "ఎ.mp3", "ఏ .mp3", "ఐ.mp3", "ఒ.mp3", "ఓ.mp3", "ఔ.mp3",
+            "క.mp3", "ఖ.mp3", "గ.mp3", "ఘ.mp3", "ఙ.mp3", "చ.mp3", "ఛ.mp3", "జ.mp3", "ఝ .mp3", "ఞ.mp3",
+            "ట.mp3", "ఠ .mp3", "డ.mp3", "ఢ.mp3", "ణ.mp3", "త .mp3", "థ.mp3", "ద.mp3", "ధ.mp3", "న.mp3",
+            "ప.mp3", "ఫ.mp3", "బ.mp3", "భ .mp3", "మ.mp3", "య.mp3", "ర.mp3", "ల.mp3", "వ.mp3", "శ.mp3", "ష.mp3", "స .mp3", "హ.mp3", "ళ.mp3",
+            "అన్నం.mp3", "అమ్మ.mp3", "అక్క.mp3", "అత్త.mp3", "అత్తయ్య.mp3", "అరటి పండు.mp3", "ఆవు.mp3", "ఎద్దు.mp3", "ఎరుపు.mp3", "ఎలుకపులి.mp3",
+            "ఏనుగు.mp3", "ఒకటి.mp3", "కుక్క.mp3", "కుందేలు.mp3", "కోడి మాంసం.mp3", "కోతి.mp3", "గాజర.mp3", "గుడ్లు.mp3", "గొర్రె.mp3",
+            "చిలుక.mp3", "చేప.mp3", "టమాటా.mp3", "తాత.mp3", "తాతయ్య.mp3", "పక్షి.mp3", "పచ్చ.mp3", "పాలు.mp3", "పిల్లి.mp3", "పువ్వు.mp3",
+            "బండి.mp3", "మనిషి.mp3", "మామ.mp3", "మామయ్య.mp3", "మామిడి పండు.mp3", "మేక.mp3", "నక్క.mp3", "నాన్న.mp3", "నారింజ.mp3",
+            "నీలం.mp3", "పసుపు.mp3", "పండు.mp3", "పులి.mp3", "పుస్తకం.mp3", "పెరుగు.mp3", "పెద్దనాన్న.mp3", "పెద్దమ్మ.mp3", "రామ.mp3",
+            "సూర్యుడు.mp3", "వృక్షం.mp3"
         ]
-        
-        // Convert to QuizItem format and store question data
-        for (index, question) in soundMatchQuestions.enumerated() {
+        let soundMatchQuestions: [SoundMatchQuestion] = [
+            SoundMatchQuestion(audioText: "అ", audioFile: "అ.mp3", options: [("అ", "a"), ("ఆ", "aa"), ("ఇ", "i"), ("ఉ", "u")], correctAnswer: "అ"),
+            SoundMatchQuestion(audioText: "ఆ", audioFile: "ఆ.mp3", options: [("ఆ", "aa"), ("అ", "a"), ("ఇ", "i"), ("ఉ", "u")], correctAnswer: "ఆ"),
+            SoundMatchQuestion(audioText: "ఇ", audioFile: "ఇ.mp3", options: [("ఇ", "i"), ("ఈ", "ii"), ("ఉ", "u"), ("ఎ", "e")], correctAnswer: "ఇ"),
+            SoundMatchQuestion(audioText: "ఉ", audioFile: "ఉ.mp3", options: [("ఉ", "u"), ("ఊ", "uu"), ("ఇ", "i"), ("ఆ", "aa")], correctAnswer: "ఉ"),
+            SoundMatchQuestion(audioText: "ఒకటి", audioFile: "ఒకటి.mp3", options: [("ఒకటి", "one"), ("రెండు", "two"), ("మూడు", "three"), ("నాలుగు", "four")], correctAnswer: "ఒకటి"),
+            SoundMatchQuestion(audioText: "క", audioFile: "క.mp3", options: [("క", "ka"), ("గ", "ga"), ("ఖ", "kha"), ("చ", "cha")], correctAnswer: "క"),
+            SoundMatchQuestion(audioText: "ప", audioFile: "ప.mp3", options: [("ప", "pa"), ("బ", "ba"), ("ఫ", "pha"), ("మ", "ma")], correctAnswer: "ప"),
+            SoundMatchQuestion(audioText: "మ", audioFile: "మ.mp3", options: [("మ", "ma"), ("న", "na"), ("వ", "va"), ("ల", "la")], correctAnswer: "మ"),
+            SoundMatchQuestion(audioText: "అన్నం", audioFile: "అన్నం.mp3", options: [("అన్నం", "rice"), ("పాలు", "milk"), ("నీరు", "water"), ("రసం", "soup")], correctAnswer: "అన్నం"),
+            SoundMatchQuestion(audioText: "పాలు", audioFile: "పాలు.mp3", options: [("పాలు", "milk"), ("కాఫీ", "coffee"), ("టీ", "tea"), ("నీరు", "water")], correctAnswer: "పాలు"),
+            SoundMatchQuestion(audioText: "కుక్క", audioFile: "కుక్క.mp3", options: [("కుక్క", "dog"), ("పిల్లి", "cat"), ("కోడి", "hen"), ("పక్షి", "bird")], correctAnswer: "కుక్క"),
+            SoundMatchQuestion(audioText: "పక్షి", audioFile: "పక్షి.mp3", options: [("పక్షి", "bird"), ("కుక్క", "dog"), ("పిల్లి", "cat"), ("కోడి", "hen")], correctAnswer: "పక్షి"),
+            SoundMatchQuestion(audioText: "సూర్యుడు", audioFile: "సూర్యుడు.mp3", options: [("సూర్యుడు", "sun"), ("చంద్రుడు", "moon"), ("నక్షత్రం", "star"), ("ఆకాశం", "sky")], correctAnswer: "సూర్యుడు"),
+            SoundMatchQuestion(audioText: "వృక్షం", audioFile: "వృక్షం.mp3", options: [("వృక్షం", "tree"), ("పువ్వు", "flower"), ("పండు", "fruit"), ("గడ్డి", "grass")], correctAnswer: "వృక్షం"),
+            SoundMatchQuestion(audioText: "పువ్వు", audioFile: "పువ్వు.mp3", options: [("పువ్వు", "flower"), ("పండు", "fruit"), ("వృక్షం", "tree"), ("గడ్డి", "grass")], correctAnswer: "పువ్వు"),
+            SoundMatchQuestion(audioText: "బండి", audioFile: "బండి.mp3", options: [("బండి", "cart"), ("కారు", "car"), ("బస్సు", "bus"), ("రైలు", "train")], correctAnswer: "బండి"),
+            SoundMatchQuestion(audioText: "మనిషి", audioFile: "మనిషి.mp3", options: [("మనిషి", "man"), ("పిల్లవాడు", "boy"), ("అమ్మాయి", "girl"), ("చిన్నపిల్ల", "child")], correctAnswer: "మనిషి"),
+            SoundMatchQuestion(audioText: "ఎరుపు", audioFile: "ఎరుపు.mp3", options: [("ఎరుపు", "red"), ("నీలం", "blue"), ("పచ్చ", "green"), ("తెలుపు", "white")], correctAnswer: "ఎరుపు"),
+            SoundMatchQuestion(audioText: "నీలం", audioFile: "నీలం.mp3", options: [("నీలం", "blue"), ("ఎరుపు", "red"), ("పచ్చ", "green"), ("తెలుపు", "white")], correctAnswer: "నీలం"),
+            SoundMatchQuestion(audioText: "పచ్చ", audioFile: "పచ్చ.mp3", options: [("పచ్చ", "green"), ("ఎరుపు", "red"), ("నీలం", "blue"), ("తెలుపు", "white")], correctAnswer: "పచ్చ"),
+            SoundMatchQuestion(audioText: "అమ్మ", audioFile: "అమ్మ.mp3", options: [("అమ్మ", "mother"), ("అన్న", "brother"), ("అక్క", "sister"), ("అత్త", "aunt")], correctAnswer: "అమ్మ"),
+            SoundMatchQuestion(audioText: "అక్క", audioFile: "అక్క.mp3", options: [("అక్క", "sister"), ("అన్న", "brother"), ("అమ్మ", "mother"), ("అత్త", "aunt")], correctAnswer: "అక్క"),
+            SoundMatchQuestion(audioText: "అత్త", audioFile: "అత్త.mp3", options: [("అత్త", "aunt"), ("అక్క", "sister"), ("అన్న", "brother"), ("అమ్మ", "mother")], correctAnswer: "అత్త"),
+            SoundMatchQuestion(audioText: "నాన్న", audioFile: "నాన్న.mp3", options: [("నాన్న", "father"), ("అమ్మ", "mother"), ("అక్క", "sister"), ("అత్త", "aunt")], correctAnswer: "నాన్న"),
+            SoundMatchQuestion(audioText: "పిల్లి", audioFile: "పిల్లి.mp3", options: [("పిల్లి", "cat"), ("కుక్క", "dog"), ("కోడి", "hen"), ("పక్షి", "bird")], correctAnswer: "పిల్లి"),
+            SoundMatchQuestion(audioText: "కోతి", audioFile: "కోతి.mp3", options: [("కోతి", "monkey"), ("కుక్క", "dog"), ("పిల్లి", "cat"), ("పక్షి", "bird")], correctAnswer: "కోతి"),
+            SoundMatchQuestion(audioText: "మేక", audioFile: "మేక.mp3", options: [("మేక", "goat"), ("కుక్క", "dog"), ("పిల్లి", "cat"), ("పక్షి", "bird")], correctAnswer: "మేక")
+        ]
+        // Filter questions to only those with audio files present
+        let filteredQuestions = soundMatchQuestions.filter { availableAudioFiles.contains($0.audioFile) }
+        for (index, question) in filteredQuestions.enumerated() {
             let quizId = "sound_match_\(index)"
             let quizItem = QuizItem(
                 id: quizId,
                 prompt: question.audioFile,
                 correctId: question.correctAnswer,
-                options: question.options.map { $0.telugu }, // Telugu text
+                options: question.options.map { $0.telugu },
                 kind: .soundMatch
             )
             items.append(quizItem)
-            
-            // Store question data for display purposes
             questionData[quizId] = question
         }
-        
         quizItems = items.shuffled()
     }
     
@@ -396,12 +274,15 @@ struct SoundMatchGameView: View {
             score += 1
             feedbackMessage = "Correct! Well done!"
             xpEarned = 5
-            session.hapticsService.success()
+            HapticsService.shared.correctAnswer()
+            session.audioService.play(name: "success.mp3", rate: 1.0)
             session.gamificationService.awardXP(5, type: .quizCompleted, description: "Sound match correct answer")
+            session.gamificationService.onActivityCompleted()
         } else {
             feedbackMessage = "Not quite right, but keep trying!"
             xpEarned = 0
-            session.hapticsService.warning()
+            HapticsService.shared.wrongAnswer()
+            session.audioService.play(name: "tryagain.mp3", rate: 1.0)
         }
         
         showingFeedback = true
@@ -417,6 +298,8 @@ struct SoundMatchGameView: View {
             currentQuizIndex += 1
         } else {
             // Game completed
+            HapticsManager.shared.impact(.heavy)
+            HapticsManager.shared.notification(.success)
             currentQuizIndex = 0
             startNewGame()
         }
