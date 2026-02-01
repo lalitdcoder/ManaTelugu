@@ -53,25 +53,34 @@ struct BadgeDetailView: View {
         case .streak:
             return session.gamificationService.gamificationState.streakCount
         case .lettersMastered:
-            // Count letters mastered from XP history
-            return session.gamificationService.gamificationState.xpHistory.filter {
-                $0.type == .wordLearned
-            }.count
+            // Count unique letters mastered from XP history
+            let uniqueLetters = Set(
+                session.gamificationService.gamificationState.xpHistory
+                    .filter { $0.type == .letterLearned }
+                    .compactMap { $0.associatedData }
+            )
+            return uniqueLetters.count
         case .lessonsCompleted:
             // Count lessons completed from XP history
             return session.gamificationService.gamificationState.xpHistory.filter {
                 $0.type == .quizCompleted
             }.count
         case .wordsMastered:
-            // Count words mastered from XP history
-            return session.gamificationService.gamificationState.xpHistory.filter {
-                $0.type == .wordLearned
-            }.count
+            // Count unique words mastered from XP history
+            let uniqueWords = Set(
+                session.gamificationService.gamificationState.xpHistory
+                    .filter { $0.type == .wordLearned }
+                    .compactMap { $0.associatedData }
+            )
+            return uniqueWords.count
         case .storiesCompleted:
-            // Count stories completed from XP history
-            return session.gamificationService.gamificationState.xpHistory.filter {
-                $0.type == .storyCompleted
-            }.count
+            // Count unique stories completed from XP history
+            let uniqueStories = Set(
+                session.gamificationService.gamificationState.xpHistory
+                    .filter { $0.type == .storyCompleted }
+                    .compactMap { $0.associatedData }
+            )
+            return uniqueStories.count
         }
     }
 

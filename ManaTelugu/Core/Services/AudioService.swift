@@ -54,8 +54,6 @@ class AudioService: NSObject, AudioServiceProtocol, AVAudioPlayerDelegate {
             return
         }
 
-        print("🎵 Playing audio: \(name) from \(audioURL.lastPathComponent)")
-
         do {
             audioPlayer = try AVAudioPlayer(contentsOf: audioURL)
             audioPlayer?.delegate = self
@@ -63,7 +61,6 @@ class AudioService: NSObject, AudioServiceProtocol, AVAudioPlayerDelegate {
             audioPlayer?.rate = rate
             audioPlayer?.prepareToPlay()
             audioPlayer?.play()
-            print("✅ Audio playback started successfully")
         } catch {
             print("❌ Failed to play audio: \(error.localizedDescription)")
         }

@@ -52,6 +52,37 @@ struct AlphabetGridView: View {
                     }
                     .padding(.horizontal, ModernDesignSystem.Spacing.md)
 
+                    // Search Bar
+                    HStack {
+                        Image(systemName: "magnifyingglass")
+                            .foregroundColor(ModernDesignSystem.Colors.textSecondary)
+                        TextField("Search (e.g., 'ka' or 'క')", text: $searchText)
+                            .font(ModernDesignSystem.Typography.body)
+                            .foregroundColor(ModernDesignSystem.Colors.textPrimary)
+                            .accessibilityLabel("Search letters")
+
+                        if !searchText.isEmpty {
+                            Button(action: {
+                                HapticsManager.shared.selection()
+                                searchText = ""
+                            }) {
+                                Image(systemName: "xmark.circle.fill")
+                                    .foregroundColor(ModernDesignSystem.Colors.textSecondary)
+                            }
+                        }
+                    }
+                    .padding()
+                    .background(ModernDesignSystem.Colors.surface)
+                    .cornerRadius(ModernDesignSystem.CornerRadius.lg)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: ModernDesignSystem.CornerRadius.lg)
+                            .stroke(ModernDesignSystem.Colors.primary.opacity(0.2), lineWidth: 1)
+                    )
+                    .padding(.horizontal, ModernDesignSystem.Spacing.md)
+                    .shadow(
+                        color: ModernDesignSystem.Colors.shadow.opacity(0.05), radius: 8, x: 0, y: 4
+                    )
+
                     if !vowels.isEmpty {
                         // Vowels Section
                         VStack(alignment: .leading, spacing: ModernDesignSystem.Spacing.md) {
@@ -166,7 +197,7 @@ struct AlphabetGridView: View {
                 }
                 .padding(.vertical, ModernDesignSystem.Spacing.lg)
             }
-            .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always))
+            // .searchable removed in favor of explicit search bar
         }
         .onAppear {
             letters = session.dataRepository.letters

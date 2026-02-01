@@ -155,18 +155,34 @@ class GamificationService: ObservableObject {
     }
 
     func awardWordLearned(_ word: String) {
-        awardXP(10, type: .wordLearned, description: "Learned: \(word)", associatedData: word)
+        if !gamificationState.xpHistory.contains(where: {
+            $0.type == .wordLearned && $0.associatedData == word
+        }) {
+            awardXP(10, type: .wordLearned, description: "Learned: \(word)", associatedData: word)
+        }
     }
 
     func awardLetterLearned(_ letter: String) {
-        awardXP(
-            5, type: .letterLearned, description: "Learned letter: \(letter)",
-            associatedData: letter)
+        if !gamificationState.xpHistory.contains(where: {
+            $0.type == .letterLearned && $0.associatedData == letter
+        }) {
+            awardXP(
+                5, type: .letterLearned, description: "Learned letter: \(letter)",
+                associatedData: letter)
+        }
     }
 
     func awardStoryCompleted(_ title: String) {
-        awardXP(
-            20, type: .storyCompleted, description: "Read story: \(title)", associatedData: title)
+        // Stories can be re-read for reduced XP, or just once.
+        // Based on "not too wildly", let's restrict to once for now or check requirements.
+        // Assuming unique completion for now to prevent spam.
+        if !gamificationState.xpHistory.contains(where: {
+            $0.type == .storyCompleted && $0.associatedData == title
+        }) {
+            awardXP(
+                20, type: .storyCompleted, description: "Read story: \(title)",
+                associatedData: title)
+        }
     }
 
     func awardQuizCompleted(_ score: Double, totalQuestions: Int) {

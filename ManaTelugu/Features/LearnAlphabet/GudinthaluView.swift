@@ -1,3 +1,4 @@
+import AVFoundation
 import SwiftUI
 
 /// Gudinthalu (Consonant-Vowel Combinations) Learning View
@@ -272,10 +273,34 @@ struct GudinthaluView: View {
             )
         }
         .frame(width: 110)
+        .onTapGesture {
+            playMelodiousAudio(for: item.combined)
+            HapticsManager.shared.selection()
+        }
     }
+
+    private func playMelodiousAudio(for text: String) {
+        // Stop any previous speech
+        if speechSynthesizer.isSpeaking {
+            speechSynthesizer.stopSpeaking(at: .immediate)
+        }
+
+        let utterance = AVSpeechUtterance(string: text)
+        // Use Telugu voice
+        utterance.voice = AVSpeechSynthesisVoice(language: "te-IN")
+        // Slightly slower rate for clarity
+        utterance.rate = 0.4
+        // Lower pitch for a deeper, more traditional sound (optional)
+        utterance.pitchMultiplier = 1.0
+
+        speechSynthesizer.speak(utterance)
+    }
+
+    private let speechSynthesizer = AVSpeechSynthesizer()
+
+    // MARK: - Preview
 }
 
-// MARK: - Preview
 #Preview {
     NavigationStack {
         GudinthaluView()

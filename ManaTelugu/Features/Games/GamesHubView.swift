@@ -46,6 +46,16 @@ struct GamesHubView: View {
             color: .green,
             isRecommended: false
         ),
+        GameInfo(
+            id: "5",
+            title: "Word Match",
+            description: "Match English words with their Telugu meanings",
+            icon: "arrow.left.arrow.right",
+            difficulty: "Beginner",
+            estimatedTime: "5 min",
+            color: .pink,
+            isRecommended: true
+        ),
     ]
 
     var body: some View {
@@ -161,6 +171,8 @@ struct GamesHubView: View {
             TraceGameView()
         case "4":
             SoundMatchGameView()
+        case "5":
+            WordMatchGameView()
         default:
             Text("Game not found")
         }
@@ -272,5 +284,263 @@ struct GameInfo: Identifiable {
     NavigationStack {
         GamesHubView()
             .environmentObject(AppSession())
+    }
+}
+
+struct WordMatchGameView: View {
+    @EnvironmentObject var session: AppSession
+    @Environment(\.dismiss) private var dismiss
+
+    @State private var allWords: [Word] = []
+    @State private var currentRoundWords: [Word] = []
+
+    // Split columns for randomization
+    @State private var leftColumnItems: [Word] = []
+    @State private var rightColumnItems: [Word] = []
+
+    // Selection states
+    @State private var selectedLeftId: String? = nil
+    @State private var selectedRightId: String? = nil
+
+    // Matched IDs
+    @State private var matchedIds: Set<String> = []
+
+    // Feedback states
+    @State private var isWrongMatch = false
+    @State private var isSuccessMatch = false
+    @State private var showingCompletion = false
+    @State private var gameStartTime = Date()
+    @State private var score = 0
+
+    private let wordsPerRound = 5
+
+    var body: some View {
+        ZStack {
+            // Background
+            Color.clear
+                .liquidGlassBackground()
+                .ignoresSafeArea()
+
+            VStack(spacing: ModernDesignSystem.Spacing.lg) {
+                // Header
+                HStack {
+                    Text("Word Match")
+                        .font(ModernDesignSystem.Typography.title1)
+                        .foregroundColor(ModernDesignSystem.Colors.textPrimary)
+                    Spacer()
+                    Text("Score: \(score)")
+                        .font(ModernDesignSystem.Typography.headline)
+                        .foregroundColor(ModernDesignSystem.Colors.funYellow)
+                }
+                .padding(.horizontal)
+
+                if !currentRoundWords.isEmpty {
+                    HStack(spacing: ModernDesignSystem.Spacing.xl) {
+                        // Left Column (English)
+                        VStack(spacing: ModernDesignSystem.Spacing.md) {
+                            ForEach(leftColumnItems, id: \.id) { word in
+                                CardView(
+                                    text: word.english,
+                                    isSelected: selectedLeftId == word.id,
+                                    isMatched: matchedIds.contains(word.id),
+                                    isWrong: isWrongMatch && selectedLeftId == word.id,
+                                    color: ModernDesignSystem.Colors.funBlue
+                                )
+                                .onTapGesture {
+                                    handleLeftTap(word.id)
+                                }
+                                .disabled(matchedIds.contains(word.id))
+                            }
+                        }
+
+                        // Right Column (Telugu)
+                        VStack(spacing: ModernDesignSystem.Spacing.md) {
+                            ForEach(rightColumnItems, id: \.id) { word in
+                                CardView(
+                                    text: word.telugu,
+                                    isSelected: selectedRightId == word.id,
+                                    isMatched: matchedIds.contains(word.id),
+                                    isWrong: isWrongMatch && selectedRightId == word.id,
+                                    color: ModernDesignSystem.Colors.funGreen
+                                )
+                                .onTapGesture {
+                                    handleRightTap(word.id)
+                                }
+                                .disabled(matchedIds.contains(word.id))
+                            }
+                        }
+                    }
+                    .padding()
+                } else if showingCompletion {
+                    // Completion View
+                    VStack(spacing: ModernDesignSystem.Spacing.lg) {
+                        Text("Round Complete!")
+                            .font(ModernDesignSystem.Typography.celebration)
+                            .foregroundColor(ModernDesignSystem.Colors.textPrimary)
+
+                        Text("You matched all pairs!")
+                            .font(ModernDesignSystem.Typography.body)
+                            .foregroundColor(ModernDesignSystem.Colors.textSecondary)
+
+                        ModernButton("Next Round", icon: "arrow.right", style: .primary) {
+                            startNewRound()
+                        }
+                    }
+                    .padding()
+                    .modernCard()
+                }
+
+                Spacer()
+            }
+            .padding(.top, ModernDesignSystem.Spacing.lg)
+        }
+        .onAppear {
+            setupGame()
+        }
+        .navigationBarTitleDisplayMode(.inline)
+        .navigationBarBackButtonHidden(true)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                BackButton {
+                    dismiss()
+                }
+            }
+        }
+    }
+
+    private func setupGame() {
+        allWords = session.dataRepository.words.shuffled()
+        if allWords.isEmpty {
+            allWords = []
+        }
+        startNewRound()
+    }
+
+    private func startNewRound() {
+        // Reset states
+        selectedLeftId = nil
+        selectedRightId = nil
+        matchedIds = []
+        isWrongMatch = false
+        isSuccessMatch = false
+        showingCompletion = false
+        gameStartTime = Date()
+
+        // Pick next batch
+        let count = min(allWords.count, wordsPerRound)
+        guard count > 0 else { return }
+
+        currentRoundWords = Array(allWords.prefix(count))
+        // Rotate pool
+        allWords.shuffle()
+
+        // Randomize columns INDEPENDENTLY (Anti-Pattern)
+        leftColumnItems = currentRoundWords.shuffled()
+        rightColumnItems = currentRoundWords.shuffled()
+    }
+
+    private func handleLeftTap(_ id: String) {
+        guard !matchedIds.contains(id) else { return }
+
+        // Haptic
+        HapticsManager.shared.selection()
+
+        selectedLeftId = id
+        checkMatch()
+    }
+
+    private func handleRightTap(_ id: String) {
+        guard !matchedIds.contains(id) else { return }
+
+        // Audio
+        if let word = currentRoundWords.first(where: { $0.id == id }) {
+            session.audioService.play(name: word.audioFile, rate: 1.0)
+        }
+
+        // Haptic
+        HapticsManager.shared.selection()
+
+        selectedRightId = id
+        checkMatch()
+    }
+
+    private func checkMatch() {
+        guard let left = selectedLeftId, let right = selectedRightId else { return }
+
+        if left == right {
+            // Match!
+            matchedIds.insert(left)
+            score += 10
+            isSuccessMatch = true
+            FeedbackCenter.correct()
+
+            selectedLeftId = nil
+            selectedRightId = nil
+
+            // Check win condition
+            if matchedIds.count == currentRoundWords.count {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    showingCompletion = true
+                    FeedbackCenter.correct()
+                }
+            }
+        } else {
+            // Mismatch
+            isWrongMatch = true
+            FeedbackCenter.wrong()
+
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                isWrongMatch = false
+                selectedLeftId = nil
+                selectedRightId = nil
+            }
+        }
+    }
+
+    // Subview for Cards
+    struct CardView: View {
+        let text: String
+        let isSelected: Bool
+        let isMatched: Bool
+        let isWrong: Bool
+        let color: Color
+
+        var body: some View {
+            Text(text)
+                .font(ModernDesignSystem.Typography.headline)
+                .foregroundColor(textColor)
+                .frame(maxWidth: .infinity)
+                .frame(height: 60)
+                .background(backgroundColor)
+                .cornerRadius(12)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(borderColor, lineWidth: 2)
+                )
+                .shadow(color: isSelected ? color.opacity(0.4) : .clear, radius: 8)
+                .scaleEffect(isSelected ? 1.05 : 1.0)
+                .blur(radius: isMatched ? 1 : 0)  // Fade out matched items
+                .opacity(isMatched ? 0.0 : 1.0)  // Hide matched items
+                .animation(.spring(), value: isSelected)
+                .animation(.easeIn, value: isMatched)
+        }
+
+        private var backgroundColor: Color {
+            if isWrong { return ModernDesignSystem.Colors.error.opacity(0.2) }
+            if isSelected { return color.opacity(0.2) }
+            return ModernDesignSystem.Colors.surface
+        }
+
+        private var borderColor: Color {
+            if isWrong { return ModernDesignSystem.Colors.error }
+            if isSelected { return color }
+            return ModernDesignSystem.Colors.surfaceSecondary
+        }
+
+        private var textColor: Color {
+            if isWrong { return ModernDesignSystem.Colors.error }
+            if isSelected { return color }
+            return ModernDesignSystem.Colors.textPrimary
+        }
     }
 }

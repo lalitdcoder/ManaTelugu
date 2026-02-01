@@ -529,15 +529,21 @@ class GamificationState: ObservableObject, Codable {
     private func isRequirementMet(_ requirement: BadgeRequirement) -> Bool {
         switch requirement {
         case .wordsLearned(let count):
-            return xpHistory.filter { $0.type == .wordLearned }.count >= count
+            let uniqueWords = Set(
+                xpHistory.filter { $0.type == .wordLearned }.compactMap { $0.associatedData })
+            return uniqueWords.count >= count
+        case .lettersLearned(let count):
+            let uniqueLetters = Set(
+                xpHistory.filter { $0.type == .letterLearned }.compactMap { $0.associatedData })
+            return uniqueLetters.count >= count
+        case .storiesCompleted(let count):
+            let uniqueStories = Set(
+                xpHistory.filter { $0.type == .storyCompleted }.compactMap { $0.associatedData })
+            return uniqueStories.count >= count
         case .streakDays(let days):
             return streakCount >= days
         case .quizzesCompleted(let count):
             return xpHistory.filter { $0.type == .quizCompleted }.count >= count
-        case .lettersLearned(let count):
-            return xpHistory.filter { $0.type == .letterLearned }.count >= count
-        case .storiesCompleted(let count):
-            return xpHistory.filter { $0.type == .storyCompleted }.count >= count
         case .perfectQuizzes(let count):
             return xpHistory.filter { $0.type == .perfectQuiz }.count >= count
         case .xpEarned(let xp):
@@ -545,11 +551,8 @@ class GamificationState: ObservableObject, Codable {
         case .levelReached(let level):
             return currentLevel.level >= level
         case .daysActive(let days):
-            // Calculate days since first activity
-            guard let firstActivity = xpHistory.first?.timestamp else { return false }
-            let daysSinceFirst =
-                Calendar.current.dateComponents([.day], from: firstActivity, to: Date()).day ?? 0
-            return daysSinceFirst >= days
+            let uniqueDays = Set(xpHistory.map { Calendar.current.startOfDay(for: $0.timestamp) })
+            return uniqueDays.count >= days
         case .combo(let requirements):
             return requirements.allSatisfy { isRequirementMet($0) }
         }

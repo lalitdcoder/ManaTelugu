@@ -278,10 +278,20 @@ struct SettingsView: View {
         }
     }
     private func resetProgress() {
+        // Reset Progress Tracking
         session.progressTrackingService.lessonProgress.removeAll()
         UserDefaults.standard.removeObject(forKey: "lessonProgress")
         session.progressTrackingService.lessonProgress = []
-        // Optionally reload or notify other services/views here
+
+        // Reset Gamification
+        session.gamificationService.resetProgress()
+
+        // Reset Content Mastery (DataRepository)
+        session.dataRepository.resetProgress()
+
+        // Reset User Data & Preferences if needed, or specific services
+        // Ensure UI updates
+        HapticsManager.shared.notification(.success)
     }
 }
 
