@@ -249,21 +249,19 @@ struct GudinthaluView: View {
 
             // Romanization label
             VStack(spacing: 4) {
-                // Base consonant
-                Text(item.consonant)
-                    .font(.caption2)
-                    .foregroundColor(.secondary)
-
                 // Vowel sign display
                 Text(item.vowelSign.display)
                     .font(.caption.bold())
                     .foregroundColor(.primary)
 
-                // Romanization
-                Text(item.vowelSign.romanization)
-                    .font(.caption2)
-                    .foregroundColor(.secondary)
-                    .italic()
+                // Full Romanization (e.g., "ka", "kha", "ki")
+                Text(
+                    manager.getFullRomanization(
+                        consonant: item.consonant, vowelSign: item.vowelSign)
+                )
+                .font(.caption2)
+                .foregroundColor(.secondary)
+                .italic()
             }
             .frame(width: 100)
             .padding(.vertical, 8)

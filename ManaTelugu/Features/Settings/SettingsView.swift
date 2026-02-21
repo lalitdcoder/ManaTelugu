@@ -278,20 +278,49 @@ struct SettingsView: View {
         }
     }
     private func resetProgress() {
-        // Reset Progress Tracking
+        // Clear all UserDefaults keys related to progress
+        let keysToRemove = [
+            "lessonProgress",
+            "completedLessons",
+            "currentXP",
+            "currentLevel",
+            "totalXP",
+            "streak",
+            "lastActiveDate",
+            "badges",
+            "unlockedBadges",
+            "xpHistory",
+            "learnedLetters",
+            "masteredWords",
+            "completedStories",
+            "gamificationState",
+        ]
+
+        for key in keysToRemove {
+            UserDefaults.standard.removeObject(forKey: key)
+        }
+
+        // Reset Progress Tracking Service
         session.progressTrackingService.lessonProgress.removeAll()
-        UserDefaults.standard.removeObject(forKey: "lessonProgress")
         session.progressTrackingService.lessonProgress = []
 
-        // Reset Gamification
+        // Reset Gamification Service (XP, level, badges)
         session.gamificationService.resetProgress()
 
-        // Reset Content Mastery (DataRepository)
+        // Reset Data Repository (content mastery)
         session.dataRepository.resetProgress()
 
-        // Reset User Data & Preferences if needed, or specific services
-        // Ensure UI updates
+        // Force sync to disk
+        UserDefaults.standard.synchronize()
+
+        // Trigger haptic success feedback
         HapticsManager.shared.notification(.success)
+
+        // Force UI refresh by updating @Published properties
+        // This ensures the home screen immediately shows 0 progress
+        DispatchQueue.main.async {
+            self.session.objectWillChange.send()
+        }
     }
 }
 

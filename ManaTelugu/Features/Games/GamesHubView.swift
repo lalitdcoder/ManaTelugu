@@ -56,6 +56,16 @@ struct GamesHubView: View {
             color: .pink,
             isRecommended: true
         ),
+        GameInfo(
+            id: "6",
+            title: "Speak Telugu",
+            description: "Record your voice and get AI pronunciation feedback",
+            icon: "waveform.circle.fill",
+            difficulty: "All Levels",
+            estimatedTime: "5 min",
+            color: .indigo,
+            isRecommended: false
+        ),
     ]
 
     var body: some View {
@@ -173,6 +183,8 @@ struct GamesHubView: View {
             SoundMatchGameView()
         case "5":
             WordMatchGameView()
+        case "6":
+            PronunciationHubView()
         default:
             Text("Game not found")
         }
@@ -312,14 +324,20 @@ struct WordMatchGameView: View {
     @State private var gameStartTime = Date()
     @State private var score = 0
 
-    private let wordsPerRound = 5
+    private let wordsPerRound = Int.random(in: 5...6)
 
     var body: some View {
         ZStack {
-            // Background
-            Color.clear
-                .liquidGlassBackground()
-                .ignoresSafeArea()
+            // Matching gradient background from HomeView
+            LinearGradient(
+                colors: [
+                    Color(red: 0.4, green: 0.5, blue: 0.9).opacity(0.3),
+                    Color(red: 0.46, green: 0.29, blue: 0.64).opacity(0.2),
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .ignoresSafeArea()
 
             VStack(spacing: ModernDesignSystem.Spacing.lg) {
                 // Header
@@ -341,6 +359,7 @@ struct WordMatchGameView: View {
                             ForEach(leftColumnItems, id: \.id) { word in
                                 CardView(
                                     text: word.english,
+                                    transliteration: nil,
                                     isSelected: selectedLeftId == word.id,
                                     isMatched: matchedIds.contains(word.id),
                                     isWrong: isWrongMatch && selectedLeftId == word.id,
@@ -358,6 +377,7 @@ struct WordMatchGameView: View {
                             ForEach(rightColumnItems, id: \.id) { word in
                                 CardView(
                                     text: word.telugu,
+                                    transliteration: word.transliteration,
                                     isSelected: selectedRightId == word.id,
                                     isMatched: matchedIds.contains(word.id),
                                     isWrong: isWrongMatch && selectedRightId == word.id,
@@ -374,6 +394,11 @@ struct WordMatchGameView: View {
                 } else if showingCompletion {
                     // Completion View
                     VStack(spacing: ModernDesignSystem.Spacing.lg) {
+                        // Celebration Icon
+                        Image(systemName: "star.circle.fill")
+                            .font(.system(size: 80))
+                            .foregroundColor(ModernDesignSystem.Colors.funYellow)
+
                         Text("Round Complete!")
                             .font(ModernDesignSystem.Typography.celebration)
                             .foregroundColor(ModernDesignSystem.Colors.textPrimary)
@@ -381,6 +406,22 @@ struct WordMatchGameView: View {
                         Text("You matched all pairs!")
                             .font(ModernDesignSystem.Typography.body)
                             .foregroundColor(ModernDesignSystem.Colors.textSecondary)
+
+                        // Score Display
+                        VStack(spacing: ModernDesignSystem.Spacing.sm) {
+                            Text("Final Score")
+                                .font(ModernDesignSystem.Typography.caption)
+                                .foregroundColor(ModernDesignSystem.Colors.textSecondary)
+
+                            Text("\(score)")
+                                .font(.system(size: 48, weight: .bold, design: .rounded))
+                                .foregroundColor(ModernDesignSystem.Colors.funGreen)
+                        }
+                        .padding()
+                        .background(
+                            RoundedRectangle(cornerRadius: 16)
+                                .fill(ModernDesignSystem.Colors.funGreen.opacity(0.1))
+                        )
 
                         ModernButton("Next Round", icon: "arrow.right", style: .primary) {
                             startNewRound()
@@ -500,41 +541,50 @@ struct WordMatchGameView: View {
     // Subview for Cards
     struct CardView: View {
         let text: String
+        let transliteration: String?
         let isSelected: Bool
         let isMatched: Bool
         let isWrong: Bool
         let color: Color
 
         var body: some View {
-            Text(text)
-                .font(ModernDesignSystem.Typography.headline)
-                .foregroundColor(textColor)
-                .frame(maxWidth: .infinity)
-                .frame(height: 60)
-                .background(backgroundColor)
-                .cornerRadius(12)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(borderColor, lineWidth: 2)
-                )
-                .shadow(color: isSelected ? color.opacity(0.4) : .clear, radius: 8)
-                .scaleEffect(isSelected ? 1.05 : 1.0)
-                .blur(radius: isMatched ? 1 : 0)  // Fade out matched items
-                .opacity(isMatched ? 0.0 : 1.0)  // Hide matched items
-                .animation(.spring(), value: isSelected)
-                .animation(.easeIn, value: isMatched)
+            VStack(spacing: 4) {
+                Text(text)
+                    .font(ModernDesignSystem.Typography.headline)
+                    .foregroundColor(textColor)
+
+                if let transliteration = transliteration {
+                    Text("(\(transliteration))")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+            }
+            .frame(maxWidth: .infinity)
+            .frame(height: transliteration != nil ? 70 : 60)
+            .background(backgroundColor)
+            .cornerRadius(12)
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(borderColor, lineWidth: 2)
+            )
+            .shadow(color: isSelected ? color.opacity(0.4) : .clear, radius: 8)
+            .scaleEffect(isSelected ? 1.05 : 1.0)
+            .blur(radius: isMatched ? 1 : 0)  // Fade out matched items
+            .opacity(isMatched ? 0.0 : 1.0)  // Hide matched items
+            .animation(.spring(), value: isSelected)
+            .animation(.easeIn, value: isMatched)
         }
 
         private var backgroundColor: Color {
             if isWrong { return ModernDesignSystem.Colors.error.opacity(0.2) }
-            if isSelected { return color.opacity(0.2) }
-            return ModernDesignSystem.Colors.surface
+            if isSelected { return color.opacity(0.15) }
+            return Color.white.opacity(0.9)  // White background
         }
 
         private var borderColor: Color {
             if isWrong { return ModernDesignSystem.Colors.error }
             if isSelected { return color }
-            return ModernDesignSystem.Colors.surfaceSecondary
+            return Color.gray.opacity(0.2)  // Subtle glass border
         }
 
         private var textColor: Color {

@@ -34,7 +34,7 @@ class GamificationService: ObservableObject {
     private func checkForNewBadges() {
         let unlockedAndUnseen = gamificationState.badges.filter { badge in
             badge.isUnlocked
-                && !newlyUnlockedBadges.contains(where: { $0.name == badge.name })
+                && !newlyUnlockedBadges.contains(where: { $0.id == badge.id })
                 && !wasBadgeSeen(badge)
         }
 
@@ -60,7 +60,7 @@ class GamificationService: ObservableObject {
     }
 
     private func markBadgeAsSeen(_ badge: GamificationBadge) {
-        if let index = gamificationState.badges.firstIndex(where: { $0.name == badge.name }) {
+        if let index = gamificationState.badges.firstIndex(where: { $0.id == badge.id }) {
             let current = gamificationState.badges[index]
             gamificationState.badges[index] = GamificationBadge(
                 name: current.name,

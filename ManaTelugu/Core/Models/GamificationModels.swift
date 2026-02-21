@@ -390,10 +390,6 @@ class GamificationState: ObservableObject, Codable {
                 emoji: "🧠", color: "funGreen", xpReward: 100, requirement: .quizzesCompleted(5),
                 rarity: .uncommon),
             GamificationBadge(
-                name: "Quiz Enthusiast", teluguName: "ప్రశ్న ప్రియుడు", description: "Complete 5 quizzes",
-                emoji: "🧠", color: "funGreen", xpReward: 100, requirement: .quizzesCompleted(5),
-                rarity: .uncommon),
-            GamificationBadge(
                 name: "Alphabet Starter", teluguName: "అక్షరమాల ప్రారంభం", description: "Learn 10 letters",
                 emoji: "🔤", color: "funGreen", xpReward: 50, requirement: .lettersLearned(10),
                 rarity: .uncommon),

@@ -166,6 +166,28 @@ class GudinthaluManager: ObservableObject {
             ),
         ]
     }
+
+    /// Generate full phonetic romanization for a consonant-vowel combination
+    /// - Parameters:
+    ///   - consonant: The base consonant character
+    ///   - vowelSign: The vowel sign being combined
+    /// - Returns: Full romanized form (e.g., "ka", "kha", "ki", "kī")
+    func getFullRomanization(consonant: String, vowelSign: VowelSign) -> String {
+        // Map consonants to their base sounds
+        let consonantMap: [String: String] = [
+            "క": "k", "ఖ": "kh", "గ": "g", "ఘ": "gh", "ఙ": "ṅ",
+            "చ": "ch", "ఛ": "chh", "జ": "j", "ఝ": "jh", "ఞ": "ñ",
+            "ట": "ṭ", "ఠ": "ṭh", "డ": "ḍ", "ఢ": "ḍh", "ణ": "ṇ",
+            "త": "t", "థ": "th", "ద": "d", "ధ": "dh", "న": "n",
+            "ప": "p", "ఫ": "ph", "బ": "b", "భ": "bh", "మ": "m",
+            "య": "y", "ర": "r", "ల": "l", "వ": "v",
+            "శ": "ś", "ష": "ṣ", "స": "s", "హ": "h",
+            "ళ": "ḷ", "ఱ": "ṟ",
+        ]
+
+        let baseSound = consonantMap[consonant] ?? consonant
+        return baseSound + vowelSign.romanization
+    }
 }
 
 // MARK: - Supporting Models

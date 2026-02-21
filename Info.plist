@@ -59,5 +59,9 @@
     </array>
     <key>ITSAppUsesNonExemptEncryption</key>
     <false/>
+    <key>NSMicrophoneUsageDescription</key>
+    <string>Mana Telugu uses your microphone to record your pronunciation so you can get instant feedback on your Telugu speech.</string>
+    <key>NSSpeechRecognitionUsageDescription</key>
+    <string>Mana Telugu uses on-device speech recognition to transcribe your Telugu speech locally, without sending audio to any third-party server.</string>
 </dict>
 </plist>

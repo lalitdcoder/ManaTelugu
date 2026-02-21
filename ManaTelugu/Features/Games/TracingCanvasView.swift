@@ -198,11 +198,10 @@ struct TracingCanvasView: View {
         let completenessScore = calculateCompletenessScore(
             refStrokes: refStrokesPixels, userStrokes: completedStrokePoints, canvasSize: size)
 
-        // Pass ONLY if ALL conditions are met
-        // coverageScore: Precision (user stays within lines) - Low requirement
-        // similarityScore: Shape matching - Low requirement
-        // completenessScore: Recall (user covers enough of the letter) - High requirement to prevent incomplete traces
-        let success = coverageScore >= 0.35 && similarityScore >= 0.35 && completenessScore >= 0.55
+        // STRICT TRACING LOGIC:
+        // User points must stay within 15-20pt radius of reference coordinates
+        // Require at least 80% coverage of the path before marking as complete
+        let success = coverageScore >= 0.65 && similarityScore >= 0.60 && completenessScore >= 0.80
         onTracingComplete(success)
     }
 

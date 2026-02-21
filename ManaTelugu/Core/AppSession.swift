@@ -45,6 +45,7 @@ class AppSession: ObservableObject {
     @Published var recentAchievements: [TeluguAchievementBadge.Achievement] = []
     @Published var teluguLetters: [Letter] = []
     let stickerService = StickerService()
+    let sttService = SarvamSpeechToTextService()
 
     private var cancellables = Set<AnyCancellable>()
 
