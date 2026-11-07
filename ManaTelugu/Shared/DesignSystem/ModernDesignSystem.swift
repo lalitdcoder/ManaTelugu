@@ -14,33 +14,18 @@ struct ModernDesignSystem {
         static let accent = Color("ModernAccentColor")
 
         static var background: Color {
-            #if canImport(UIKit)
-                return Color(uiColor: .systemBackground)
-            #else
-                return Color("ModernBackgroundColor")
-            #endif
+            Color(red: 0.08, green: 0.05, blue: 0.20)
         }
 
         static var backgroundGradient: LinearGradient {
-            #if canImport(UIKit)
-                return LinearGradient(
-                    colors: [
-                        Color(uiColor: .systemBackground),
-                        Color(uiColor: .secondarySystemBackground),
-                    ],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-            #else
-                return LinearGradient(
-                    colors: [
-                        Color("ModernBackgroundGradientStart"),
-                        Color("ModernBackgroundGradientEnd"),
-                    ],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-            #endif
+            LinearGradient(
+                colors: [
+                    Color(red: 0.15, green: 0.11, blue: 0.35),
+                    Color(red: 0.08, green: 0.05, blue: 0.20)
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
         }
 
         static var surface: Color {

@@ -7,43 +7,53 @@ struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var showingExportSheet = false
     @State private var showingResetConfirmation = false
-    @State private var isParentalGateUnlocked = false
 
-    // Settings state
     @State private var soundEffectsEnabled = true
     @State private var hapticFeedbackEnabled = true
     @State private var showingExportSuccess = false
     @State private var exportedFileURL: URL? = nil
     @State private var showDocumentPreview = false
 
+    private let midnightIndigo = Color(red: 0.18, green: 0.13, blue: 0.42)
+    private let saffronGold = Color(red: 0.98, green: 0.67, blue: 0.12)
+
     var body: some View {
         ZStack {
-            // Stronger gradient background
+            // Premium deep purple gradient background
             LinearGradient(
                 colors: [
-                    Color(red: 0.4, green: 0.5, blue: 0.9).opacity(0.3),
-                    Color(red: 0.46, green: 0.29, blue: 0.64).opacity(0.2),
+                    Color(red: 0.15, green: 0.11, blue: 0.35),
+                    Color(red: 0.08, green: 0.05, blue: 0.20)
                 ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
+                startPoint: .top,
+                endPoint: .bottom
             )
             .ignoresSafeArea()
+
             ScrollView(showsIndicators: false) {
-                VStack(spacing: ModernDesignSystem.Spacing.xl) {
-                    headerSection
-                        .padding(.top, ModernDesignSystem.Spacing.xl)
+                VStack(spacing: 20) {
+                    // Privacy shield banner (top priority)
+                    privacyBanner
+                        .padding(.top, 16)
+
+                    // Audio & Feedback
                     audioSection
-                    appSection
+
+                    // Appearance
+                    appearanceSection
+
+                    // Data Management
                     dataSection
+
+                    // About
                     aboutSection
                 }
-                .padding(.horizontal, ModernDesignSystem.Spacing.md)
-                .padding(.bottom, ModernDesignSystem.Spacing.xl)
+                .padding(.horizontal, 20)
+                .padding(.bottom, 40)
             }
         }
         .onAppear {
             session.systemColorScheme = colorScheme
-            // Sync local toggles with session services
             soundEffectsEnabled = session.audioFeedback.isEnabled
             hapticFeedbackEnabled = session.hapticsService.isEnabled
         }
@@ -52,43 +62,15 @@ struct SettingsView: View {
         }
         .navigationTitle("Settings")
         .navigationBarTitleDisplayMode(.large)
+        .preferredColorScheme(.dark)
         .navigationBarBackButtonHidden(true)
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
-                BackButton {
-                    dismiss()
-                }
+                BackButton { dismiss() }
             }
         }
         .sheet(isPresented: $showingExportSheet) {
-            VStack(spacing: ModernDesignSystem.Spacing.lg) {
-                Text("Export Progress")
-                    .font(ModernDesignSystem.Typography.title2)
-                Text("Your progress data will be exported as a file.")
-                    .font(ModernDesignSystem.Typography.body)
-                ElegantButton(title: "Export", style: .primary) {
-                    exportProgress()
-                }
-                if showingExportSuccess, let url = exportedFileURL {
-                    Text("Export successful! File saved at:\n\(url.path)")
-                        .font(ModernDesignSystem.Typography.caption)
-                        .foregroundColor(.green)
-                    ElegantButton(title: "Open File", style: .secondary) {
-                        showDocumentPreview = true
-                    }
-                    .sheet(isPresented: $showDocumentPreview) {
-                        DocumentPreviewController(url: exportedFileURL!)
-                    }
-                } else if showingExportSuccess {
-                    Text("Export successful!")
-                        .font(ModernDesignSystem.Typography.caption)
-                        .foregroundColor(.green)
-                }
-                ElegantButton(title: "Close", style: .secondary) {
-                    showingExportSheet = false
-                }
-            }
-            .padding(ModernDesignSystem.Spacing.xl)
+            exportSheet
         }
         .alert("Reset Progress", isPresented: $showingResetConfirmation) {
             Button("Reset", role: .destructive) {
@@ -101,156 +83,288 @@ struct SettingsView: View {
         }
     }
 
-    private var headerSection: some View {
-        VStack(alignment: .leading, spacing: ModernDesignSystem.Spacing.xs) {
-            Text("Customize your learning experience")
-                .font(ModernDesignSystem.Typography.body)
-                .foregroundColor(ModernDesignSystem.Colors.textSecondary)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .modernCard()
-    }
+    // MARK: - Privacy Banner (NEW — top section)
+    private var privacyBanner: some View {
+        NavigationLink(destination: PrivacyPolicyView()) {
+            HStack(spacing: 16) {
+                ZStack {
+                    Circle()
+                        .fill(
+                            LinearGradient(
+                                colors: [saffronGold, Color(red: 1.0, green: 0.82, blue: 0.40)],
+                                startPoint: .topLeading, endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 50, height: 50)
+                        .shadow(color: saffronGold.opacity(0.35), radius: 10, x: 0, y: 4)
 
-    private var audioSection: some View {
-        VStack(alignment: .leading, spacing: ModernDesignSystem.Spacing.md) {
-            Text("Audio & Feedback")
-                .font(ModernDesignSystem.Typography.headline)
-                .foregroundColor(ModernDesignSystem.Colors.textPrimary)
-
-            settingToggle("Sound Effects", $soundEffectsEnabled, "speaker.wave.2.fill")
-            settingToggle(
-                "Haptic Feedback", $session.isHapticsEnabled, "iphone.radiowaves.left.and.right")
-        }
-        .modernCard()
-    }
-
-    private var appSection: some View {
-        VStack(alignment: .leading, spacing: ModernDesignSystem.Spacing.md) {
-            Text("Appearance")
-                .font(ModernDesignSystem.Typography.headline)
-                .foregroundColor(ModernDesignSystem.Colors.textPrimary)
-            Toggle(isOn: $session.darkModeEnabled) {
-                HStack {
-                    Image(systemName: "moon.fill")
-                        .font(.title3)
-                        .foregroundColor(ModernDesignSystem.Colors.primary)
-                        .frame(width: 24)
-                    Text("Dark Mode")
-                        .font(ModernDesignSystem.Typography.body)
-                        .foregroundColor(ModernDesignSystem.Colors.textPrimary)
+                    Image(systemName: "shield.checkmark.fill")
+                        .font(.system(size: 22, weight: .semibold))
+                        .foregroundStyle(midnightIndigo)
                 }
+
+                VStack(alignment: .leading, spacing: 3) {
+                    HStack(spacing: 6) {
+                        Text("Privacy Protected")
+                            .font(.system(size: 15, weight: .bold))
+                            .foregroundStyle(.primary)
+
+                        Text("100% offline")
+                            .font(.system(size: 10, weight: .bold))
+                            .foregroundStyle(Color(red: 0.13, green: 0.62, blue: 0.41))
+                            .padding(.horizontal, 7)
+                            .padding(.vertical, 3)
+                            .background(Color(red: 0.13, green: 0.62, blue: 0.41).opacity(0.12))
+                            .clipShape(Capsule())
+                    }
+
+                    Text("All your data stays on your device — never shared")
+                        .font(.system(size: 12))
+                        .foregroundStyle(.secondary)
+                }
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(.tertiary)
             }
-            .onChange(of: session.darkModeEnabled) { _, _ in
+            .padding(18)
+            .background(
+                RoundedRectangle(cornerRadius: 18)
+                    .fill(.regularMaterial)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 18)
+                            .strokeBorder(saffronGold.opacity(0.30), lineWidth: 1.5)
+                    )
+                    .shadow(color: .black.opacity(0.07), radius: 10, x: 0, y: 4)
+            )
+        }
+        .buttonStyle(.plain)
+    }
+
+    // MARK: - Audio Section
+    private var audioSection: some View {
+        settingsCard(title: "Audio & Feedback", icon: "speaker.wave.2.fill", iconColor: midnightIndigo) {
+            VStack(spacing: 0) {
+                settingToggleRow("Sound Effects", icon: "speaker.wave.2.fill", iconColor: .blue,
+                                 binding: $soundEffectsEnabled) { newVal in
+                    session.audioFeedback.isEnabled = newVal
+                }
+
+                Divider().padding(.leading, 52)
+
+                settingToggleRow("Haptic Feedback", icon: "iphone.radiowaves.left.and.right", iconColor: .purple,
+                                 binding: $session.isHapticsEnabled) { _ in }
+            }
+        }
+    }
+
+    // MARK: - Appearance Section
+    private var appearanceSection: some View {
+        settingsCard(title: "Appearance", icon: "paintbrush.fill", iconColor: .orange) {
+            settingToggleRow("Dark Mode", icon: "moon.fill", iconColor: .indigo,
+                             binding: $session.darkModeEnabled) { _ in
                 HapticsManager.shared.selection()
             }
-            .tint(ModernDesignSystem.Colors.primary)
         }
-        .modernCard()
     }
 
+    // MARK: - Data Section
     private var dataSection: some View {
-        VStack(alignment: .leading, spacing: ModernDesignSystem.Spacing.md) {
-            Text("Data Management")
-                .font(ModernDesignSystem.Typography.headline)
-                .foregroundColor(ModernDesignSystem.Colors.textPrimary)
-
-            Button(action: {
-                HapticsService.shared.buttonTap()
-                showingExportSheet = true
-            }) {
-                settingButton(
-                    "Export Progress", "square.and.arrow.up", ModernDesignSystem.Colors.primary)
-            }
-
-            Button(action: {
-                HapticsService.shared.warning()
-                showingResetConfirmation = true
-            }) {
-                settingButton("Reset Progress", "trash.fill", .red)
-            }
-        }
-        .modernCard()
-    }
-
-    private var aboutSection: some View {
-        VStack(alignment: .leading, spacing: ModernDesignSystem.Spacing.md) {
-            Text("About the Developer")
-                .font(ModernDesignSystem.Typography.headline)
-                .foregroundColor(ModernDesignSystem.Colors.textPrimary)
-
-            HStack(alignment: .top, spacing: ModernDesignSystem.Spacing.md) {
-                Image(systemName: "heart.text.square.fill")
-                    .font(.title2)
-                    .foregroundColor(.red)
-
-                VStack(alignment: .leading, spacing: ModernDesignSystem.Spacing.xs) {
-                    Text("ManaTelugu Version 3.0")
-                        .font(ModernDesignSystem.Typography.subheadline)
-                        .fontWeight(.bold)
-                    Text(
-                        "Built with ❤️ by a 12-year-old developer in England. Dedicated to preserving the Telugu language for the next generation."
-                    )
-                    .font(ModernDesignSystem.Typography.caption)
-                    .foregroundColor(ModernDesignSystem.Colors.textSecondary)
+        settingsCard(title: "Data Management", icon: "externaldrive.fill", iconColor: .teal) {
+            VStack(spacing: 0) {
+                Button {
+                    HapticsService.shared.buttonTap()
+                    showingExportSheet = true
+                } label: {
+                    settingActionRow("Export Progress", icon: "square.and.arrow.up", iconColor: .blue)
                 }
+                .buttonStyle(.plain)
+
+                Divider().padding(.leading, 52)
+
+                Button {
+                    HapticsService.shared.warning()
+                    showingResetConfirmation = true
+                } label: {
+                    settingActionRow("Reset Progress", icon: "trash.fill", iconColor: .red)
+                }
+                .buttonStyle(.plain)
             }
-            .padding(.top, ModernDesignSystem.Spacing.xs)
         }
-        .modernCard()
     }
 
-    private func settingToggle(_ title: String, _ binding: Binding<Bool>, _ icon: String)
-        -> some View
-    {
-        HStack {
+    // MARK: - About Section
+    private var aboutSection: some View {
+        settingsCard(title: "About ManaTelugu", icon: "heart.text.square.fill", iconColor: .red) {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(spacing: 12) {
+                    ZStack {
+                        Circle()
+                            .fill(
+                                LinearGradient(
+                                    colors: [midnightIndigo, Color(red: 0.32, green: 0.18, blue: 0.62)],
+                                    startPoint: .topLeading, endPoint: .bottomTrailing
+                                )
+                            )
+                            .frame(width: 44, height: 44)
+
+                        Text("మ")
+                            .font(.system(size: 22, weight: .bold))
+                            .foregroundStyle(.white)
+                    }
+
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("ManaTelugu v3.0")
+                            .font(.system(size: 15, weight: .bold))
+                            .foregroundStyle(.primary)
+
+                        Text("Telugu Learning App")
+                            .font(.system(size: 12))
+                            .foregroundStyle(.secondary)
+                    }
+                }
+
+                Text("Built with ❤️ by a 12-year-old developer in England, dedicated to preserving the Telugu language for the next generation.")
+                    .font(.system(size: 13))
+                    .foregroundStyle(.secondary)
+                    .lineSpacing(3)
+            }
+        }
+    }
+
+    // MARK: - Helper View Builders
+    @ViewBuilder
+    private func settingsCard<Content: View>(
+        title: String, icon: String, iconColor: Color,
+        @ViewBuilder content: () -> Content
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(spacing: 8) {
+                Image(systemName: icon)
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(iconColor)
+                Text(title)
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(.secondary)
+                    .textCase(.uppercase)
+                    .tracking(0.3)
+            }
+            .padding(.horizontal, 4)
+
+            content()
+                .background(
+                    RoundedRectangle(cornerRadius: 16)
+                        .fill(.regularMaterial)
+                        .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 3)
+                )
+        }
+    }
+
+    private func settingToggleRow(
+        _ title: String, icon: String, iconColor: Color,
+        binding: Binding<Bool>,
+        onChange: @escaping (Bool) -> Void
+    ) -> some View {
+        HStack(spacing: 14) {
             Image(systemName: icon)
-                .font(.title3)
-                .foregroundColor(ModernDesignSystem.Colors.primary)
-                .frame(width: 24)
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(.white)
+                .frame(width: 30, height: 30)
+                .background(iconColor)
+                .clipShape(RoundedRectangle(cornerRadius: 7))
 
             Text(title)
-                .font(ModernDesignSystem.Typography.body)
-                .foregroundColor(ModernDesignSystem.Colors.textPrimary)
+                .font(.system(size: 16))
+                .foregroundStyle(.primary)
 
             Spacer()
 
             Toggle("", isOn: binding)
-                .tint(ModernDesignSystem.Colors.primary)
-                .onChange(of: binding.wrappedValue) { _, newValue in
-                    // Use selection feedback for toggles per HIG
+                .tint(midnightIndigo)
+                .onChange(of: binding.wrappedValue) { _, newVal in
                     HapticsManager.shared.selection()
-                    if title == "Sound Effects" {
-                        session.audioFeedback.isEnabled = newValue
-                    } else if title == "Haptic Feedback" {
-                        // Synced handled via AppSession didSet binding
-                    } else if title == "Dark Mode" {
-                        // Already provided selection feedback above
-                    }
+                    onChange(newVal)
                 }
         }
-        .padding(.vertical, ModernDesignSystem.Spacing.xs)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
     }
 
-    private func settingButton(_ title: String, _ icon: String, _ color: Color) -> some View {
-        HStack {
+    private func settingActionRow(_ title: String, icon: String, iconColor: Color) -> some View {
+        HStack(spacing: 14) {
             Image(systemName: icon)
-                .font(.title3)
-                .foregroundColor(color)
-                .frame(width: 24)
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(.white)
+                .frame(width: 30, height: 30)
+                .background(iconColor)
+                .clipShape(RoundedRectangle(cornerRadius: 7))
 
             Text(title)
-                .font(ModernDesignSystem.Typography.body)
-                .foregroundColor(ModernDesignSystem.Colors.textPrimary)
+                .font(.system(size: 16))
+                .foregroundStyle(iconColor == .red ? .red : .primary)
 
             Spacer()
 
             Image(systemName: "chevron.right")
-                .font(.caption)
-                .foregroundColor(ModernDesignSystem.Colors.textTertiary)
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(.tertiary)
         }
-        .padding(.vertical, ModernDesignSystem.Spacing.xs)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
     }
 
+    // MARK: - Export Sheet
+    private var exportSheet: some View {
+        NavigationStack {
+            VStack(spacing: 24) {
+                Image(systemName: "square.and.arrow.up.circle.fill")
+                    .font(.system(size: 60))
+                    .foregroundStyle(midnightIndigo)
+
+                VStack(spacing: 8) {
+                    Text("Export Progress")
+                        .font(.title2.bold())
+
+                    Text("Your progress will be exported as a JSON file to your device's Documents folder.")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                }
+
+                Button {
+                    exportProgress()
+                } label: {
+                    Label("Export", systemImage: "square.and.arrow.up")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 14)
+                        .background(midnightIndigo)
+                        .clipShape(RoundedRectangle(cornerRadius: 14))
+                }
+
+                if showingExportSuccess {
+                    Label("Export successful!", systemImage: "checkmark.circle.fill")
+                        .font(.subheadline.bold())
+                        .foregroundStyle(Color(red: 0.13, green: 0.62, blue: 0.41))
+                }
+
+                Button("Close") {
+                    showingExportSheet = false
+                }
+                .foregroundStyle(.secondary)
+            }
+            .padding(32)
+            .navigationTitle("Export")
+            .navigationBarTitleDisplayMode(.inline)
+        }
+        .presentationDetents([.medium])
+        .presentationCornerRadius(24)
+    }
+
+    // MARK: - Actions
     private func exportProgress() {
         let lessonProgress = session.progressTrackingService.lessonProgress
         let storiesLearned = lessonProgress.filter { $0.isCompleted }.count
@@ -259,11 +373,11 @@ struct SettingsView: View {
             "storiesLearned": storiesLearned,
             "wordsLearned": wordsLearned,
             "totalLessons": lessonProgress.count,
-            "rawProgress": lessonProgress.map { $0.dictionary },
+            "exportDate": ISO8601DateFormatter().string(from: Date()),
+            "rawProgress": lessonProgress.map { $0.dictionary }
         ]
-        if let data = try? JSONSerialization.data(withJSONObject: summary, options: .prettyPrinted)
-        {
-            let fileName = "ManaTelugu_Progress_Export_\(Date().timeIntervalSince1970).json"
+        if let data = try? JSONSerialization.data(withJSONObject: summary, options: .prettyPrinted) {
+            let fileName = "ManaTelugu_Progress_\(Int(Date().timeIntervalSince1970)).json"
             let url = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
                 .appendingPathComponent(fileName)
             do {
@@ -273,69 +387,36 @@ struct SettingsView: View {
             } catch {
                 showingExportSuccess = false
             }
-        } else {
-            showingExportSuccess = false
         }
     }
+
     private func resetProgress() {
-        // Clear all UserDefaults keys related to progress
         let keysToRemove = [
-            "lessonProgress",
-            "completedLessons",
-            "currentXP",
-            "currentLevel",
-            "totalXP",
-            "streak",
-            "lastActiveDate",
-            "badges",
-            "unlockedBadges",
-            "xpHistory",
-            "learnedLetters",
-            "masteredWords",
-            "completedStories",
-            "gamificationState",
+            "lessonProgress", "completedLessons", "currentXP", "currentLevel",
+            "totalXP", "streak", "lastActiveDate", "badges", "unlockedBadges",
+            "xpHistory", "learnedLetters", "masteredWords", "completedStories", "gamificationState"
         ]
-
-        for key in keysToRemove {
-            UserDefaults.standard.removeObject(forKey: key)
-        }
-
-        // Reset Progress Tracking Service
+        for key in keysToRemove { UserDefaults.standard.removeObject(forKey: key) }
         session.progressTrackingService.lessonProgress.removeAll()
         session.progressTrackingService.lessonProgress = []
-
-        // Reset Gamification Service (XP, level, badges)
         session.gamificationService.resetProgress()
-
-        // Reset Data Repository (content mastery)
         session.dataRepository.resetProgress()
-
-        // Force sync to disk
         UserDefaults.standard.synchronize()
-
-        // Trigger haptic success feedback
         HapticsManager.shared.notification(.success)
-
-        // Force UI refresh by updating @Published properties
-        // This ensures the home screen immediately shows 0 progress
-        DispatchQueue.main.async {
-            self.session.objectWillChange.send()
-        }
+        DispatchQueue.main.async { self.session.objectWillChange.send() }
     }
 }
 
+// MARK: - Document Preview
 struct DocumentPreviewController: UIViewControllerRepresentable {
     let url: URL
     func makeUIViewController(context: Context) -> UIDocumentInteractionControllerView {
         UIDocumentInteractionControllerView(url: url)
     }
-    func updateUIViewController(
-        _ uiViewController: UIDocumentInteractionControllerView, context: Context
-    ) {}
+    func updateUIViewController(_ uiViewController: UIDocumentInteractionControllerView, context: Context) {}
 }
 
-class UIDocumentInteractionControllerView: UIViewController, UIDocumentInteractionControllerDelegate
-{
+class UIDocumentInteractionControllerView: UIViewController, UIDocumentInteractionControllerDelegate {
     let url: URL
     var docController: UIDocumentInteractionController?
     init(url: URL) {
@@ -349,9 +430,7 @@ class UIDocumentInteractionControllerView: UIViewController, UIDocumentInteracti
         docController?.delegate = self
         docController?.presentPreview(animated: true)
     }
-    func documentInteractionControllerViewControllerForPreview(
-        _ controller: UIDocumentInteractionController
-    ) -> UIViewController {
+    func documentInteractionControllerViewControllerForPreview(_ controller: UIDocumentInteractionController) -> UIViewController {
         return self
     }
 }
@@ -366,7 +445,7 @@ extension LessonProgress {
             "correctAnswers": correctAnswers,
             "totalQuestions": totalQuestions,
             "timeSpent": timeSpent,
-            "attempts": attempts,
+            "attempts": attempts
         ]
     }
 }

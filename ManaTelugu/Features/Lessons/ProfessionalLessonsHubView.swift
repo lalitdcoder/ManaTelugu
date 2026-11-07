@@ -1,118 +1,96 @@
 import SwiftUI
 
-// MARK: - Professional Lesson Card
+// MARK: - Premium Lesson Card
 struct ProfessionalLessonCard: View {
     let lesson: ProfessionalLesson
-    @State private var isPressed = false
 
     var body: some View {
-        ProfessionalCard(
-            type: lesson.isLocked ? .secondary : .interactive,
-            isInteractive: !lesson.isLocked
-        ) {
-            HStack(spacing: ProfessionalSpacing.medium.value) {
-                // Lesson Icon
+        ManaCard(style: lesson.isLocked ? .outlined : .elevated) {
+            HStack(spacing: ManaTheme.Spacing.md) {
+                // Lesson Status Icon Ring
                 ZStack {
                     Circle()
                         .fill(
                             lesson.isLocked
-                                ? Color.gray.opacity(0.3) : lesson.difficulty.color.opacity(0.15)
+                                ? ManaTheme.Colors.fill
+                                : lesson.difficulty.color.opacity(0.15)
                         )
-                        .frame(width: 50, height: 50)
+                        .frame(width: 48, height: 48)
 
                     if lesson.isLocked {
                         Image(systemName: "lock.fill")
-                            .font(.system(size: 20, weight: .semibold))
-                            .foregroundColor(.gray)
+                            .font(.system(size: 18, weight: .semibold))
+                            .foregroundColor(ManaTheme.Colors.tertiaryLabel)
                     } else if lesson.isCompleted {
                         Image(systemName: "checkmark.circle.fill")
-                            .font(.system(size: 24, weight: .semibold))
-                            .foregroundColor(.professionalGreen)
+                            .font(.system(size: 24, weight: .bold))
+                            .foregroundColor(ManaTheme.Colors.emeraldGreen)
                     } else {
                         Image(systemName: "play.circle.fill")
-                            .font(.system(size: 24, weight: .semibold))
+                            .font(.system(size: 24, weight: .bold))
                             .foregroundColor(lesson.difficulty.color)
                     }
                 }
 
-                // Lesson Content
-                VStack(alignment: .leading, spacing: ProfessionalSpacing.small.value) {
+                // Lesson Title & Details
+                VStack(alignment: .leading, spacing: 4) {
                     HStack {
-                        ProfessionalText(
-                            lesson.title,
-                            style: .cardTitle,
-                            color: lesson.isLocked ? .textSecondary : .textPrimary
-                        )
+                        Text(lesson.title)
+                            .font(ManaTheme.Typography.headline)
+                            .foregroundColor(lesson.isLocked ? ManaTheme.Colors.secondaryLabel : ManaTheme.Colors.label)
 
                         Spacer()
 
-                        // Difficulty Badge
+                        // Difficulty Tag
                         Text(lesson.difficulty.displayName)
-                            .font(.system(size: 10, weight: .semibold))
+                            .font(.system(size: 11, weight: .bold))
                             .foregroundColor(lesson.difficulty.color)
                             .padding(.horizontal, 8)
-                            .padding(.vertical, 4)
+                            .padding(.vertical, 3)
                             .background(
                                 Capsule()
                                     .fill(lesson.difficulty.color.opacity(0.15))
                             )
                     }
 
-                    ProfessionalText(
-                        lesson.description,
-                        style: .bodyText,
-                        color: lesson.isLocked ? .textTertiary : .textSecondary
-                    )
+                    Text(lesson.description)
+                        .font(ManaTheme.Typography.subheadline)
+                        .foregroundColor(lesson.isLocked ? ManaTheme.Colors.tertiaryLabel : ManaTheme.Colors.secondaryLabel)
+                        .lineLimit(2)
 
-                    HStack {
-                        ProfessionalText(
-                            lesson.estimatedTime,
-                            style: .caption,
-                            color: .textSecondary
-                        )
+                    HStack(spacing: 8) {
+                        Label(lesson.estimatedTime, systemImage: "clock")
+                            .font(ManaTheme.Typography.caption1)
+                            .foregroundColor(ManaTheme.Colors.tertiaryLabel)
 
                         Spacer()
 
                         if !lesson.isLocked && lesson.progress > 0 {
-                            ProfessionalText(
-                                "\(Int(lesson.progress * 100))% Complete",
-                                style: .caption,
-                                color: lesson.difficulty.color
-                            )
+                            Text("\(Int(lesson.progress * 100))% Complete")
+                                .font(ManaTheme.Typography.caption1.weight(.semibold))
+                                .foregroundColor(lesson.difficulty.color)
                         }
                     }
 
                     // Progress Bar
                     if !lesson.isLocked && lesson.progress > 0 {
-                        GeometryReader { geometry in
-                            ZStack(alignment: .leading) {
-                                RoundedRectangle(cornerRadius: 2)
-                                    .fill(Color.black.opacity(0.1))
-                                    .frame(height: 4)
-
-                                RoundedRectangle(cornerRadius: 2)
-                                    .fill(lesson.difficulty.color)
-                                    .frame(width: geometry.size.width * lesson.progress, height: 4)
-                            }
-                        }
-                        .frame(height: 4)
+                        ManaProgressBar(progress: lesson.progress, color: lesson.difficulty.color, height: 4)
+                            .padding(.top, 2)
                     }
                 }
 
-                // Arrow
+                // Navigation Chevron
                 if !lesson.isLocked {
                     Image(systemName: "chevron.right")
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(.textSecondary)
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundColor(ManaTheme.Colors.tertiaryLabel)
                 }
             }
         }
     }
 }
 
-// MARK: - Professional Lessons Hub View
-// Clean, vertical layout with inspiring progress visualization
-
+// MARK: - Premium Lessons Hub View
 struct ProfessionalLessonsHubView: View {
     @EnvironmentObject var session: AppSession
     @Environment(\.dismiss) private var dismiss
@@ -122,219 +100,219 @@ struct ProfessionalLessonsHubView: View {
 
     var body: some View {
         ZStack {
-            // Matching gradient background from HomeView
-            LinearGradient(
-                colors: [
-                    Color(red: 0.4, green: 0.5, blue: 0.9).opacity(0.3),
-                    Color(red: 0.46, green: 0.29, blue: 0.64).opacity(0.2),
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            .ignoresSafeArea()
+            // Adaptive Grouped Background (Light/Dark aware)
+            ManaTheme.Colors.groupedBackground
+                .ignoresSafeArea()
 
             if isLoading {
-                ProfessionalCard(type: .hero) {
-                    VStack(spacing: ProfessionalSpacing.large.value) {
-                        ProgressView()
-                            .scaleEffect(1.5)
-                            .tint(.professionalBlue)
+                VStack(spacing: ManaTheme.Spacing.md) {
+                    ProgressView()
+                        .scaleEffect(1.3)
+                        .tint(ManaTheme.Colors.primary)
 
-                        ProfessionalText(
-                            "Loading Lessons...",
-                            style: .cardTitle,
-                            color: .textPrimary,
-                            alignment: .center
-                        )
-                    }
-                    .padding(ProfessionalSpacing.extraLarge.value)
+                    Text("Loading Lessons...")
+                        .font(ManaTheme.Typography.headline)
+                        .foregroundColor(ManaTheme.Colors.secondaryLabel)
                 }
-                .padding(.horizontal, ProfessionalSpacing.large.value)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
-                ScrollView {
-                    LazyVStack(spacing: ProfessionalSpacing.large.value) {
-                        // Hero Progress Section
+                ScrollView(showsIndicators: false) {
+                    VStack(spacing: ManaTheme.Spacing.lg) {
+                        // Dynamic Hero Progress Ring Section
                         heroProgressSection
-                            .padding(.top, -20)
 
-                        // Learning Stats
+                        // Dynamic Learning Stats
                         learningStatsSection
 
-                        // Lessons List
+                        // Available Lessons List
                         lessonsListSection
 
                         // Bottom padding for tab bar
-                        Color.clear
-                            .frame(height: 120)
+                        Color.clear.frame(height: 60)
                     }
-                    .padding(.horizontal, ProfessionalSpacing.medium.value)
+                    .padding(.horizontal, ManaTheme.Spacing.screenMarginLarge)
+                    .padding(.top, ManaTheme.Spacing.sm)
                 }
                 .scrollIndicators(.hidden)
             }
         }
-        .navigationBarHidden(false)
         .navigationTitle("Lessons")
         .navigationBarTitleDisplayMode(.inline)
-        .navigationBarBackButtonHidden(true)
-        .toolbar {
-            ToolbarItem(placement: .navigationBarLeading) {
-                Button("Back") {
-                    dismiss()
-                }
-                .foregroundColor(.blue)
-            }
-        }
         .onAppear {
-            // Simulate loading
-            isLoading = true
-            Task {
-                // Use the proper lessons repository with 10 lessons
-                let lessonsRepo = LessonsRepository()
-                await lessonsRepo.loadLevels()
-
-                displayedLessons = lessonsRepo.levels.flatMap { level in
-                    level.lessons.map { lesson in
-                        ProfessionalLesson(lesson: lesson, isLocked: false)
-                    }
-                }
-
-                withAnimation(ProfessionalAnimation.pageTransition) {
-                    isLoading = false
-                }
-            }
+            loadUserLessons()
         }
     }
 
-    // MARK: - Hero Progress Section
+    // MARK: - Hero Progress Ring Section (Dynamic Data)
     private var heroProgressSection: some View {
-        ProfessionalCard(type: .hero) {
-            VStack(alignment: .leading, spacing: ProfessionalSpacing.large.value) {
-                // Title
-                ProfessionalText(
-                    "Your Learning Journey",
-                    style: .heroTitle,
-                    color: .textPrimary
-                )
+        ManaCard(style: .elevated) {
+            VStack(spacing: ManaTheme.Spacing.md) {
+                HStack {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("YOUR LEARNING JOURNEY")
+                            .font(.system(size: 11, weight: .bold))
+                            .tracking(1.0)
+                            .foregroundColor(ManaTheme.Colors.secondaryLabel)
 
-                // Progress Ring
+                        Text("Telugu Mastery")
+                            .font(ManaTheme.Typography.title2)
+                            .foregroundColor(ManaTheme.Colors.label)
+                    }
+
+                    Spacer()
+
+                    Text("\(Int(calculatedCourseProgress * 100))%")
+                        .font(.system(size: 28, weight: .bold, design: .rounded))
+                        .foregroundColor(ManaTheme.Colors.primary)
+                }
+
+                // Animated Circular Ring & Bar
                 ZStack {
                     Circle()
-                        .stroke(Color.black.opacity(0.1), lineWidth: 8)
-                        .frame(width: 120, height: 120)
+                        .stroke(ManaTheme.Colors.secondaryFill, lineWidth: 10)
+                        .frame(width: 100, height: 100)
 
                     Circle()
                         .trim(from: 0, to: animatedProgress)
                         .stroke(
                             LinearGradient(
-                                colors: [.professionalBlue, .professionalGreen],
+                                colors: [ManaTheme.Colors.primary, ManaTheme.Colors.primaryLight],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
                             ),
-                            style: StrokeStyle(lineWidth: 8, lineCap: .round)
+                            style: StrokeStyle(lineWidth: 10, lineCap: .round)
                         )
-                        .frame(width: 120, height: 120)
+                        .frame(width: 100, height: 100)
                         .rotationEffect(.degrees(-90))
-                        .animation(ProfessionalAnimation.progressUpdate, value: animatedProgress)
+                        .animation(ManaTheme.Animation.smooth, value: animatedProgress)
 
-                    VStack(spacing: ProfessionalSpacing.tiny.value) {
-                        ProfessionalText(
-                            "65%",
-                            style: .statValue,
-                            color: .textPrimary,
-                            alignment: .center
-                        )
+                    VStack(spacing: 0) {
+                        Text("\(completedCount)/\(displayedLessons.count)")
+                            .font(ManaTheme.Typography.headline)
+                            .foregroundColor(ManaTheme.Colors.label)
 
-                        ProfessionalText(
-                            "Complete",
-                            style: .caption,
-                            color: .textSecondary,
-                            alignment: .center
-                        )
+                        Text("Lessons")
+                            .font(ManaTheme.Typography.caption2)
+                            .foregroundColor(ManaTheme.Colors.secondaryLabel)
                     }
                 }
                 .frame(maxWidth: .infinity)
+                .padding(.vertical, ManaTheme.Spacing.xs)
 
-                // Progress Description
-                ProfessionalText(
-                    "You're doing great! Keep up the momentum.",
-                    style: .bodyText,
-                    color: .textSecondary,
-                    alignment: .center
-                )
+                Text(learningMessage)
+                    .font(ManaTheme.Typography.subheadline)
+                    .foregroundColor(ManaTheme.Colors.secondaryLabel)
+                    .multilineTextAlignment(.center)
             }
         }
         .onAppear {
-            withAnimation(ProfessionalAnimation.progressUpdate) {
-                animatedProgress = 0.65
+            withAnimation(ManaTheme.Animation.smooth.delay(0.2)) {
+                animatedProgress = calculatedCourseProgress
             }
         }
     }
 
-    // MARK: - Learning Stats Section
+    private var calculatedCourseProgress: Double {
+        guard !displayedLessons.isEmpty else { return 0 }
+        let completed = displayedLessons.filter { $0.isCompleted }.count
+        return Double(completed) / Double(displayedLessons.count)
+    }
+
+    private var completedCount: Int {
+        displayedLessons.filter { $0.isCompleted }.count
+    }
+
+    private var learningMessage: String {
+        let percent = Int(calculatedCourseProgress * 100)
+        if percent == 0 {
+            return "Start your first lesson today! Every step counts."
+        } else if percent < 50 {
+            return "Great momentum! Keep learning new Telugu concepts."
+        } else if percent < 100 {
+            return "You're more than halfway to Telugu fluency!"
+        } else {
+            return "Outstanding! You have mastered all available lessons!"
+        }
+    }
+
+    // MARK: - Dynamic Learning Stats Section
     private var learningStatsSection: some View {
-        VStack(alignment: .leading, spacing: ProfessionalSpacing.medium.value) {
-            ProfessionalSectionHeader(
-                title: "Learning Stats",
-                subtitle: "Track your progress"
+        HStack(spacing: ManaTheme.Spacing.sm) {
+            HubStatChip(
+                icon: "book.fill",
+                value: "\(completedCount)",
+                label: "Completed",
+                color: ManaTheme.Colors.vowelColor
             )
 
-            HStack(spacing: ProfessionalSpacing.medium.value) {
-                ProfessionalStatCard(
-                    icon: "book.fill",
-                    value: "12",
-                    label: "Lessons",
-                    color: .professionalBlue
-                )
+            HubStatChip(
+                icon: "flame.fill",
+                value: "\(session.currentStreak)",
+                label: "Streak",
+                color: ManaTheme.Colors.primary
+            )
 
-                ProfessionalStatCard(
-                    icon: "clock.fill",
-                    value: "3h",
-                    label: "Time",
-                    color: .professionalGreen
-                )
-
-                ProfessionalStatCard(
-                    icon: "star.fill",
-                    value: "8",
-                    label: "Streak",
-                    color: .professionalOrange
-                )
-            }
+            HubStatChip(
+                icon: "star.fill",
+                value: "\(session.gamificationService.gamificationState.totalXP)",
+                label: "Total XP",
+                color: ManaTheme.Colors.consonantColor
+            )
         }
     }
 
     // MARK: - Lessons List Section
     private var lessonsListSection: some View {
-        VStack(alignment: .leading, spacing: ProfessionalSpacing.medium.value) {
-            ProfessionalSectionHeader(
-                title: "Available Lessons",
-                subtitle: "Continue your learning"
-            )
+        VStack(alignment: .leading, spacing: ManaTheme.Spacing.sm) {
+            Text("Available Lessons")
+                .font(ManaTheme.Typography.title3)
+                .foregroundColor(ManaTheme.Colors.label)
 
-            VStack(spacing: ProfessionalSpacing.medium.value) {
+            VStack(spacing: ManaTheme.Spacing.sm) {
                 ForEach(Array(displayedLessons.enumerated()), id: \.element.id) { index, lesson in
                     NavigationLink(
-                        destination: LessonFlowView(
-                            lesson: convertToTeluguLesson(lesson, index: index))
+                        destination: LessonFlowView(lesson: convertToTeluguLesson(lesson, index: index))
                     ) {
                         ProfessionalLessonCard(lesson: lesson)
                     }
                     .buttonStyle(.plain)
+                    .disabled(lesson.isLocked)
                 }
             }
         }
     }
 
-    // Convert ProfessionalLesson to TeluguLesson for LessonFlowView
-    private func convertToTeluguLesson(_ professionalLesson: ProfessionalLesson, index: Int)
-        -> TeluguLesson
-    {
-        // Use the predefined lessons from teluguLessons array if available
+    private func loadUserLessons() {
+        isLoading = true
+        Task {
+            let lessonsRepo = LessonsRepository()
+            await lessonsRepo.loadLevels()
+
+            let trackedLessons = session.progressTrackingService.lessonProgress
+
+            let mapped = lessonsRepo.levels.flatMap { level in
+                level.lessons.map { lesson -> ProfessionalLesson in
+                    let isComp = trackedLessons.first(where: { $0.lessonId == lesson.id })?.isCompleted ?? false
+                    let prog = trackedLessons.first(where: { $0.lessonId == lesson.id })?.accuracy ?? (isComp ? 1.0 : 0.0)
+                    return ProfessionalLesson(lesson: lesson, isCompleted: isComp, progress: prog, isLocked: false)
+                }
+            }
+
+            DispatchQueue.main.async {
+                self.displayedLessons = mapped
+                self.isLoading = false
+                withAnimation(ManaTheme.Animation.smooth) {
+                    self.animatedProgress = self.calculatedCourseProgress
+                }
+            }
+        }
+    }
+
+    private func convertToTeluguLesson(_ professionalLesson: ProfessionalLesson, index: Int) -> TeluguLesson {
         if index < teluguLessons.count {
             return teluguLessons[index]
         }
 
-        // Fallback: create a basic lesson structure
         return TeluguLesson(
             id: index + 1,
             title: professionalLesson.title,
@@ -342,6 +320,33 @@ struct ProfessionalLessonsHubView: View {
             isUnlocked: !professionalLesson.isLocked,
             isCompleted: professionalLesson.isCompleted
         )
+    }
+}
+
+// MARK: - Hub Stat Chip
+struct HubStatChip: View {
+    let icon: String
+    let value: String
+    let label: String
+    let color: Color
+
+    var body: some View {
+        ManaCard(style: .elevated, padding: ManaTheme.Spacing.sm) {
+            VStack(spacing: 4) {
+                Image(systemName: icon)
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(color)
+
+                Text(value)
+                    .font(ManaTheme.Typography.headline)
+                    .foregroundColor(ManaTheme.Colors.label)
+
+                Text(label)
+                    .font(ManaTheme.Typography.caption2)
+                    .foregroundColor(ManaTheme.Colors.secondaryLabel)
+            }
+            .frame(maxWidth: .infinity)
+        }
     }
 }
 
@@ -356,14 +361,14 @@ struct ProfessionalLesson {
     let isCompleted: Bool
     let isLocked: Bool
 
-    init(lesson: Lesson, isLocked: Bool = false) {
+    init(lesson: Lesson, isCompleted: Bool = false, progress: Double = 0.0, isLocked: Bool = false) {
         self.id = lesson.id
         self.title = lesson.title
         self.description = lesson.description
-        self.progress = 0.0  // Placeholder, actual progress needs to be fetched/calculated
+        self.progress = progress
         self.difficulty = ProfessionalLesson.mapDifficulty(from: lesson.difficulty)
         self.estimatedTime = "\(lesson.estimatedMinutes) min"
-        self.isCompleted = false  // Placeholder, actual completion needs to be fetched
+        self.isCompleted = isCompleted
         self.isLocked = isLocked
     }
 
@@ -382,9 +387,9 @@ struct ProfessionalLesson {
 
         var color: Color {
             switch self {
-            case .beginner: return .professionalGreen
-            case .intermediate: return .professionalOrange
-            case .advanced: return .professionalPurple
+            case .beginner: return ManaTheme.Colors.emeraldGreen
+            case .intermediate: return ManaTheme.Colors.primary
+            case .advanced: return ManaTheme.Colors.royalIndigo
             }
         }
     }
@@ -394,10 +399,9 @@ struct ProfessionalLesson {
         case 1: return .beginner
         case 2: return .intermediate
         case 3: return .advanced
-        default: return .beginner  // Default to beginner if unknown
+        default: return .beginner
         }
     }
-}  // Closing brace for ProfessionalLesson struct
+}
 
-// MARK: - Replace the original LessonsHubView
 typealias LessonsHubView = ProfessionalLessonsHubView

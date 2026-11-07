@@ -1,5 +1,6 @@
 import SwiftUI
 
+// MARK: - Premium Games Hub View (iOS 17+ HIG Native)
 struct GamesHubView: View {
     @EnvironmentObject var session: AppSession
     @Environment(\.dismiss) private var dismiss
@@ -9,117 +10,99 @@ struct GamesHubView: View {
         GameInfo(
             id: "1",
             title: "Sentence Builder",
-            description: "Arrange words to create perfect Telugu sentences",
+            description: "Arrange words to construct grammatically correct Telugu sentences",
             icon: "text.alignleft",
             difficulty: "Beginner",
             estimatedTime: "5 min",
-            color: .blue,
+            color: AppleHIGDesign.Colors.vowelColor,
             isRecommended: false
         ),
         GameInfo(
             id: "2",
             title: "Listening Challenge",
-            description: "Listen and choose the correct meaning",
+            description: "Listen to native audio and select matching Telugu terms",
             icon: "ear.fill",
             difficulty: "Intermediate",
             estimatedTime: "8 min",
-            color: .purple,
+            color: AppleHIGDesign.Colors.wordColor,
             isRecommended: false
         ),
         GameInfo(
             id: "3",
             title: "Letter Tracing",
-            description: "Practice writing Telugu letters",
-            icon: "pencil",
+            description: "Practice letter strokes and handwriting accuracy",
+            icon: "pencil.tip.crop.circle.fill",
             difficulty: "Beginner",
             estimatedTime: "10 min",
-            color: .orange,
+            color: AppleHIGDesign.TeluguPalette.terracotta,
             isRecommended: false
         ),
         GameInfo(
             id: "4",
             title: "Sound Match",
-            description: "Match sounds with their letters",
+            description: "Match spoken Telugu phonemes with correct script characters",
             icon: "waveform",
             difficulty: "Intermediate",
             estimatedTime: "6 min",
-            color: .green,
+            color: AppleHIGDesign.Colors.consonantColor,
             isRecommended: false
         ),
         GameInfo(
             id: "5",
             title: "Word Match",
-            description: "Match English words with their Telugu meanings",
+            description: "Match English vocabulary with corresponding Telugu words",
             icon: "arrow.left.arrow.right",
             difficulty: "Beginner",
             estimatedTime: "5 min",
-            color: .pink,
+            color: AppleHIGDesign.Colors.primary,
             isRecommended: true
-        ),
-        GameInfo(
-            id: "6",
-            title: "Speak Telugu",
-            description: "Record your voice and get AI pronunciation feedback",
-            icon: "waveform.circle.fill",
-            difficulty: "All Levels",
-            estimatedTime: "5 min",
-            color: .indigo,
-            isRecommended: false
         ),
     ]
 
     var body: some View {
         ZStack {
-            // Stronger gradient background
-            LinearGradient(
-                colors: [
-                    Color(red: 0.4, green: 0.5, blue: 0.9).opacity(0.3),
-                    Color(red: 0.46, green: 0.29, blue: 0.64).opacity(0.2),
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            .ignoresSafeArea()
+            // Adaptive system background (Light/Dark aware)
+            AppleHIGDesign.Colors.systemGroupedBackground
+                .ignoresSafeArea()
 
-            ScrollView {
-                LazyVStack(spacing: 24) {
-                    // Header
-                    headerSection
-                        .padding(.top, -20)
+            ScrollView(showsIndicators: false) {
+                VStack(alignment: .leading, spacing: AppleHIGDesign.Spacing.lg) {
+                    // Hero Header Banner
+                    gamesHeroBanner
 
                     // Games Grid
-                    gamesGrid
+                    VStack(alignment: .leading, spacing: AppleHIGDesign.Spacing.sm) {
+                        Text("Available Games")
+                            .font(AppleHIGDesign.Typography.title3)
+                            .foregroundColor(AppleHIGDesign.Colors.label)
 
-                    // Bottom padding
-                    Color.clear.frame(height: 100)
+                        LazyVGrid(
+                            columns: [
+                                GridItem(.flexible(), spacing: AppleHIGDesign.Spacing.md),
+                                GridItem(.flexible(), spacing: AppleHIGDesign.Spacing.md),
+                            ],
+                            spacing: AppleHIGDesign.Spacing.md
+                        ) {
+                            ForEach(games) { game in
+                                Button {
+                                    AppleHIGDesign.Haptics.medium()
+                                    selectedGame = game.id
+                                } label: {
+                                    NativeGameCard(game: game)
+                                }
+                                .buttonStyle(NativeCardButtonStyle())
+                            }
+                        }
+                    }
+
+                    Spacer().frame(height: 60)
                 }
-                .padding(.horizontal, 20)
+                .padding(.horizontal, AppleHIGDesign.Spacing.screenMargin)
+                .padding(.top, AppleHIGDesign.Spacing.sm)
             }
-            .scrollIndicators(.hidden)
         }
-        .navigationTitle("Games")
+        .navigationTitle("Practice Games")
         .navigationBarTitleDisplayMode(.inline)
-        .navigationBarBackButtonHidden(true)
-        .toolbarBackground(
-            LinearGradient(
-                colors: [
-                    Color(red: 0.4, green: 0.5, blue: 0.9).opacity(0.1),
-                    Color(red: 0.46, green: 0.29, blue: 0.64).opacity(0.08),
-                ],
-                startPoint: .leading,
-                endPoint: .trailing
-            ),
-            for: .navigationBar
-        )
-        .toolbarBackground(.visible, for: .navigationBar)
-        .toolbar {
-            ToolbarItem(placement: .navigationBarLeading) {
-                Button("Back") {
-                    dismiss()
-                }
-                .foregroundColor(.blue)
-            }
-        }
         .fullScreenCover(
             item: Binding<GameInfo?>(
                 get: { games.first { $0.id == selectedGame } },
@@ -132,42 +115,38 @@ struct GamesHubView: View {
         }
     }
 
-    // MARK: - Header Section
-    private var headerSection: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text("Practice Games")
-                .font(.title2.bold())
-                .foregroundColor(.primary)
+    // MARK: - Games Hero Banner
+    private var gamesHeroBanner: some View {
+        ZStack(alignment: .bottomLeading) {
+            RoundedRectangle(cornerRadius: AppleHIGDesign.CornerRadius.xxl)
+                .fill(AppleHIGDesign.TeluguPalette.heroGradient)
+                .shadow(color: AppleHIGDesign.TeluguPalette.midnightIndigo.opacity(0.25), radius: 10, x: 0, y: 5)
 
-            Text("Practice Telugu through fun interactive games")
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.vertical, 12)
-    }
+            // Watermark
+            Text("ఆట")
+                .font(.system(size: 140, weight: .bold))
+                .foregroundColor(.white.opacity(0.08))
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)
+                .offset(x: 15, y: 15)
+                .allowsHitTesting(false)
 
-    // MARK: - Games Grid
-    private var gamesGrid: some View {
-        LazyVGrid(
-            columns: [
-                GridItem(.flexible(), spacing: 16),
-                GridItem(.flexible(), spacing: 16),
-            ],
-            spacing: 16
-        ) {
-            ForEach(Array(games.enumerated()), id: \.element.id) { index, game in
-                Button {
-                    print("🎮 Game tapped: \(game.title)")
-                    HapticsManager.shared.trigger(.medium)
-                    selectedGame = game.id
-                } label: {
-                    ModernGameCard(game: game)
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
+            VStack(alignment: .leading, spacing: AppleHIGDesign.Spacing.xs) {
+                Text("INTERACTIVE LEARNING")
+                    .font(.system(size: 11, weight: .bold))
+                    .tracking(1.2)
+                    .foregroundColor(.white.opacity(0.80))
+
+                Text("Practice Games • ఆటలు")
+                    .font(.system(size: 24, weight: .bold))
+                    .foregroundColor(.white)
+
+                Text("Reinforce your Telugu knowledge through fun, engaging mini-games")
+                    .font(AppleHIGDesign.Typography.subheadline)
+                    .foregroundColor(.white.opacity(0.80))
             }
+            .padding(AppleHIGDesign.Spacing.xl)
         }
+        .frame(minHeight: 150)
     }
 
     @ViewBuilder
@@ -183,99 +162,71 @@ struct GamesHubView: View {
             SoundMatchGameView()
         case "5":
             WordMatchGameView()
-        case "6":
-            PronunciationHubView()
         default:
             Text("Game not found")
         }
     }
 }
 
-// MARK: - Modern Game Card
-struct ModernGameCard: View {
+// MARK: - Native Game Card
+struct NativeGameCard: View {
     let game: GameInfo
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            // Top row: Icon and Time badge
-            HStack(alignment: .top) {
-                Image(systemName: game.icon)
-                    .font(.system(size: 36, weight: .semibold))
-                    .foregroundColor(game.color)
+        AppleHIGCard(style: .elevated) {
+            VStack(alignment: .leading, spacing: AppleHIGDesign.Spacing.xs) {
+                // Top row: Icon and Time tag
+                HStack(alignment: .top) {
+                    Image(systemName: game.icon)
+                        .font(.system(size: 20, weight: .semibold))
+                        .foregroundColor(game.color)
+                        .frame(width: 42, height: 42)
+                        .background(game.color.opacity(0.12))
+                        .clipShape(RoundedRectangle(cornerRadius: AppleHIGDesign.CornerRadius.md))
 
-                Spacer()
+                    Spacer()
 
-                // Time badge
-                Text(game.estimatedTime)
-                    .font(.caption.bold())
-                    .foregroundColor(.secondary)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(
-                        Capsule()
-                            .fill(.secondary.opacity(0.15))
-                    )
-            }
+                    Text(game.estimatedTime)
+                        .font(AppleHIGDesign.Typography.caption2.weight(.bold))
+                        .foregroundColor(AppleHIGDesign.Colors.secondaryLabel)
+                        .padding(.horizontal, 7)
+                        .padding(.vertical, 3)
+                        .background(AppleHIGDesign.Colors.secondarySystemFill)
+                        .clipShape(Capsule())
+                }
 
-            // Title
-            Text(game.title)
-                .font(.headline.bold())
-                .foregroundColor(.primary)
-                .lineLimit(1)
+                Spacer().frame(height: 2)
 
-            // Description
-            Text(game.description)
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-                .lineLimit(2)
-                .fixedSize(horizontal: false, vertical: true)
+                // Title
+                Text(game.title)
+                    .font(AppleHIGDesign.Typography.headline)
+                    .foregroundColor(AppleHIGDesign.Colors.label)
+                    .lineLimit(1)
 
-            Spacer()
+                // Description
+                Text(game.description)
+                    .font(AppleHIGDesign.Typography.caption1)
+                    .foregroundColor(AppleHIGDesign.Colors.secondaryLabel)
+                    .lineLimit(2)
 
-            // Level tag
-            HStack {
-                Text(game.difficulty)
-                    .font(.caption.bold())
-                    .foregroundColor(levelColor)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(
-                        Capsule()
-                            .fill(levelColor.opacity(0.15))
-                    )
+                Spacer(minLength: 4)
 
-                Spacer()
-            }
-        }
-        .padding(16)
-        .frame(height: 200)
-        .contentShape(Rectangle())
-        .background(
-            Group {
-                if game.isRecommended {
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(game.color.opacity(0.08))
-                } else {
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(Color(.systemBackground))
+                // Difficulty Tag
+                HStack {
+                    Text(game.difficulty)
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundColor(game.color)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3)
+                        .background(game.color.opacity(0.12))
+                        .clipShape(Capsule())
+
+                    Spacer()
                 }
             }
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(game.isRecommended ? game.color.opacity(0.3) : .clear, lineWidth: 1)
-        )
-        .shadow(
-            color: game.isRecommended ? game.color.opacity(0.15) : .black.opacity(0.05),
-            radius: game.isRecommended ? 6 : 2,
-            x: 0,
-            y: 1
-        )
-        .foregroundColor(.primary)
-    }
-
-    private var levelColor: Color {
-        game.difficulty == "Beginner" ? .green : .orange
+            .padding(AppleHIGDesign.Spacing.xs)
+        }
+        .frame(height: 175)
     }
 }
 
@@ -291,79 +242,60 @@ struct GameInfo: Identifiable {
     let isRecommended: Bool
 }
 
-// MARK: - Preview
-#Preview {
-    NavigationStack {
-        GamesHubView()
-            .environmentObject(AppSession())
-    }
-}
-
+// MARK: - Word Match Game View (HIG Native Refactored)
 struct WordMatchGameView: View {
     @EnvironmentObject var session: AppSession
     @Environment(\.dismiss) private var dismiss
 
     @State private var allWords: [Word] = []
     @State private var currentRoundWords: [Word] = []
-
-    // Split columns for randomization
     @State private var leftColumnItems: [Word] = []
     @State private var rightColumnItems: [Word] = []
-
-    // Selection states
     @State private var selectedLeftId: String? = nil
     @State private var selectedRightId: String? = nil
-
-    // Matched IDs
     @State private var matchedIds: Set<String> = []
-
-    // Feedback states
     @State private var isWrongMatch = false
     @State private var isSuccessMatch = false
     @State private var showingCompletion = false
-    @State private var gameStartTime = Date()
     @State private var score = 0
 
     private let wordsPerRound = Int.random(in: 5...6)
 
     var body: some View {
         ZStack {
-            // Matching gradient background from HomeView
-            LinearGradient(
-                colors: [
-                    Color(red: 0.4, green: 0.5, blue: 0.9).opacity(0.3),
-                    Color(red: 0.46, green: 0.29, blue: 0.64).opacity(0.2),
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            .ignoresSafeArea()
+            AppleHIGDesign.Colors.systemGroupedBackground
+                .ignoresSafeArea()
 
-            VStack(spacing: ModernDesignSystem.Spacing.lg) {
-                // Header
+            VStack(spacing: AppleHIGDesign.Spacing.md) {
+                // Top Header Score
                 HStack {
-                    Text("Word Match")
-                        .font(ModernDesignSystem.Typography.title1)
-                        .foregroundColor(ModernDesignSystem.Colors.textPrimary)
+                    Text("Word Match • పదాల జత")
+                        .font(AppleHIGDesign.Typography.title3)
+                        .foregroundColor(AppleHIGDesign.Colors.label)
                     Spacer()
-                    Text("Score: \(score)")
-                        .font(ModernDesignSystem.Typography.headline)
-                        .foregroundColor(ModernDesignSystem.Colors.funYellow)
+                    HStack(spacing: 4) {
+                        Image(systemName: "star.fill")
+                            .font(.system(size: 14))
+                            .foregroundColor(AppleHIGDesign.Colors.primary)
+                        Text("Score: \(score)")
+                            .font(AppleHIGDesign.Typography.headline)
+                            .foregroundColor(AppleHIGDesign.Colors.primary)
+                    }
                 }
-                .padding(.horizontal)
+                .padding(.horizontal, AppleHIGDesign.Spacing.screenMargin)
 
-                if !currentRoundWords.isEmpty {
-                    HStack(spacing: ModernDesignSystem.Spacing.xl) {
+                if !currentRoundWords.isEmpty && !showingCompletion {
+                    HStack(spacing: AppleHIGDesign.Spacing.md) {
                         // Left Column (English)
-                        VStack(spacing: ModernDesignSystem.Spacing.md) {
+                        VStack(spacing: AppleHIGDesign.Spacing.sm) {
                             ForEach(leftColumnItems, id: \.id) { word in
-                                CardView(
+                                MatchTileView(
                                     text: word.english,
-                                    transliteration: nil,
+                                    subtext: nil,
                                     isSelected: selectedLeftId == word.id,
                                     isMatched: matchedIds.contains(word.id),
                                     isWrong: isWrongMatch && selectedLeftId == word.id,
-                                    color: ModernDesignSystem.Colors.funBlue
+                                    color: AppleHIGDesign.Colors.vowelColor
                                 )
                                 .onTapGesture {
                                     handleLeftTap(word.id)
@@ -373,15 +305,15 @@ struct WordMatchGameView: View {
                         }
 
                         // Right Column (Telugu)
-                        VStack(spacing: ModernDesignSystem.Spacing.md) {
+                        VStack(spacing: AppleHIGDesign.Spacing.sm) {
                             ForEach(rightColumnItems, id: \.id) { word in
-                                CardView(
+                                MatchTileView(
                                     text: word.telugu,
-                                    transliteration: word.transliteration,
+                                    subtext: word.transliteration,
                                     isSelected: selectedRightId == word.id,
                                     isMatched: matchedIds.contains(word.id),
                                     isWrong: isWrongMatch && selectedRightId == word.id,
-                                    color: ModernDesignSystem.Colors.funGreen
+                                    color: AppleHIGDesign.Colors.consonantColor
                                 )
                                 .onTapGesture {
                                     handleRightTap(word.id)
@@ -390,50 +322,49 @@ struct WordMatchGameView: View {
                             }
                         }
                     }
-                    .padding()
+                    .padding(.horizontal, AppleHIGDesign.Spacing.screenMargin)
                 } else if showingCompletion {
-                    // Completion View
-                    VStack(spacing: ModernDesignSystem.Spacing.lg) {
-                        // Celebration Icon
-                        Image(systemName: "star.circle.fill")
-                            .font(.system(size: 80))
-                            .foregroundColor(ModernDesignSystem.Colors.funYellow)
+                    AppleHIGCard(style: .elevated) {
+                        VStack(spacing: AppleHIGDesign.Spacing.md) {
+                            Image(systemName: "checkmark.circle.fill")
+                                .font(.system(size: 64, weight: .semibold))
+                                .foregroundColor(AppleHIGDesign.Colors.consonantColor)
 
-                        Text("Round Complete!")
-                            .font(ModernDesignSystem.Typography.celebration)
-                            .foregroundColor(ModernDesignSystem.Colors.textPrimary)
+                            Text("Round Complete!")
+                                .font(AppleHIGDesign.Typography.title2)
+                                .foregroundColor(AppleHIGDesign.Colors.label)
 
-                        Text("You matched all pairs!")
-                            .font(ModernDesignSystem.Typography.body)
-                            .foregroundColor(ModernDesignSystem.Colors.textSecondary)
+                            Text("You matched all vocabulary pairs successfully!")
+                                .font(AppleHIGDesign.Typography.body)
+                                .foregroundColor(AppleHIGDesign.Colors.secondaryLabel)
+                                .multilineTextAlignment(.center)
 
-                        // Score Display
-                        VStack(spacing: ModernDesignSystem.Spacing.sm) {
-                            Text("Final Score")
-                                .font(ModernDesignSystem.Typography.caption)
-                                .foregroundColor(ModernDesignSystem.Colors.textSecondary)
+                            VStack(spacing: 2) {
+                                Text("Final Round Score")
+                                    .font(AppleHIGDesign.Typography.caption1)
+                                    .foregroundColor(AppleHIGDesign.Colors.secondaryLabel)
 
-                            Text("\(score)")
-                                .font(.system(size: 48, weight: .bold, design: .rounded))
-                                .foregroundColor(ModernDesignSystem.Colors.funGreen)
+                                Text("\(score)")
+                                    .font(.system(size: 40, weight: .bold, design: .rounded))
+                                    .foregroundColor(AppleHIGDesign.Colors.primary)
+                            }
+                            .padding(AppleHIGDesign.Spacing.md)
+                            .background(AppleHIGDesign.Colors.primary.opacity(0.1))
+                            .clipShape(RoundedRectangle(cornerRadius: AppleHIGDesign.CornerRadius.md))
+
+                            Button("Next Round") {
+                                startNewRound()
+                            }
+                            .buttonStyle(AppleHIGButtonStyle(style: .primary, size: .medium))
                         }
-                        .padding()
-                        .background(
-                            RoundedRectangle(cornerRadius: 16)
-                                .fill(ModernDesignSystem.Colors.funGreen.opacity(0.1))
-                        )
-
-                        ModernButton("Next Round", icon: "arrow.right", style: .primary) {
-                            startNewRound()
-                        }
+                        .padding(AppleHIGDesign.Spacing.md)
                     }
-                    .padding()
-                    .modernCard()
+                    .padding(.horizontal, AppleHIGDesign.Spacing.screenMargin)
                 }
 
                 Spacer()
             }
-            .padding(.top, ModernDesignSystem.Spacing.lg)
+            .padding(.top, AppleHIGDesign.Spacing.sm)
         }
         .onAppear {
             setupGame()
@@ -442,65 +373,50 @@ struct WordMatchGameView: View {
         .navigationBarBackButtonHidden(true)
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
-                BackButton {
+                Button("Back") {
                     dismiss()
                 }
+                .foregroundColor(AppleHIGDesign.Colors.primary)
             }
         }
     }
 
     private func setupGame() {
         allWords = session.dataRepository.words.shuffled()
-        if allWords.isEmpty {
-            allWords = []
-        }
         startNewRound()
     }
 
     private func startNewRound() {
-        // Reset states
         selectedLeftId = nil
         selectedRightId = nil
         matchedIds = []
         isWrongMatch = false
         isSuccessMatch = false
         showingCompletion = false
-        gameStartTime = Date()
 
-        // Pick next batch
         let count = min(allWords.count, wordsPerRound)
         guard count > 0 else { return }
 
         currentRoundWords = Array(allWords.prefix(count))
-        // Rotate pool
         allWords.shuffle()
 
-        // Randomize columns INDEPENDENTLY (Anti-Pattern)
         leftColumnItems = currentRoundWords.shuffled()
         rightColumnItems = currentRoundWords.shuffled()
     }
 
     private func handleLeftTap(_ id: String) {
         guard !matchedIds.contains(id) else { return }
-
-        // Haptic
-        HapticsManager.shared.selection()
-
+        AppleHIGDesign.Haptics.selection()
         selectedLeftId = id
         checkMatch()
     }
 
     private func handleRightTap(_ id: String) {
         guard !matchedIds.contains(id) else { return }
-
-        // Audio
         if let word = currentRoundWords.first(where: { $0.id == id }) {
             session.audioService.play(name: word.audioFile, rate: 1.0)
         }
-
-        // Haptic
-        HapticsManager.shared.selection()
-
+        AppleHIGDesign.Haptics.selection()
         selectedRightId = id
         checkMatch()
     }
@@ -509,88 +425,81 @@ struct WordMatchGameView: View {
         guard let left = selectedLeftId, let right = selectedRightId else { return }
 
         if left == right {
-            // Match!
             matchedIds.insert(left)
             score += 10
             isSuccessMatch = true
-            FeedbackCenter.correct()
-
+            AppleHIGDesign.Haptics.success()
             selectedLeftId = nil
             selectedRightId = nil
 
-            // Check win condition
             if matchedIds.count == currentRoundWords.count {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
                     showingCompletion = true
-                    FeedbackCenter.correct()
                 }
             }
         } else {
-            // Mismatch
             isWrongMatch = true
-            FeedbackCenter.wrong()
+            AppleHIGDesign.Haptics.error()
 
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
                 isWrongMatch = false
                 selectedLeftId = nil
                 selectedRightId = nil
             }
         }
     }
+}
 
-    // Subview for Cards
-    struct CardView: View {
-        let text: String
-        let transliteration: String?
-        let isSelected: Bool
-        let isMatched: Bool
-        let isWrong: Bool
-        let color: Color
+// MARK: - Match Tile View
+struct MatchTileView: View {
+    let text: String
+    let subtext: String?
+    let isSelected: Bool
+    let isMatched: Bool
+    let isWrong: Bool
+    let color: Color
 
-        var body: some View {
-            VStack(spacing: 4) {
-                Text(text)
-                    .font(ModernDesignSystem.Typography.headline)
-                    .foregroundColor(textColor)
+    var body: some View {
+        VStack(spacing: 2) {
+            Text(text)
+                .font(AppleHIGDesign.Typography.headline)
+                .foregroundColor(textColor)
 
-                if let transliteration = transliteration {
-                    Text("(\(transliteration))")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
+            if let subtext = subtext {
+                Text(subtext)
+                    .font(AppleHIGDesign.Typography.caption2)
+                    .foregroundColor(AppleHIGDesign.Colors.secondaryLabel)
             }
-            .frame(maxWidth: .infinity)
-            .frame(height: transliteration != nil ? 70 : 60)
-            .background(backgroundColor)
-            .cornerRadius(12)
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(borderColor, lineWidth: 2)
-            )
-            .shadow(color: isSelected ? color.opacity(0.4) : .clear, radius: 8)
-            .scaleEffect(isSelected ? 1.05 : 1.0)
-            .blur(radius: isMatched ? 1 : 0)  // Fade out matched items
-            .opacity(isMatched ? 0.0 : 1.0)  // Hide matched items
-            .animation(.spring(), value: isSelected)
-            .animation(.easeIn, value: isMatched)
         }
+        .frame(maxWidth: .infinity)
+        .frame(height: subtext != nil ? 65 : 55)
+        .background(backgroundColor)
+        .clipShape(RoundedRectangle(cornerRadius: AppleHIGDesign.CornerRadius.md))
+        .overlay(
+            RoundedRectangle(cornerRadius: AppleHIGDesign.CornerRadius.md)
+                .stroke(borderColor, lineWidth: isSelected ? 2 : 1)
+        )
+        .scaleEffect(isSelected ? 1.04 : 1.0)
+        .opacity(isMatched ? 0.0 : 1.0)
+        .animation(AppleHIGDesign.Animation.smooth, value: isSelected)
+        .animation(AppleHIGDesign.Animation.smooth, value: isMatched)
+    }
 
-        private var backgroundColor: Color {
-            if isWrong { return ModernDesignSystem.Colors.error.opacity(0.2) }
-            if isSelected { return color.opacity(0.15) }
-            return Color.white.opacity(0.9)  // White background
-        }
+    private var backgroundColor: Color {
+        if isWrong { return AppleHIGDesign.Colors.systemRed.opacity(0.15) }
+        if isSelected { return color.opacity(0.12) }
+        return AppleHIGDesign.Colors.secondarySystemGroupedBackground
+    }
 
-        private var borderColor: Color {
-            if isWrong { return ModernDesignSystem.Colors.error }
-            if isSelected { return color }
-            return Color.gray.opacity(0.2)  // Subtle glass border
-        }
+    private var borderColor: Color {
+        if isWrong { return AppleHIGDesign.Colors.systemRed }
+        if isSelected { return color }
+        return AppleHIGDesign.Colors.separator.opacity(0.5)
+    }
 
-        private var textColor: Color {
-            if isWrong { return ModernDesignSystem.Colors.error }
-            if isSelected { return color }
-            return ModernDesignSystem.Colors.textPrimary
-        }
+    private var textColor: Color {
+        if isWrong { return AppleHIGDesign.Colors.systemRed }
+        if isSelected { return color }
+        return AppleHIGDesign.Colors.label
     }
 }

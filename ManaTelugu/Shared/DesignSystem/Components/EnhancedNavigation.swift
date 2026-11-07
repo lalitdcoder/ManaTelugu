@@ -3,17 +3,17 @@ import UIKit
 
 // MARK: - Enhanced Navigation System
 struct EnhancedNavigation {
-    
+
     // MARK: - Safe Area Container
     struct SafeAreaContainer<Content: View>: View {
         let content: Content
         let bottomPadding: CGFloat
-        
+
         init(bottomPadding: CGFloat = 24, @ViewBuilder content: () -> Content) {
             self.bottomPadding = bottomPadding
             self.content = content()
         }
-        
+
         var body: some View {
             ZStack {
                 content
@@ -24,20 +24,20 @@ struct EnhancedNavigation {
             }
         }
     }
-    
+
     // MARK: - Enhanced Tab Bar
     struct EnhancedTabBar: View {
         @Binding var selectedTab: Int
         let tabs: [TabItem]
         @State private var isVisible = false
         @State private var tabAnimations: [Bool] = []
-        
+
         init(selectedTab: Binding<Int>, tabs: [TabItem]) {
             self._selectedTab = selectedTab
             self.tabs = tabs
             self._tabAnimations = State(initialValue: Array(repeating: false, count: tabs.count))
         }
-        
+
         var body: some View {
             HStack(spacing: 0) {
                 ForEach(0..<tabs.count, id: \.self) { index in
@@ -59,7 +59,7 @@ struct EnhancedNavigation {
                     RoundedRectangle(cornerRadius: getCornerRadiusForDevice(), style: .continuous)
                         .fill(.regularMaterial)
                         .blur(radius: 20)
-                    
+
                     RoundedRectangle(cornerRadius: getCornerRadiusForDevice(), style: .continuous)
                         .fill(
                             LinearGradient(
@@ -72,7 +72,7 @@ struct EnhancedNavigation {
                             )
                         )
                         .opacity(0.1)
-                    
+
                     RoundedRectangle(cornerRadius: getCornerRadiusForDevice(), style: .continuous)
                         .stroke(
                             LinearGradient(
@@ -115,17 +115,17 @@ struct EnhancedNavigation {
                 }
             }
         }
-        
+
         private func handleTabSelection(_ index: Int) {
-// Haptic feedback
+            // Haptic feedback
             HapticsManager.shared.impact(.light)
-            
+
             // Animation for selected tab
             withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
                 tabAnimations[index] = true
                 selectedTab = index
             }
-            
+
             // Reset animation
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                 withAnimation(.easeOut(duration: 0.2)) {
@@ -133,38 +133,37 @@ struct EnhancedNavigation {
                 }
             }
         }
-        
+
         private func getCornerRadiusForDevice() -> CGFloat {
             // Cross-platform consistency: larger radius for iPad/macOS
             #if os(iOS)
-            if UIDevice.current.userInterfaceIdiom == .pad {
-                return 32
-            }
+                if UIDevice.current.userInterfaceIdiom == .pad {
+                    return 32
+                }
             #endif
             return 28
         }
-        
+
         private func getBorderWidthForDevice() -> CGFloat {
             // Cross-platform consistency: thicker border for larger devices
             #if os(iOS)
-            if UIDevice.current.userInterfaceIdiom == .pad {
-                return 1.5
-            }
+                if UIDevice.current.userInterfaceIdiom == .pad {
+                    return 1.5
+                }
             #endif
             return 1.0
         }
     }
-    
-    
+
     // MARK: - Enhanced Tab Bar Button
     struct EnhancedTabBarButton: View {
         let tab: TabItem
         let isSelected: Bool
         let isAnimating: Bool
         let action: () -> Void
-        
+
         @State private var isPressed = false
-        
+
         var body: some View {
             Button(action: action) {
                 VStack(spacing: 4) {
@@ -176,7 +175,7 @@ struct EnhancedNavigation {
                                     LinearGradient(
                                         colors: [
                                             ModernDesignSystem.Colors.funBlue.opacity(0.3),
-                                            ModernDesignSystem.Colors.funBlue.opacity(0.1)
+                                            ModernDesignSystem.Colors.funBlue.opacity(0.1),
                                         ],
                                         startPoint: .topLeading,
                                         endPoint: .bottomTrailing
@@ -191,19 +190,23 @@ struct EnhancedNavigation {
                                     y: 0
                                 )
                         }
-                        
+
                         // Icon with enhanced styling
                         Image(systemName: tab.icon)
                             .font(.system(size: 20, weight: .medium))
-                            .foregroundColor(isSelected ? ModernDesignSystem.Colors.funBlue : .primary)
+                            .foregroundColor(
+                                isSelected ? ModernDesignSystem.Colors.funBlue : .primary
+                            )
                             .scaleEffect(isSelected ? 1.1 : 1.0)
                             .scaleEffect(isPressed ? 0.9 : 1.0)
                     }
-                    
+
                     // Label with enhanced typography
                     Text(tab.title)
                         .font(.system(size: 10, weight: .medium))
-                        .foregroundColor(isSelected ? ModernDesignSystem.Colors.funBlue : .secondary)
+                        .foregroundColor(
+                            isSelected ? ModernDesignSystem.Colors.funBlue : .secondary
+                        )
                         .lineLimit(1)
                 }
                 .frame(maxWidth: .infinity)
@@ -224,29 +227,29 @@ struct EnhancedNavigation {
             }
         }
     }
-    
+
     // MARK: - Floating Action Button
     struct FloatingActionButton: View {
         let icon: String
         let color: Color
         let action: () -> Void
-        
+
         @State private var isPressed = false
         @State private var isVisible = false
-        
+
         init(icon: String, color: Color = .accentColor, action: @escaping () -> Void) {
             self.icon = icon
             self.color = color
             self.action = action
         }
-        
+
         var body: some View {
             Button(action: {
                 // Haptic feedback
                 let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
                 impactFeedback.prepare()
                 impactFeedback.impactOccurred()
-                
+
                 action()
             }) {
                 ZStack {
@@ -272,7 +275,7 @@ struct EnhancedNavigation {
                             x: 0,
                             y: 10
                         )
-                    
+
                     // Icon
                     Image(systemName: icon)
                         .font(.system(size: 24, weight: .semibold))
@@ -309,15 +312,15 @@ struct EnhancedRootTabView: View {
     @State private var showingBadgeUnlock = false
     @State private var showingTreasureChest = false
     @State private var selectedTab = 0
-    
+
     private let tabs = [
         TabItem(title: "Home", icon: "house.fill", view: AnyView(HomeView())),
         TabItem(title: "Lessons", icon: "book.fill", view: AnyView(LessonsHubView())),
         TabItem(title: "Stories", icon: "books.vertical.fill", view: AnyView(StorybookHubView())),
         TabItem(title: "Games", icon: "gamecontroller.fill", view: AnyView(GamesHubView())),
-        TabItem(title: "More", icon: "ellipsis.circle.fill", view: AnyView(ProfessionalMoreView()))
+        TabItem(title: "More", icon: "ellipsis.circle.fill", view: AnyView(ProfessionalMoreView())),
     ]
-    
+
     var body: some View {
         ZStack {
             // Main content with proper safe area handling
@@ -325,7 +328,7 @@ struct EnhancedRootTabView: View {
                 tabs[selectedTab].view
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
-            
+
             // Enhanced Tab Bar
             VStack {
                 Spacer()
@@ -365,17 +368,17 @@ struct EnhancedRootTabView: View {
 struct EnhancedScrollView<Content: View>: View {
     let content: Content
     let bottomPadding: CGFloat
-    
+
     init(bottomPadding: CGFloat = 24, @ViewBuilder content: () -> Content) {
         self.bottomPadding = bottomPadding
         self.content = content()
     }
-    
+
     var body: some View {
         ScrollView {
             VStack {
                 content
-                
+
                 // Bottom spacer to prevent content overlap
                 Color.clear
                     .frame(height: min(bottomPadding, 32))
@@ -388,7 +391,7 @@ struct EnhancedScrollView<Content: View>: View {
             LinearGradient(
                 colors: [
                     Color.clear,
-                    ModernDesignSystem.Colors.shadow.opacity(0.02)
+                    ModernDesignSystem.Colors.shadow.opacity(0.02),
                 ],
                 startPoint: .top,
                 endPoint: .bottom
@@ -440,7 +443,8 @@ struct VisualEffectBlur: UIViewRepresentable {
 enum SafeAreaHelper {
     static func topInset() -> CGFloat {
         guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-              let window = windowScene.windows.first else { return 0 }
+            let window = windowScene.windows.first
+        else { return 0 }
         return window.safeAreaInsets.top
     }
 }

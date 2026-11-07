@@ -82,6 +82,7 @@ struct TeluguAudioButton: View {
     let size: AudioButtonSize
     @State private var isPlaying = false
     @State private var audioPlayer: AVAudioPlayer?
+    @State private var audioPlayerDelegate: AudioPlayerDelegate?
 
     enum AudioButtonSize {
         case small, medium, large
@@ -152,11 +153,13 @@ struct TeluguAudioButton: View {
 
         do {
             audioPlayer = try AVAudioPlayer(contentsOf: url)
-            audioPlayer?.delegate = AudioPlayerDelegate { [self] in
+            let delegate = AudioPlayerDelegate { [self] in
                 withAnimation {
                     isPlaying = false
                 }
             }
+            audioPlayerDelegate = delegate
+            audioPlayer?.delegate = delegate
 
             withAnimation {
                 isPlaying = true

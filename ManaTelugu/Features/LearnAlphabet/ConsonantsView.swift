@@ -5,7 +5,7 @@ struct ConsonantsView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var consonants: [Letter] = []
 
-    // Traditional Telugu consonant order (grouped, simplified up to క్ష)
+    // Traditional Telugu consonant order
     private let consonantOrder = [
         "క", "ఖ", "గ", "ఘ", "ఙ",
         "చ", "ఛ", "జ", "ఝ", "ఞ",
@@ -19,14 +19,25 @@ struct ConsonantsView: View {
 
     var body: some View {
         ZStack {
-            ModernDesignSystem.Colors.backgroundGradient
-                .ignoresSafeArea(.all, edges: .all)
+            ManaTheme.Colors.groupedBackground
+                .ignoresSafeArea()
 
             ScrollView(showsIndicators: false) {
-                VStack(spacing: ModernDesignSystem.Spacing.md) {
+                VStack(alignment: .leading, spacing: ManaTheme.Spacing.md) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Consonants • హల్లులు")
+                            .font(ManaTheme.Typography.title2)
+                            .foregroundColor(ManaTheme.Colors.label)
+
+                        Text("Tap any letter to hear pronunciation and practice tracing")
+                            .font(ManaTheme.Typography.subheadline)
+                            .foregroundColor(ManaTheme.Colors.secondaryLabel)
+                    }
+                    .padding(.horizontal, ManaTheme.Spacing.xs)
+
                     LazyVGrid(
-                        columns: Array(repeating: GridItem(.flexible(), spacing: 16), count: 4),
-                        spacing: 16
+                        columns: Array(repeating: GridItem(.flexible(), spacing: 14), count: 4),
+                        spacing: 14
                     ) {
                         ForEach(Array(consonants.enumerated()), id: \.element.id) { index, letter in
                             NavigationLink {
@@ -34,27 +45,16 @@ struct ConsonantsView: View {
                             } label: {
                                 LetterCardView(letter: letter)
                             }
-                            .buttonStyle(.plain)
-                            .onTapGesture {
-                                HapticsService.shared.buttonTap()
-                            }
+                            .buttonStyle(NativeCardButtonStyle())
                         }
                     }
                 }
-                .padding(ModernDesignSystem.Spacing.md)
-                .padding(.bottom, ModernDesignSystem.Spacing.xl)
+                .padding(ManaTheme.Spacing.screenMarginLarge)
+                .padding(.bottom, 60)
             }
         }
-        .navigationTitle("Consonants (హల్లులు)")
+        .navigationTitle("Consonants")
         .navigationBarTitleDisplayMode(.inline)
-        .navigationBarBackButtonHidden(true)
-        .toolbar {
-            ToolbarItem(placement: .navigationBarLeading) {
-                BackButton {
-                    dismiss()
-                }
-            }
-        }
         .onAppear {
             load()
             session.sessionTimer.start()

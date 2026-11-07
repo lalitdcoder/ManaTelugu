@@ -1681,5 +1681,275 @@
     "imageName": "parrot.png",
     "audioFile": "చిలుక.mp3",
     "theme": "Animals"
+  },
+  {
+    "id": "word_nature_1",
+    "telugu": "ప్రకృతి",
+    "transliteration": "prakruti",
+    "english": "Nature",
+    "imageName": "prakruti.png",
+    "audioFile": "ప్రకృతి.mp3",
+    "theme": "Nature"
+  },
+  {
+    "id": "word_nature_2",
+    "telugu": "భూమి",
+    "transliteration": "bhoomi",
+    "english": "Earth",
+    "imageName": "bhoomi.png",
+    "audioFile": "భూమి.mp3",
+    "theme": "Nature"
+  },
+  {
+    "id": "word_nature_3",
+    "telugu": "ఆకాశం",
+    "transliteration": "aakaasham",
+    "english": "Sky",
+    "imageName": "aakaasham.png",
+    "audioFile": "ఆకాశం.mp3",
+    "theme": "Nature"
+  },
+  {
+    "id": "word_nature_4",
+    "telugu": "గాలి",
+    "transliteration": "gaali",
+    "english": "Air/Wind",
+    "imageName": "gaali.png",
+    "audioFile": "గాలి.mp3",
+    "theme": "Nature"
+  },
+  {
+    "id": "word_nature_5",
+    "telugu": "నీరు",
+    "transliteration": "neeru",
+    "english": "Water",
+    "imageName": "neeru.png",
+    "audioFile": "నీరు.mp3",
+    "theme": "Nature"
+  },
+  {
+    "id": "word_nature_6",
+    "telugu": "చెట్టు",
+    "transliteration": "chettu",
+    "english": "Tree",
+    "imageName": "chettu.png",
+    "audioFile": "చెట్టు.mp3",
+    "theme": "Nature"
+  },
+  {
+    "id": "word_nature_7",
+    "telugu": "పువ్వు",
+    "transliteration": "puvvu",
+    "english": "Flower",
+    "imageName": "puvvu.png",
+    "audioFile": "పువ్వు.mp3",
+    "theme": "Nature"
+  },
+  {
+    "id": "word_nature_8",
+    "telugu": "ఆకు",
+    "transliteration": "aaku",
+    "english": "Leaf",
+    "imageName": "aaku.png",
+    "audioFile": "ఆకు.mp3",
+    "theme": "Nature"
+  },
+  {
+    "id": "word_nature_9",
+    "telugu": "అడవి",
+    "transliteration": "adavi",
+    "english": "Forest",
+    "imageName": "adavi.png",
+    "audioFile": "అడవి.mp3",
+    "theme": "Nature"
+  },
+  {
+    "id": "word_nature_10",
+    "telugu": "గడ్డి",
+    "transliteration": "gaddi",
+    "english": "Grass",
+    "imageName": "gaddi.png",
+    "audioFile": "గడ్డి.mp3",
+    "theme": "Nature"
+  },
+  {
+    "id": "word_nature_11",
+    "telugu": "నది",
+    "transliteration": "nadi",
+    "english": "River",
+    "imageName": "nadi.png",
+    "audioFile": "నది.mp3",
+    "theme": "Nature"
+  },
+  {
+    "id": "word_nature_12",
+    "telugu": "సముద్రం",
+    "transliteration": "samudram",
+    "english": "Ocean/Sea",
+    "imageName": "samudram.png",
+    "audioFile": "సముద్రం.mp3",
+    "theme": "Nature"
+  },
+  {
+    "id": "word_nature_13",
+    "telugu": "వర్షం",
+    "transliteration": "varsham",
+    "english": "Rain",
+    "imageName": "varsham.png",
+    "audioFile": "వర్షం.mp3",
+    "theme": "Nature"
+  },
+  {
+    "id": "word_nature_14",
+    "telugu": "మేఘం",
+    "transliteration": "megham",
+    "english": "Cloud",
+    "imageName": "megham.png",
+    "audioFile": "మేఘం.mp3",
+    "theme": "Nature"
+  },
+  {
+    "id": "word_nature_15",
+    "telugu": "గాలి తుఫాను",
+    "transliteration": "gaali tufaanu",
+    "english": "Storm",
+    "imageName": "gaali_tufaanu.png",
+    "audioFile": "గాలి తుఫాను.mp3",
+    "theme": "Nature"
+  },
+  {
+    "id": "word_nature_16",
+    "telugu": "సూర్యుడు",
+    "transliteration": "sooryudu",
+    "english": "Sun",
+    "imageName": "sooryudu.png",
+    "audioFile": "సూర్యుడు.mp3",
+    "theme": "Nature"
+  },
+  {
+    "id": "word_nature_17",
+    "telugu": "చంద్రుడు",
+    "transliteration": "chandrudu",
+    "english": "Moon",
+    "imageName": "chandrudu.png",
+    "audioFile": "చంద్రుడు.mp3",
+    "theme": "Nature"
+  },
+  {
+    "id": "word_nature_18",
+    "telugu": "నక్షత్రం",
+    "transliteration": "nakshatram",
+    "english": "Star",
+    "imageName": "nakshatram.png",
+    "audioFile": "నక్షత్రం.mp3",
+    "theme": "Nature"
+  },
+  {
+    "id": "word_nature_19",
+    "telugu": "ఉదయం",
+    "transliteration": "udayam",
+    "english": "Morning",
+    "imageName": "udayam.png",
+    "audioFile": "ఉదయం.mp3",
+    "theme": "Nature"
+  },
+  {
+    "id": "word_nature_20",
+    "telugu": "సాయంత్రం",
+    "transliteration": "saayantram",
+    "english": "Evening",
+    "imageName": "saayantram.png",
+    "audioFile": "సాయంత్రం.mp3",
+    "theme": "Nature"
+  },
+  {
+    "id": "word_nature_21",
+    "telugu": "పక్షి",
+    "transliteration": "pakshi",
+    "english": "Bird",
+    "imageName": "pakshi.png",
+    "audioFile": "పక్షి.mp3",
+    "theme": "Nature"
+  },
+  {
+    "id": "word_nature_22",
+    "telugu": "జంతువు",
+    "transliteration": "jantuvu",
+    "english": "Animal",
+    "imageName": "jantuvu.png",
+    "audioFile": "జంతువు.mp3",
+    "theme": "Nature"
+  },
+  {
+    "id": "word_nature_23",
+    "telugu": "చేప",
+    "transliteration": "chepa",
+    "english": "Fish",
+    "imageName": "chepa.png",
+    "audioFile": "చేప.mp3",
+    "theme": "Nature"
+  },
+  {
+    "id": "word_nature_24",
+    "telugu": "పులి",
+    "transliteration": "puli",
+    "english": "Tiger",
+    "imageName": "puli.png",
+    "audioFile": "పులి.mp3",
+    "theme": "Nature"
+  },
+  {
+    "id": "word_nature_25",
+    "telugu": "ఏనుగు",
+    "transliteration": "enugu",
+    "english": "Elephant",
+    "imageName": "enugu.png",
+    "audioFile": "ఏనుగు.mp3",
+    "theme": "Nature"
+  },
+  {
+    "id": "word_nature_26",
+    "telugu": "పర్వతం",
+    "transliteration": "parvatam",
+    "english": "Mountain",
+    "imageName": "parvatam.png",
+    "audioFile": "పర్వతం.mp3",
+    "theme": "Nature"
+  },
+  {
+    "id": "word_nature_27",
+    "telugu": "లోయ",
+    "transliteration": "loya",
+    "english": "Valley",
+    "imageName": "loya.png",
+    "audioFile": "లోయ.mp3",
+    "theme": "Nature"
+  },
+  {
+    "id": "word_nature_28",
+    "telugu": "ఎడారి",
+    "transliteration": "edaari",
+    "english": "Desert",
+    "imageName": "edaari.png",
+    "audioFile": "ఎడారి.mp3",
+    "theme": "Nature"
+  },
+  {
+    "id": "word_nature_29",
+    "telugu": "సరస్సు",
+    "transliteration": "sarassu",
+    "english": "Lake",
+    "imageName": "sarassu.png",
+    "audioFile": "సరస్సు.mp3",
+    "theme": "Nature"
+  },
+  {
+    "id": "word_nature_30",
+    "telugu": "తీరము",
+    "transliteration": "teeramu",
+    "english": "Shore",
+    "imageName": "teeramu.png",
+    "audioFile": "తీరము.mp3",
+    "theme": "Nature"
   }
 ]

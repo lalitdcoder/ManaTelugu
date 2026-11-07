@@ -8,6 +8,7 @@ struct RootTabView: View {
     @State private var currentBadge: GamificationBadge? = nil
     @State private var selectedTab = 0
     @State private var xpChange: Int?
+    @State private var showingOnboarding = false
 
     var body: some View {
         mainTabView
@@ -39,11 +40,14 @@ struct RootTabView: View {
                     onDismiss: {
                         session.gamificationService.dismissNewlyUnlockedBadge()
                         currentBadge = nil
-                        // If there are more badges, they will be handled by the onChange
                     }
                 )
                 .presentationBackground(.regularMaterial)
                 .presentationCornerRadius(AppleHIGDesign.CornerRadius.xl)
+            }
+            .fullScreenCover(isPresented: $showingOnboarding) {
+                OnboardingView()
+                    .environmentObject(session)
             }
             .overlay(alignment: .top) {
                 xpOverlay
@@ -51,6 +55,11 @@ struct RootTabView: View {
             .onChange(of: session.gamificationService.lastXPChange) { _, amount in
                 if let amount = amount {
                     handleXPChange(amount)
+                }
+            }
+            .onAppear {
+                if !UserDefaults.standard.bool(forKey: "isOnboardingCompleted") {
+                    showingOnboarding = true
                 }
             }
     }
@@ -64,16 +73,14 @@ struct RootTabView: View {
     private var mainTabView: some View {
         TabView(selection: $selectedTab) {
             homeTab
-            alphabetTab
-            gamesTab
+            learnTab
+            practiceTab
             moreTab
         }
-        .tint(.professionalBlue)
+        .tint(AppleHIGDesign.Colors.primary)
         .toolbarBackground(.visible, for: .tabBar)
-        .toolbarBackground(Color(uiColor: .systemBackground), for: .tabBar)
-        .toolbarColorScheme(nil, for: .tabBar)
         .onChange(of: selectedTab) { _, _ in
-            HapticsManager.shared.selection()
+            AppleHIGDesign.Haptics.selection()
         }
     }
 
@@ -88,28 +95,26 @@ struct RootTabView: View {
             .accessibilityHint("Navigate to home screen")
     }
 
-    private var alphabetTab: some View {
-        AlphabetHubView()
+    private var learnTab: some View {
+        LearnView()
             .tabItem {
-                Image(
-                    systemName: selectedTab == 1
-                        ? "character.book.closed.fill" : "character.book.closed")
-                Text("Alphabet")
+                Image(systemName: selectedTab == 1 ? "book.fill" : "book")
+                Text("Learn")
             }
             .tag(1)
-            .accessibilityLabel("Alphabet")
-            .accessibilityHint("Learn Telugu letters")
+            .accessibilityLabel("Learn")
+            .accessibilityHint("Explore the 48-module Telugu course")
     }
 
-    private var gamesTab: some View {
-        GamesHubView()
+    private var practiceTab: some View {
+        PracticeView()
             .tabItem {
-                Image(systemName: selectedTab == 2 ? "gamecontroller.fill" : "gamecontroller")
-                Text("Games")
+                Image(systemName: selectedTab == 2 ? "bolt.fill" : "bolt")
+                Text("Practice")
             }
             .tag(2)
-            .accessibilityLabel("Games")
-            .accessibilityHint("Play learning games")
+            .accessibilityLabel("Practice")
+            .accessibilityHint("Practice games and targeted review")
     }
 
     private var moreTab: some View {
@@ -120,7 +125,7 @@ struct RootTabView: View {
             }
             .tag(3)
             .accessibilityLabel("More")
-            .accessibilityHint("Access settings and additional features")
+            .accessibilityHint("Access settings, alphabet reference, and features")
     }
 
     @ViewBuilder
@@ -128,7 +133,7 @@ struct RootTabView: View {
         if let amount = xpChange {
             XPPopUp(amount: amount)
                 .transition(.move(edge: .top).combined(with: .opacity))
-                .padding(.top, 60)  // Below dynamic island/notch
+                .padding(.top, 60)
         }
     }
 
@@ -138,10 +143,8 @@ struct RootTabView: View {
                 xpChange = amount
             }
 
-            // Haptic feedback for XP
-            HapticsManager.shared.notification(.success)
+            AppleHIGDesign.Haptics.success()
 
-            // Hide after delay
             DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
                 withAnimation {
                     xpChange = nil

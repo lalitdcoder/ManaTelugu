@@ -25,7 +25,7 @@ class LocalLeaderboardService: ObservableObject {
         var entries: [LeaderboardEntry] = []
 
         // Add fake users
-        for (index, name) in fakeNames.enumerated() {
+        for (_, name) in fakeNames.enumerated() {
             // Generate scores around the user's score to make it competitive
             let randomVariance = Int.random(in: -500...500)
             let score = max(0, userScore + randomVariance)

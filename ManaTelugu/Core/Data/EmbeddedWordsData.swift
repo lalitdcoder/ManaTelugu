@@ -78,17 +78,47 @@ struct EmbeddedWordsData {
         Word(id: "word_59", telugu: "మెదడు", transliteration: "medaḍu", english: "Brain", imageName: "medaḍu", audioFile: "medaḍu.mp3", theme: "Body Parts"),
         Word(id: "word_60", telugu: "ఎముక", transliteration: "emuka", english: "Bone", imageName: "emuka", audioFile: "emuka.mp3", theme: "Body Parts"),
         
-        // Nature Theme
-        Word(id: "word_61", telugu: "సూర్యుడు", transliteration: "sūryuḍu", english: "Sun", imageName: "sūryuḍu", audioFile: "sūryuḍu.mp3", theme: "Nature"),
-        Word(id: "word_62", telugu: "చంద్రుడు", transliteration: "caṁdruḍu", english: "Moon", imageName: "caṁdruḍu", audioFile: "caṁdruḍu.mp3", theme: "Nature"),
-        Word(id: "word_63", telugu: "నక్షత్రాలు", transliteration: "nakṣatrālu", english: "Stars", imageName: "nakṣatrālu", audioFile: "nakṣatrālu.mp3", theme: "Nature"),
-        Word(id: "word_64", telugu: "ఆకాశం", transliteration: "ākāśaṁ", english: "Sky", imageName: "ākāśaṁ", audioFile: "ākāśaṁ.mp3", theme: "Nature"),
-        Word(id: "word_65", telugu: "భూమి", transliteration: "bhūmi", english: "Earth", imageName: "bhūmi", audioFile: "bhūmi.mp3", theme: "Nature"),
-        Word(id: "word_66", telugu: "వృక్షం", transliteration: "vṛkṣaṁ", english: "Tree", imageName: "vṛkṣaṁ", audioFile: "vṛkṣaṁ.mp3", theme: "Nature"),
-        Word(id: "word_67", telugu: "పువ్వు", transliteration: "puvvu", english: "Flower", imageName: "puvvu", audioFile: "puvvu.mp3", theme: "Nature"),
-        Word(id: "word_68", telugu: "ఆకు", transliteration: "āku", english: "Leaf", imageName: "āku", audioFile: "āku.mp3", theme: "Nature"),
-        Word(id: "word_69", telugu: "పర్వతం", transliteration: "parvataṁ", english: "Mountain", imageName: "parvataṁ", audioFile: "parvataṁ.mp3", theme: "Nature"),
-        Word(id: "word_70", telugu: "నది", transliteration: "nadi", english: "River", imageName: "nadi", audioFile: "nadi.mp3", theme: "Nature"),
+        // Nature Theme (Basic Nature Words)
+        Word(id: "word_nature_1", telugu: "ప్రకృతి", transliteration: "prakruti", english: "Nature", imageName: "prakruti", audioFile: "ప్రకృతి.mp3", theme: "Nature"),
+        Word(id: "word_nature_2", telugu: "భూమి", transliteration: "bhoomi", english: "Earth", imageName: "bhoomi", audioFile: "భూమి.mp3", theme: "Nature"),
+        Word(id: "word_nature_3", telugu: "ఆకాశం", transliteration: "aakaasham", english: "Sky", imageName: "aakaasham", audioFile: "ఆకాశం.mp3", theme: "Nature"),
+        Word(id: "word_nature_4", telugu: "గాలి", transliteration: "gaali", english: "Air/Wind", imageName: "gaali", audioFile: "గాలి.mp3", theme: "Nature"),
+        Word(id: "word_nature_5", telugu: "నీరు", transliteration: "neeru", english: "Water", imageName: "neeru", audioFile: "నీరు.mp3", theme: "Nature"),
+        
+        // Nature Theme (Plants & Land)
+        Word(id: "word_nature_6", telugu: "చెట్టు", transliteration: "chettu", english: "Tree", imageName: "chettu", audioFile: "చెట్టు.mp3", theme: "Nature"),
+        Word(id: "word_nature_7", telugu: "పువ్వు", transliteration: "puvvu", english: "Flower", imageName: "puvvu", audioFile: "పువ్వు.mp3", theme: "Nature"),
+        Word(id: "word_nature_8", telugu: "ఆకు", transliteration: "aaku", english: "Leaf", imageName: "aaku", audioFile: "ఆకు.mp3", theme: "Nature"),
+        Word(id: "word_nature_9", telugu: "అడవి", transliteration: "adavi", english: "Forest", imageName: "adavi", audioFile: "అడవి.mp3", theme: "Nature"),
+        Word(id: "word_nature_10", telugu: "గడ్డి", transliteration: "gaddi", english: "Grass", imageName: "gaddi", audioFile: "గడ్డి.mp3", theme: "Nature"),
+        
+        // Nature Theme (Water & Weather)
+        Word(id: "word_nature_11", telugu: "నది", transliteration: "nadi", english: "River", imageName: "nadi", audioFile: "నది.mp3", theme: "Nature"),
+        Word(id: "word_nature_12", telugu: "సముద్రం", transliteration: "samudram", english: "Ocean/Sea", imageName: "samudram", audioFile: "సముద్రం.mp3", theme: "Nature"),
+        Word(id: "word_nature_13", telugu: "వర్షం", transliteration: "varsham", english: "Rain", imageName: "varsham", audioFile: "వర్షం.mp3", theme: "Nature"),
+        Word(id: "word_nature_14", telugu: "మేఘం", transliteration: "megham", english: "Cloud", imageName: "megham", audioFile: "మేఘం.mp3", theme: "Nature"),
+        Word(id: "word_nature_15", telugu: "గాలి తుఫాను", transliteration: "gaali tufaanu", english: "Storm", imageName: "gaali_tufaanu", audioFile: "గాలి తుఫాను.mp3", theme: "Nature"),
+        
+        // Nature Theme (Sky & Time)
+        Word(id: "word_nature_16", telugu: "సూర్యుడు", transliteration: "sooryudu", english: "Sun", imageName: "sooryudu", audioFile: "సూర్యుడు.mp3", theme: "Nature"),
+        Word(id: "word_nature_17", telugu: "చంద్రుడు", transliteration: "chandrudu", english: "Moon", imageName: "chandrudu", audioFile: "చంద్రుడు.mp3", theme: "Nature"),
+        Word(id: "word_nature_18", telugu: "నక్షత్రం", transliteration: "nakshatram", english: "Star", imageName: "nakshatram", audioFile: "నక్షత్రం.mp3", theme: "Nature"),
+        Word(id: "word_nature_19", telugu: "ఉదయం", transliteration: "udayam", english: "Morning", imageName: "udayam", audioFile: "ఉదయం.mp3", theme: "Nature"),
+        Word(id: "word_nature_20", telugu: "సాయంత్రం", transliteration: "saayantram", english: "Evening", imageName: "saayantram", audioFile: "సాయంత్రం.mp3", theme: "Nature"),
+        
+        // Nature Theme (Animals)
+        Word(id: "word_nature_21", telugu: "పక్షి", transliteration: "pakshi", english: "Bird", imageName: "pakshi", audioFile: "పక్షి.mp3", theme: "Nature"),
+        Word(id: "word_nature_22", telugu: "జంతువు", transliteration: "jantuvu", english: "Animal", imageName: "jantuvu", audioFile: "జంతువు.mp3", theme: "Nature"),
+        Word(id: "word_nature_23", telugu: "చేప", transliteration: "chepa", english: "Fish", imageName: "chepa", audioFile: "చేప.mp3", theme: "Nature"),
+        Word(id: "word_nature_24", telugu: "పులి", transliteration: "puli", english: "Tiger", imageName: "puli", audioFile: "పులి.mp3", theme: "Nature"),
+        Word(id: "word_nature_25", telugu: "ఏనుగు", transliteration: "enugu", english: "Elephant", imageName: "enugu", audioFile: "ఏనుగు.mp3", theme: "Nature"),
+        
+        // Nature Theme (Landscapes)
+        Word(id: "word_nature_26", telugu: "పర్వతం", transliteration: "parvatam", english: "Mountain", imageName: "parvatam", audioFile: "పర్వతం.mp3", theme: "Nature"),
+        Word(id: "word_nature_27", telugu: "లోయ", transliteration: "loya", english: "Valley", imageName: "loya", audioFile: "లోయ.mp3", theme: "Nature"),
+        Word(id: "word_nature_28", telugu: "ఎడారి", transliteration: "edaari", english: "Desert", imageName: "edaari", audioFile: "ఎడారి.mp3", theme: "Nature"),
+        Word(id: "word_nature_29", telugu: "సరస్సు", transliteration: "sarassu", english: "Lake", imageName: "sarassu", audioFile: "సరస్సు.mp3", theme: "Nature"),
+        Word(id: "word_nature_30", telugu: "తీరము", transliteration: "teeramu", english: "Shore", imageName: "teeramu", audioFile: "తీరము.mp3", theme: "Nature"),
         
         // Time Theme
         Word(id: "word_71", telugu: "ఉదయం", transliteration: "udayaṁ", english: "Morning", imageName: "udayaṁ", audioFile: "udayaṁ.mp3", theme: "Time"),

@@ -140,6 +140,8 @@ struct ModernThemeCardView: View {
         case "Daily Actions": return "figure.walk"
         case "Body Parts": return "figure.stand"
         case "Weather": return "cloud.sun.fill"
+        case "Nature": return "leaf.fill"
+        case "Time": return "clock.fill"
         default: return "books.vertical"
         }
     }

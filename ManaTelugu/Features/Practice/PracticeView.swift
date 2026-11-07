@@ -2,442 +2,238 @@ import SwiftUI
 
 struct PracticeView: View {
     @EnvironmentObject var session: AppSession
-    @Environment(\.dismiss) private var dismiss
-    @State private var practiceItems: [PracticeItem] = []
-
-    struct PracticeItem: Identifiable {
-        let id = UUID()
-        let telugu: String
-        let transliteration: String
-        let english: String
-        let audioFile: String
-        var difficulty: Difficulty = .unknown
-    }
-
-    enum Difficulty {
-        case easy, medium, hard, unknown
-    }
+    @StateObject private var learnerRepo = LearnerRepository.shared
+    @State private var selectedSkillPractice: String? = nil
 
     var body: some View {
         NavigationStack {
-            ZStack {
-                // Stronger gradient background
-                LinearGradient(
-                    colors: [
-                        Color(red: 0.4, green: 0.5, blue: 0.9).opacity(0.3),
-                        Color(red: 0.46, green: 0.29, blue: 0.64).opacity(0.2),
-                    ],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-                .ignoresSafeArea()
+            ScrollView {
+                VStack(alignment: .leading, spacing: 24) {
+                    // Header
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Targeted Practice")
+                            .font(.largeTitle.bold())
+                            .foregroundColor(.primary)
 
-                EnhancedScrollView {
-                    VStack(alignment: .leading, spacing: 32) {
-                        // Header - Apple-style with proper spacing
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("Practice")
-                                .font(.largeTitle)
-                                .fontWeight(.bold)
-                                .foregroundColor(.primary)
-                                .accessibilityAddTraits(.isHeader)
-                            Text("Sharpen your Telugu skills with targeted practice")
-                                .font(.subheadline)
-                                .foregroundColor(.secondary)
-                        }
-                        .padding(.horizontal, 20)
-                        .padding(.top, 8)
-                        .accessibilityElement(children: .combine)
-
-                        // Games Section - Apple-style section header
-                        VStack(alignment: .leading, spacing: 16) {
-                            HStack(spacing: 12) {
-                                Image(systemName: "gamecontroller.fill")
-                                    .font(.title2)
-                                    .foregroundColor(.accentColor)
-                                Text("Interactive Games")
-                                    .font(.title2)
-                                    .fontWeight(.semibold)
-                                    .foregroundColor(.primary)
-                            }
-                            .padding(.horizontal, ModernDesignSystem.Spacing.lg)
-
-                            VStack(spacing: 12) {
-                                PracticeSectionCard(
-                                    title: "Vocabulary Match",
-                                    icon: "rectangle.stack.fill",
-                                    accent: ModernDesignSystem.Colors.funBlue,
-                                    action: {},
-                                    content: {
-                                        Text("Match Telugu words with their English meanings.")
-                                            .font(.subheadline)
-                                            .foregroundColor(.secondary)
-                                    },
-                                    destination: AnyView(
-                                        VocabularyCardsView(theme: "Animals").environmentObject(
-                                            session))
-                                )
-
-                                PracticeSectionCard(
-                                    title: "Sentence Builder",
-                                    icon: "text.bubble.fill",
-                                    accent: ModernDesignSystem.Colors.funGreen,
-                                    action: {},
-                                    content: {
-                                        Text("Build Telugu sentences by arranging words correctly.")
-                                            .font(.subheadline)
-                                            .foregroundColor(.secondary)
-                                    },
-                                    destination: AnyView(
-                                        SentenceBuilderGameView().environmentObject(session))
-                                )
-
-                                PracticeSectionCard(
-                                    title: "Listening Challenge",
-                                    icon: "ear.fill",
-                                    accent: ModernDesignSystem.Colors.funPink,
-                                    action: {},
-                                    content: {
-                                        Text("Listen to Telugu words and choose the right meaning.")
-                                            .font(.subheadline)
-                                            .foregroundColor(.secondary)
-                                    },
-                                    destination: AnyView(
-                                        ListeningChallengeGameView().environmentObject(session))
-                                )
-
-                                PracticeSectionCard(
-                                    title: "Sound Match",
-                                    icon: "speaker.wave.2.fill",
-                                    accent: ModernDesignSystem.Colors.funYellow,
-                                    action: {},
-                                    content: {
-                                        Text(
-                                            "Listen to the sound and pick the right letter or word."
-                                        )
-                                        .font(.subheadline)
-                                        .foregroundColor(.secondary)
-                                    },
-                                    destination: AnyView(
-                                        SoundMatchGameView().environmentObject(session))
-                                )
-
-                                PracticeSectionCard(
-                                    title: "Card Match",
-                                    icon: "arrow.left.arrow.right",
-                                    accent: ModernDesignSystem.Colors.funBlue,
-                                    action: {},
-                                    content: {
-                                        Text("Memory match game with Telugu letters.")
-                                            .font(.subheadline)
-                                            .foregroundColor(.secondary)
-                                    },
-                                    destination: AnyView(
-                                        CardMatchGameView().environmentObject(session))
-                                )
-
-                                PracticeSectionCard(
-                                    title: "Trace Letters",
-                                    icon: "pencil.tip",
-                                    accent: ModernDesignSystem.Colors.funGreen,
-                                    action: {},
-                                    content: {
-                                        Text("Practice writing letters by tracing them.")
-                                            .font(.subheadline)
-                                            .foregroundColor(.secondary)
-                                    },
-                                    destination: AnyView(TraceGameView().environmentObject(session))
-                                )
-
-                            }
-                            .padding(.horizontal, ModernDesignSystem.Spacing.lg)
-                        }
-
-                        // Quizzes Section - Apple-style section header
-                        VStack(alignment: .leading, spacing: 16) {
-                            HStack(spacing: 12) {
-                                Image(systemName: "questionmark.circle.fill")
-                                    .font(.title2)
-                                    .foregroundColor(.accentColor)
-                                Text("Knowledge Quizzes")
-                                    .font(.title2)
-                                    .fontWeight(.semibold)
-                                    .foregroundColor(.primary)
-                            }
-                            .padding(.horizontal, ModernDesignSystem.Spacing.lg)
-
-                            VStack(spacing: 12) {
-                                PracticeSectionCard(
-                                    title: "Vowels Quiz",
-                                    icon: "textformat",
-                                    accent: ModernDesignSystem.Colors.funYellow,
-                                    action: {},
-                                    content: {
-                                        Text("Test your knowledge of Telugu vowels: అ ఆ ఇ ఈ...")
-                                            .font(.subheadline)
-                                            .foregroundColor(.secondary)
-                                    },
-                                    destination: AnyView(
-                                        LettersQuizView(scope: .vowels).environmentObject(session))
-                                )
-
-                                PracticeSectionCard(
-                                    title: "Consonants Quiz",
-                                    icon: "textformat.abc",
-                                    accent: ModernDesignSystem.Colors.funBlue,
-                                    action: {},
-                                    content: {
-                                        Text("Challenge yourself with consonants: క నుండి క్ష వరకు")
-                                            .font(.subheadline)
-                                            .foregroundColor(.secondary)
-                                    },
-                                    destination: AnyView(
-                                        LettersQuizView(scope: .consonants).environmentObject(
-                                            session))
-                                )
-
-                                PracticeSectionCard(
-                                    title: "Complete Letters Quiz",
-                                    icon: "square.grid.2x2",
-                                    accent: ModernDesignSystem.Colors.funGreen,
-                                    action: {},
-                                    content: {
-                                        Text("Mixed practice with all Telugu letters.")
-                                            .font(.subheadline)
-                                            .foregroundColor(.secondary)
-                                    },
-                                    destination: AnyView(
-                                        LettersQuizView(scope: .all).environmentObject(session))
-                                )
-                            }
-                            .padding(.horizontal, ModernDesignSystem.Spacing.lg)
-                        }
-
+                        Text("Strengthen your Telugu skills based on your learning journey.")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
                     }
-                    .padding(.vertical, ModernDesignSystem.Spacing.lg)
+
+                    // Section 1: Mistakes Review (if any active mistakes exist)
+                    if !learnerRepo.activeMistakes.isEmpty {
+                        mistakesReviewCard
+                    }
+
+                    // Section 2: Recommended Skills Focus Grid
+                    skillsFocusSection
+
+                    // Section 3: Interactive Skills Practice
+                    interactiveGamesSection
                 }
+                .padding(.horizontal)
+                .padding(.vertical, 12)
             }
+            .background(Color(uiColor: .systemGroupedBackground))
             .navigationTitle("Practice")
-            .navigationBarTitleDisplayMode(.inline)
-            .navigationBarBackButtonHidden(true)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    BackButton {
-                        dismiss()
+            .sheet(item: $selectedSkillPractice) { skill in
+                skillPracticeSheet(skill: skill)
+            }
+        }
+    }
+
+    // MARK: - Subviews
+    private var mistakesReviewCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .foregroundColor(.orange)
+                Text("\(learnerRepo.activeMistakes.count) Unresolved Mistakes")
+                    .font(.headline)
+                    .foregroundColor(.primary)
+                Spacer()
+            }
+
+            Text("Review and clear phrases you recently struggled with during lessons.")
+                .font(.caption)
+                .foregroundColor(.secondary)
+
+            Button {
+                selectedSkillPractice = "mistakes"
+                HapticsManager.shared.impact(.medium)
+            } label: {
+                Text("Review Recent Mistakes")
+                    .font(.subheadline.bold())
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 12)
+                    .background(Color.orange)
+                    .cornerRadius(12)
+            }
+        }
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color(uiColor: .secondarySystemGroupedBackground))
+                .shadow(color: .black.opacity(0.04), radius: 6, x: 0, y: 3)
+        )
+    }
+
+    private var skillsFocusSection: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Text("Skills Breakdown")
+                .font(.title3.bold())
+                .foregroundColor(.primary)
+
+            let skills = [
+                ("comprehension", "Comprehension", "brain.head.profile", Color.purple),
+                ("vocabulary", "Vocabulary", "book.fill", Color.blue),
+                ("reading", "Reading Script", "eye.fill", Color.green),
+                ("sentence_construction", "Sentence Building", "character.cursor", Color.orange),
+                ("listening", "Listening", "speaker.wave.2.fill", Color.pink),
+                ("speaking", "Speaking Practice", "mic.fill", Color.red)
+            ]
+
+            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
+                ForEach(skills, id: \.0) { key, title, icon, color in
+                    let score = learnerRepo.skillScores[key] ?? 0.5
+                    VStack(alignment: .leading, spacing: 10) {
+                        HStack {
+                            Image(systemName: icon)
+                                .foregroundColor(color)
+                            Spacer()
+                            Text("\(Int(score * 100))%")
+                                .font(.caption.bold())
+                                .foregroundColor(color)
+                        }
+
+                        Text(title)
+                            .font(.subheadline.bold())
+                            .foregroundColor(.primary)
+
+                        ProgressView(value: score)
+                            .tint(color)
                     }
+                    .padding(14)
+                    .background(
+                        RoundedRectangle(cornerRadius: 14)
+                            .fill(Color(uiColor: .secondarySystemGroupedBackground))
+                    )
                 }
             }
         }
-        .onAppear {
-            loadPracticeItems()
-        }
-        .tabItem {
-            Image(systemName: "book")
-            Text("Practice")
+    }
+
+    private var interactiveGamesSection: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Text("Skill Practice Modules")
+                .font(.title3.bold())
+                .foregroundColor(.primary)
+
+            VStack(spacing: 12) {
+                practiceRowCard(
+                    title: "Vocabulary Match",
+                    subtitle: "Match Telugu terms with English meanings",
+                    icon: "rectangle.stack.fill",
+                    color: .blue,
+                    destination: AnyView(VocabularyCardsView(theme: "General").environmentObject(session))
+                )
+
+                practiceRowCard(
+                    title: "Sentence Builder",
+                    subtitle: "Construct proper Telugu sentences step-by-step",
+                    icon: "text.bubble.fill",
+                    color: .orange,
+                    destination: AnyView(SentenceBuilderGameView().environmentObject(session))
+                )
+
+                practiceRowCard(
+                    title: "Listening Challenge",
+                    subtitle: "Identify spoken Telugu words & pronunciations",
+                    icon: "ear.fill",
+                    color: .pink,
+                    destination: AnyView(ListeningChallengeGameView().environmentObject(session))
+                )
+
+                practiceRowCard(
+                    title: "Trace & Write Script",
+                    subtitle: "Practice writing Telugu letters accurately",
+                    icon: "pencil.tip",
+                    color: .green,
+                    destination: AnyView(TraceGameView().environmentObject(session))
+                )
+            }
         }
     }
 
-    private func loadPracticeItems() {
-        // Load a mix of letters and words for practice
-        let letters = session.dataRepository.letters.prefix(5)
-        let words = session.dataRepository.words.prefix(5)
-
-        var items: [PracticeItem] = []
-
-        for letter in letters {
-            items.append(
-                PracticeItem(
-                    telugu: letter.character,
-                    transliteration: letter.romanization,
-                    english: letter.meaning,
-                    audioFile: letter.audioFileName ?? ""
-                ))
-        }
-
-        for word in words {
-            items.append(
-                PracticeItem(
-                    telugu: word.telugu,
-                    transliteration: word.transliteration,
-                    english: word.english,
-                    audioFile: word.audioFile
-                ))
-        }
-
-        practiceItems = items
-    }
-}
-
-// MARK: - Practice Section Card
-struct PracticeSectionCard<Content: View>: View {
-    let title: String
-    let icon: String
-    let accent: Color
-    let action: () -> Void
-    let content: () -> Content
-    let destination: AnyView
-    @EnvironmentObject var session: AppSession
-    @State private var isPressed = false
-
-    var body: some View {
-        NavigationButton(
-            destination: destination,
-            hapticStyle: .medium,
-            loadingMessage: "Loading practice..."
-        ) {
-            HStack(spacing: ModernDesignSystem.Spacing.md) {
-                // Apple-style icon container
+    private func practiceRowCard(title: String, subtitle: String, icon: String, color: Color, destination: AnyView) -> some View {
+        NavigationLink(destination: destination) {
+            HStack(spacing: 16) {
                 ZStack {
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(accent.opacity(0.1))
-                        .frame(width: 50, height: 50)
+                    Circle()
+                        .fill(color.opacity(0.12))
+                        .frame(width: 44, height: 44)
                     Image(systemName: icon)
-                        .font(.title2)
-                        .fontWeight(.medium)
-                        .foregroundColor(accent)
-                        .accessibilityHidden(true)  // Icon is decorative
+                        .font(.headline)
+                        .foregroundColor(color)
                 }
 
-                VStack(alignment: .leading, spacing: ModernDesignSystem.Spacing.tiny) {
-                    (Text(title) as Text)
-                        .font(ModernDesignSystem.Typography.headline)
-                        .fontWeight(.semibold)
-                        .foregroundColor(ModernDesignSystem.Colors.primaryText)
-                        .multilineTextAlignment(.leading)
-                    content()
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(title)
+                        .font(.body.bold())
+                        .foregroundColor(.primary)
+                    Text(subtitle)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
                 }
 
                 Spacer()
 
-                // Apple-style chevron
                 Image(systemName: "chevron.right")
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(ModernDesignSystem.Colors.tertiaryText)
-                    .accessibilityHidden(true)  // Decorative indicator
+                    .font(.caption.bold())
+                    .foregroundColor(.secondary)
             }
-            .padding(.horizontal, ModernDesignSystem.Spacing.md)
-            .padding(.vertical, ModernDesignSystem.Spacing.regular)
+            .padding()
             .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(ModernDesignSystem.Colors.surfaceSecondary)
-                    .shadow(color: .black.opacity(0.05), radius: 1, x: 0, y: 1)
+                RoundedRectangle(cornerRadius: 14)
+                    .fill(Color(uiColor: .secondarySystemGroupedBackground))
             )
         }
-        .accessibilityElement(children: .combine)
-        .accessibilityAddTraits(.isButton)
-        .accessibilityHint("Double tap to start this practice activity")
+        .buttonStyle(.plain)
+    }
+
+    private func skillPracticeSheet(skill: String) -> some View {
+        VStack(spacing: 20) {
+            Text("Reviewing \(skill == "mistakes" ? "Recent Mistakes" : skill.capitalized)")
+                .font(.title2.bold())
+                .padding(.top)
+
+            if learnerRepo.activeMistakes.isEmpty {
+                Text("Great job! You have no unresolved mistakes right now.")
+                    .foregroundColor(.secondary)
+                    .padding()
+            } else {
+                Text("\(learnerRepo.activeMistakes.count) items ready for practice.")
+                    .foregroundColor(.secondary)
+            }
+
+            Spacer()
+
+            Button("Clear All Reviewed Mistakes") {
+                learnerRepo.activeMistakes.removeAll()
+                selectedSkillPractice = nil
+            }
+            .font(.headline)
+            .foregroundColor(.white)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 14)
+            .background(Color.orange)
+            .cornerRadius(12)
+            .padding()
+        }
     }
 }
 
-struct PracticeItemView: View {
-    @EnvironmentObject var session: AppSession
-    let item: PracticeView.PracticeItem
-    @State private var showingOptions = false
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: ModernDesignSystem.Spacing.sm) {
-            (Text(item.telugu) as Text)
-                .font(ModernDesignSystem.Typography.title1)
-                .foregroundColor(ModernDesignSystem.Colors.primaryText)
-
-            Text(item.transliteration)
-                .font(ModernDesignSystem.Typography.body)
-                .foregroundColor(ModernDesignSystem.Colors.secondaryText)
-
-            if showingOptions {
-                Text(item.english)
-                    .font(ModernDesignSystem.Typography.body)
-                    .foregroundColor(ModernDesignSystem.Colors.primaryText)
-                    .padding(.bottom, ModernDesignSystem.Spacing.sm)
-
-                HStack(spacing: ModernDesignSystem.Spacing.md) {
-                    EnhancedButton(
-                        interaction: .medium,
-                        isLoading: false,
-                        isEnabled: true,
-                        action: {
-                            // Mark as hard
-                            HapticsManager.shared.notification(.warning)
-                        },
-                        content: {
-                            Text("Hard")
-                                .font(ModernDesignSystem.Typography.caption)
-                                .padding(.horizontal, ModernDesignSystem.Spacing.lg)
-                                .padding(.vertical, ModernDesignSystem.Spacing.sm)
-                                .background(ModernDesignSystem.Colors.warning)
-                                .foregroundColor(.white)
-                                .cornerRadius(20)
-                        }
-                    )
-                    .frame(
-                        minWidth: ModernDesignSystem.Spacing.minimumTouchTarget,
-                        minHeight: ModernDesignSystem.Spacing.minimumTouchTarget
-                    )
-                    .accessibilityLabel("Mark as hard")
-                    .accessibilityHint("This practice item was difficult")
-                    .accessibilityAddTraits(.isButton)
-
-                    EnhancedButton(
-                        interaction: .medium,
-                        isLoading: false,
-                        isEnabled: true,
-                        action: {
-                            // Mark as medium
-                            HapticsManager.shared.impact(.light)
-                        },
-                        content: {
-                            Text("Okay")
-                                .font(ModernDesignSystem.Typography.caption)
-                                .padding(.horizontal, ModernDesignSystem.Spacing.lg)
-                                .padding(.vertical, ModernDesignSystem.Spacing.sm)
-                                .background(ModernDesignSystem.Colors.primary)
-                                .foregroundColor(.white)
-                                .cornerRadius(20)
-                        }
-                    )
-                    .frame(
-                        minWidth: ModernDesignSystem.Spacing.minimumTouchTarget,
-                        minHeight: ModernDesignSystem.Spacing.minimumTouchTarget
-                    )
-                    .accessibilityLabel("Mark as okay")
-                    .accessibilityHint("This practice item was moderately difficult")
-                    .accessibilityAddTraits(.isButton)
-
-                    EnhancedButton(
-                        interaction: .medium,
-                        isLoading: false,
-                        isEnabled: true,
-                        action: {
-                            // Mark as easy
-                            HapticsManager.shared.notification(.success)
-                        },
-                        content: {
-                            Text("Easy")
-                                .font(ModernDesignSystem.Typography.caption)
-                                .padding(.horizontal, ModernDesignSystem.Spacing.lg)
-                                .padding(.vertical, ModernDesignSystem.Spacing.sm)
-                                .background(ModernDesignSystem.Colors.success)
-                                .foregroundColor(.white)
-                                .cornerRadius(20)
-                        }
-                    )
-                    .frame(
-                        minWidth: ModernDesignSystem.Spacing.minimumTouchTarget,
-                        minHeight: ModernDesignSystem.Spacing.minimumTouchTarget
-                    )
-                    .accessibilityLabel("Mark as easy")
-                    .accessibilityHint("This practice item was easy")
-                    .accessibilityAddTraits(.isButton)
-                }
-            }
-        }
-        .padding(ModernDesignSystem.Spacing.md)
-        .background(ModernDesignSystem.Colors.surfaceSecondary)
-        .cornerRadius(12)
-        .onTapGesture {
-            withAnimation {
-                showingOptions.toggle()
-            }
-        }
-    }
+extension String: Identifiable {
+    public var id: String { self }
 }

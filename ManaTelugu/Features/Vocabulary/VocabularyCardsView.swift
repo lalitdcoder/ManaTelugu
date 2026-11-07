@@ -8,8 +8,6 @@ struct VocabularyCardsView: View {
     @State private var currentIndex = 0
     @State private var showingTranslation = true
     @State private var isPlaying = false
-    @State private var showAlert = false
-    @State private var alertMessage = ""
 
     var currentWord: Word? {
         guard currentIndex < words.count else { return nil }
@@ -106,8 +104,6 @@ struct VocabularyCardsView: View {
                             .cornerRadius(10)
                             .onTapGesture {
                                 HapticFeedback.medium()
-                                alertMessage = "Audio button tapped! File: \(word.audioFile)"
-                                showAlert = true
                                 session.audioService.play(name: word.audioFile, rate: 1.0)
                             }
                             .frame(minWidth: 44, minHeight: 44)
@@ -193,11 +189,6 @@ struct VocabularyCardsView: View {
                 Spacer()
             }
             .padding(.vertical)
-        }
-        .alert("Audio Debug", isPresented: $showAlert) {
-            Button("OK", role: .cancel) {}
-        } message: {
-            Text(alertMessage)
         }
         .onAppear {
             print("🚀 VocabularyCardsView appeared for theme: \(theme)")

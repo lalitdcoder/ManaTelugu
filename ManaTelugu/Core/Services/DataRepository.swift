@@ -83,38 +83,30 @@ class DataRepository: ObservableObject {
         error = nil
 
         Task {
+            // Sequential loading to ensure specific error context
             do {
-                // Sequential loading to ensure specific error context
-                do {
-                    self.letters = try await loadLetters()
-                } catch {
-                    print("⚠️ Letters load failed, using fallbacks: \(error.localizedDescription)")
-                    self.letters = fallbackLetters()
-                }
-
-                do {
-                    self.words = try await loadWords()
-                } catch {
-                    print("⚠️ Words load failed, using fallbacks: \(error.localizedDescription)")
-                    self.words = EmbeddedWordsData.words
-                }
-
-                do {
-                    self.lessons = try await loadLessons()
-                } catch {
-                    print("⚠️ Lessons load failed, using fallbacks: \(error.localizedDescription)")
-                    self.lessons = fallbackLessons()
-                }
-
-                await MainActor.run {
-                    self.isLoading = false
-                }
+                self.letters = try await loadLetters()
             } catch {
-                await MainActor.run {
-                    self.error = .loadingFailed(
-                        "Essential data is missing or corrupted. Please restart the app.")
-                    self.isLoading = false
-                }
+                print("⚠️ Letters load failed, using fallbacks: \(error.localizedDescription)")
+                self.letters = fallbackLetters()
+            }
+
+            do {
+                self.words = try await loadWords()
+            } catch {
+                print("⚠️ Words load failed, using fallbacks: \(error.localizedDescription)")
+                self.words = EmbeddedWordsData.words
+            }
+
+            do {
+                self.lessons = try await loadLessons()
+            } catch {
+                print("⚠️ Lessons load failed, using fallbacks: \(error.localizedDescription)")
+                self.lessons = fallbackLessons()
+            }
+
+            await MainActor.run {
+                self.isLoading = false
             }
         }
     }

@@ -25,6 +25,7 @@ class GamificationViewModel: ObservableObject {
 
     // MARK: - Dependencies
     private let gamificationService: GamificationService
+    private let stickerService = StickerService()
     private let userDefaults: UserDefaults
     private var cancellables = Set<AnyCancellable>()
 
@@ -96,8 +97,9 @@ class GamificationViewModel: ObservableObject {
         recentXPEvents = Array(state.xpHistory.suffix(10))
 
         // Update stickers
-        let allStickerIDs = state.collectedStickerIDs
-        // Note: You'll need to get actual sticker objects from StickerService
+        totalStickers = stickerService.allStickers
+        let collectedIDs = Set(state.collectedStickerIDs)
+        collectedStickers = totalStickers.filter { collectedIDs.contains($0.id) }
 
         // Update hearts (if using heart system)
         // hearts = state.hearts ?? maxHearts

@@ -45,7 +45,10 @@ class AppSession: ObservableObject {
     @Published var recentAchievements: [TeluguAchievementBadge.Achievement] = []
     @Published var teluguLetters: [Letter] = []
     let stickerService = StickerService()
-    let sttService = SarvamSpeechToTextService()
+
+    var learnedLettersSet: Set<String> {
+        Set(UserDefaults.standard.stringArray(forKey: "learnedLettersSet") ?? [])
+    }
 
     private var cancellables = Set<AnyCancellable>()
 
@@ -168,8 +171,6 @@ class AppSession: ObservableObject {
     }
 
     private func loadRecentAchievements() async {
-        // Load achievements from persistence or keep empty
-        // For now, we'll start with empty for new users
         if UserDefaults.standard.bool(forKey: "hasLaunchedBefore") {
             // Load from somewhere if needed, or keep empty
         } else {
@@ -178,7 +179,6 @@ class AppSession: ObservableObject {
     }
 
     private func loadUserProgress() {
-        // Check if first launch
         let hasLaunchedBefore = UserDefaults.standard.bool(forKey: "hasLaunchedBefore")
 
         if hasLaunchedBefore {
@@ -191,7 +191,6 @@ class AppSession: ObservableObject {
             masteredWords = UserDefaults.standard.integer(forKey: "masteredWords")
             completedLessons = UserDefaults.standard.integer(forKey: "completedLessons")
         } else {
-            // First launch defaults
             currentStreak = 0
             totalXP = 0
             todayXP = 0
@@ -201,12 +200,10 @@ class AppSession: ObservableObject {
             masteredWords = 0
             completedLessons = 0
 
-            // Mark as launched
             UserDefaults.standard.set(true, forKey: "hasLaunchedBefore")
             saveAllProgress()
         }
 
-        // Safety checks
         if dailyGoal == 0 { dailyGoal = 100 }
         if level == 0 { level = 1 }
     }
@@ -214,7 +211,7 @@ class AppSession: ObservableObject {
     // MARK: - Progress Updates
     func updateProgress(xp: Int = 0, letters: Int = 0, words: Int = 0, lessons: Int = 0) {
         if xp > 0 {
-            awardXP(xp, type: .quizCompleted)  // Default to quiz completed for updateProgress
+            awardXP(xp, type: .quizCompleted)
         }
 
         if letters > 0 {
@@ -241,10 +238,9 @@ class AppSession: ObservableObject {
 
     func addLearningTime(minutes: Int) {
         guard minutes > 0 else { return }
-        // For every 5 minutes of learning, award 10 XP
         let xpReward = (minutes / 5) * 10
         if xpReward > 0 {
-            awardXP(xpReward, type: .wordLearned)  // Using wordLearned as a proxy for generic activity
+            awardXP(xpReward, type: .wordLearned)
         }
     }
 
@@ -342,16 +338,13 @@ class AppSession: ObservableObject {
         let savedDate = Date(timeIntervalSince1970: lastDate)
 
         if !calendar.isDateInToday(savedDate) || lastID.isEmpty {
-            // New day, new word
             if let newWord = dataRepository.words.randomElement() {
                 setWordOfTheDay(newWord)
             }
         } else {
-            // Same day, try to load existing
             if let existingWord = dataRepository.words.first(where: { $0.id == lastID }) {
                 wordOfTheDay = existingWord
             } else {
-                // Fallback if ID not found
                 if let newWord = dataRepository.words.randomElement() {
                     setWordOfTheDay(newWord)
                 }
@@ -373,7 +366,7 @@ class AppSession: ObservableObject {
     }
 
     let maxHearts = 5
-    let heartRegenInterval: TimeInterval = 7200  // 2 hours
+    let heartRegenInterval: TimeInterval = 7200
 
     var nextHeartRegenTime: Date? {
         guard hearts < maxHearts else { return nil }
@@ -383,14 +376,11 @@ class AppSession: ObservableObject {
     }
 
     func loadHearts() {
-        // Load hearts
         if UserDefaults.standard.object(forKey: "userHearts") != nil {
             hearts = UserDefaults.standard.integer(forKey: "userHearts")
         } else {
             hearts = maxHearts
         }
-
-        // Check regeneration
         regenerateHeartsIfNeeded()
     }
 
@@ -401,7 +391,6 @@ class AppSession: ObservableObject {
         let now = Date().timeIntervalSince1970
 
         if lastRegen == 0 {
-            // First time tracking, set timestamp
             UserDefaults.standard.set(now, forKey: "lastHeartRegenTime")
             return
         }
@@ -413,7 +402,6 @@ class AppSession: ObservableObject {
 
             if newHearts > hearts {
                 hearts = newHearts
-                // Reset timer to remainder or now if full
                 if newHearts == maxHearts {
                     UserDefaults.standard.set(0, forKey: "lastHeartRegenTime")
                 } else {
@@ -427,7 +415,6 @@ class AppSession: ObservableObject {
     func deductHeart() {
         if hearts > 0 {
             hearts -= 1
-            // If we just dropped below max, start the timer if not already running effectively
             if hearts == maxHearts - 1 {
                 UserDefaults.standard.set(
                     Date().timeIntervalSince1970, forKey: "lastHeartRegenTime")

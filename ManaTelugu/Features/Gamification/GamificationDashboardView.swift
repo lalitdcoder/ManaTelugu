@@ -1,126 +1,111 @@
 import SwiftUI
 
+// MARK: - Leaderboard Entry Component
+struct LeaderboardCardView: View {
+    let leaderboard: [LeaderboardEntry]
+
+    var body: some View {
+        ManaCard(style: .elevated) {
+            VStack(spacing: ManaTheme.Spacing.md) {
+                HStack {
+                    Text("League Leaderboard")
+                        .font(ManaTheme.Typography.headline)
+                        .foregroundColor(ManaTheme.Colors.label)
+
+                    Spacer()
+
+                    Text("Bronze Division")
+                        .font(ManaTheme.Typography.caption1.weight(.semibold))
+                        .foregroundColor(ManaTheme.Colors.primary)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(ManaTheme.Colors.primary.opacity(0.12))
+                        .clipShape(Capsule())
+                }
+
+                VStack(spacing: 0) {
+                    ForEach(leaderboard.prefix(5)) { entry in
+                        HStack {
+                            Text("\(entry.rank)")
+                                .font(.system(size: 14, weight: .bold))
+                                .foregroundColor(ManaTheme.Colors.secondaryLabel)
+                                .frame(width: 24)
+
+                            Text(entry.name)
+                                .font(ManaTheme.Typography.body)
+                                .fontWeight(entry.isCurrentUser ? .bold : .regular)
+                                .foregroundColor(entry.isCurrentUser ? ManaTheme.Colors.primary : ManaTheme.Colors.label)
+
+                            if entry.isCurrentUser {
+                                Text("(You)")
+                                    .font(ManaTheme.Typography.caption2)
+                                    .foregroundColor(ManaTheme.Colors.secondaryLabel)
+                            }
+
+                            Spacer()
+
+                            Text("\(entry.score) XP")
+                                .font(ManaTheme.Typography.subheadline.weight(.semibold))
+                                .foregroundColor(ManaTheme.Colors.secondaryLabel)
+                        }
+                        .padding(.vertical, 10)
+
+                        if entry.id != leaderboard.prefix(5).last?.id {
+                            Divider()
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Premium Apple Fitness-Style Gamification Dashboard
 struct GamificationDashboardView: View {
     @EnvironmentObject var session: AppSession
     @State private var showingBadgeGallery = false
     @State private var showingXPHistory = false
-    @State private var animateXP = false
-    @State private var animateBadge = false
 
     var gamification: GamificationState {
         session.gamificationService.gamificationState
     }
 
     var body: some View {
-        NavigationStack {
-            ZStack {
-                // Enhanced background gradient for Liquid Glass effect
-                Color.clear
-                    .liquidGlassBackground()
-                    .ignoresSafeArea()
+        ZStack {
+            ManaTheme.Colors.groupedBackground
+                .ignoresSafeArea()
 
-                EnhancedScrollView {
-                    VStack(spacing: ModernDesignSystem.Spacing.lg) {
-                        // Hearts Display
-                        HStack {
-                            Spacer()
-                            HStack(spacing: 4) {
-                                Image(systemName: "heart.fill")
-                                    .foregroundColor(.red)
-                                Text("\(session.hearts)")
-                                    .font(ModernDesignSystem.Typography.headline)
-                                    .foregroundColor(.primary)
-                            }
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 6)
-                            .background(Capsule().fill(Color.red.opacity(0.1)))
-                        }
-                        .padding(.horizontal)
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: ManaTheme.Spacing.lg) {
+                    // Level & XP Hero Progress Ring
+                    levelRingHeroCard
 
-                        // Header with level and XP
-                        LevelProgressCard(gamification: gamification, animateXP: $animateXP)
-                            .padding(.horizontal)
+                    // Streak & Heart Summary
+                    statsSummaryRow
 
-                        // Daily Goal Card
-                        DailyGoalCard(gamification: gamification)
-                            .padding(.horizontal)
+                    // Daily Goal Target Card
+                    dailyGoalCard
 
-                        // Streak Card
-                        StreakCard(
-                            title: "Streak", value: "\(gamification.streakCount)",
-                            icon: "flame.fill", color: ModernDesignSystem.Colors.funYellow
-                        )
-                        .padding(.horizontal)
+                    // Leaderboard Snapshot
+                    LeaderboardCardView(leaderboard: session.leaderboardService.leaderboard)
 
-                        // Leaderboard Card
-                        LeaderboardCard(leaderboard: session.leaderboardService.leaderboard)
-                            .padding(.horizontal)
+                    // Recent Badges Gallery
+                    recentBadgesCard
 
-                        // Recent Badges
-                        RecentBadgesCard(gamification: gamification, animateBadge: $animateBadge)
-                            .padding(.horizontal)
+                    // Sticker Album & Actions
+                    quickActionsSection
 
-                        // Quick Actions
-                        QuickActionsCard(
-                            showingBadgeGallery: $showingBadgeGallery,
-                            showingXPHistory: $showingXPHistory
-                        )
-                        .padding(.horizontal)
-
-                        // Badges Section
-                        VStack(alignment: .leading, spacing: 12) {
-                            Text("Recent Badges")
-                                .font(.headline)
-                                .fontWeight(.semibold)
-
-                            ScrollView(.horizontal, showsIndicators: false) {
-                                HStack(spacing: 12) {
-                                    ForEach(
-                                        Array(gamification.badges.prefix(5).enumerated()),
-                                        id: \.offset
-                                    ) { index, badge in
-                                        VStack {
-                                            Text(badge.emoji)
-                                                .font(.title2)
-                                                .foregroundColor(ModernDesignSystem.Colors.primary)
-                                            Text(badge.name)
-                                                .font(.caption)
-                                                .multilineTextAlignment(.center)
-                                        }
-                                        .frame(width: 80, height: 80)
-                                        .background(Color(.systemGray6))
-                                        .cornerRadius(12)
-                                    }
-                                }
-                                .padding(.horizontal)
-                            }
-                        }
-                        .padding(.horizontal)
-
-                        // Sticker Album Section
-                        NavigationLink(destination: StickerAlbumView()) {
-                            HStack {
-                                Image(systemName: "photo.on.rectangle.angled")
-                                Text("Sticker Album")
-                                Spacer()
-                                Image(systemName: "chevron.right")
-                            }
-                            .padding()
-                            .background(Color(.systemGray6))
-                            .cornerRadius(12)
-                            .foregroundColor(.primary)
-                        }
-
-                        // XP History section removed - using sheet instead
-                    }
-                    .padding(.vertical)
+                    Spacer().frame(height: 60)
                 }
+                .padding(.horizontal, ManaTheme.Spacing.screenMarginLarge)
+                .padding(.top, ManaTheme.Spacing.sm)
             }
-            .navigationTitle("Progress")
-            .navigationBarTitleDisplayMode(.large)
-            .onAppear {
-                session.gamificationService.onActivityCompleted()
-            }
+            .scrollIndicators(.hidden)
+        }
+        .navigationTitle("Progress & XP")
+        .navigationBarTitleDisplayMode(.inline)
+        .onAppear {
+            session.gamificationService.onActivityCompleted()
         }
         .sheet(isPresented: $showingBadgeGallery) {
             BadgeGalleryView(gamification: gamification)
@@ -129,337 +114,262 @@ struct GamificationDashboardView: View {
             XPHistoryView(gamification: gamification)
         }
     }
-}
 
-// MARK: - Level Progress Card
-struct LevelProgressCard: View {
-    @ObservedObject var gamification: GamificationState
-    @Binding var animateXP: Bool
-
-    var body: some View {
-        VStack(spacing: ModernDesignSystem.Spacing.md) {
-            HStack {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Level \(gamification.currentLevel.level)")
-                        .font(ModernDesignSystem.Typography.headline)
-                        .foregroundColor(.primary)
-                    Text(gamification.currentLevel.teluguName)
-                        .font(ModernDesignSystem.Typography.body)
-                        .foregroundColor(.secondary)
-                }
-
-                Spacer()
-
-                VStack(alignment: .trailing, spacing: 4) {
-                    Text("\(gamification.totalXP) XP")
-                        .font(ModernDesignSystem.Typography.headline)
-                        .foregroundColor(.primary)
-                        .scaleEffect(animateXP ? 1.1 : 1.0)
-                        .animation(.spring(response: 0.3, dampingFraction: 0.6), value: animateXP)
-                    Text("Total Experience")
-                        .font(ModernDesignSystem.Typography.caption)
-                        .foregroundColor(.secondary)
-                }
-            }
-
-            // Progress Bar
-            VStack(alignment: .leading, spacing: 8) {
+    // MARK: - Level Ring Hero Card
+    private var levelRingHeroCard: some View {
+        ManaCard(style: .elevated) {
+            VStack(spacing: ManaTheme.Spacing.md) {
                 HStack {
-                    Text("Progress to Next Level")
-                        .font(ModernDesignSystem.Typography.caption)
-                        .foregroundColor(.secondary)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("CURRENT LEVEL \(gamification.currentLevel.level)")
+                            .font(.system(size: 11, weight: .bold))
+                            .tracking(1.0)
+                            .foregroundColor(ManaTheme.Colors.primary)
+
+                        Text(gamification.currentLevel.teluguName)
+                            .font(ManaTheme.Typography.title2)
+                            .foregroundColor(ManaTheme.Colors.label)
+                    }
+
                     Spacer()
-                    if let nextLevel = gamification.nextLevel {
-                        Text("\(nextLevel.teluguName)")
-                            .font(ModernDesignSystem.Typography.caption)
-                            .fontWeight(.medium)
-                            .foregroundColor(.accentColor)
+
+                    VStack(alignment: .trailing, spacing: 2) {
+                        Text("\(gamification.totalXP) XP")
+                            .font(ManaTheme.Typography.roundedTitle)
+                            .foregroundColor(ManaTheme.Colors.primary)
+
+                        Text("Total Experience")
+                            .font(ManaTheme.Typography.caption2)
+                            .foregroundColor(ManaTheme.Colors.secondaryLabel)
                     }
                 }
 
-                ProgressView(value: gamification.progressToNextLevel)
-                    .progressViewStyle(
-                        LinearProgressViewStyle(tint: ModernDesignSystem.Colors.primary)
-                    )
-                    .scaleEffect(x: 1, y: 2, anchor: .center)
-            }
-        }
-        .padding(ModernDesignSystem.Spacing.md)
-        .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(Color(.secondarySystemGroupedBackground))
-                .shadow(color: .black.opacity(0.05), radius: 2, x: 0, y: 1)
-        )
-    }
-}
-
-// MARK: - Daily Goal Card
-struct DailyGoalCard: View {
-    @ObservedObject var gamification: GamificationState
-
-    var body: some View {
-        VStack(spacing: ModernDesignSystem.Spacing.md) {
-            HStack {
-                Image(systemName: "target")
-                    .font(.title2)
-                    .foregroundColor(ModernDesignSystem.Colors.funGreen)
-
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Daily Goal")
-                        .font(ModernDesignSystem.Typography.headline)
-                        .foregroundColor(.primary)
-                    Text("Learn \(gamification.dailyGoal.wordsToLearn) words today")
-                        .font(ModernDesignSystem.Typography.body)
-                        .foregroundColor(.secondary)
-                }
-
-                Spacer()
-
-                VStack(alignment: .trailing, spacing: 4) {
-                    Text("\(gamification.dailyGoal.xpTarget) XP")
-                        .font(ModernDesignSystem.Typography.headline)
-                        .foregroundColor(ModernDesignSystem.Colors.funGreen)
-                    Text("Reward")
-                        .font(ModernDesignSystem.Typography.caption)
-                        .foregroundColor(.secondary)
-                }
-            }
-
-            // Progress indicator
-            HStack {
-                ForEach(0..<gamification.dailyGoal.wordsToLearn, id: \.self) { index in
-                    Circle()
-                        .fill(index < 3 ? ModernDesignSystem.Colors.funGreen : Color(.systemGray4))
-                        .frame(width: 12, height: 12)
-                }
-                Spacer()
-            }
-        }
-        .padding(ModernDesignSystem.Spacing.md)
-        .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(Color(.secondarySystemGroupedBackground))
-                .shadow(color: .black.opacity(0.05), radius: 2, x: 0, y: 1)
-        )
-    }
-}
-
-// StreakCard is defined in EnhancedProgressView.swift
-
-// MARK: - Recent Badges Card
-struct RecentBadgesCard: View {
-    @ObservedObject var gamification: GamificationState
-    @Binding var animateBadge: Bool
-
-    var recentBadges: [GamificationBadge] {
-        gamification.badges.filter { $0.isUnlocked }.suffix(3).reversed()
-    }
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: ModernDesignSystem.Spacing.md) {
-            HStack {
-                Text("Recent Badges")
-                    .font(ModernDesignSystem.Typography.headline)
-                    .foregroundColor(.primary)
-
-                Spacer()
-
-                Button("View All") {
-                    // Show badge gallery
-                }
-                .font(ModernDesignSystem.Typography.caption)
-                .foregroundColor(.accentColor)
-            }
-
-            if recentBadges.isEmpty {
-                HStack {
-                    Image(systemName: "star")
-                        .font(.title2)
-                        .foregroundColor(.secondary)
-                    Text("Complete activities to earn badges!")
-                        .font(ModernDesignSystem.Typography.body)
-                        .foregroundColor(.secondary)
-                }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, ModernDesignSystem.Spacing.md)
-            } else {
-                HStack(spacing: ModernDesignSystem.Spacing.md) {
-                    ForEach(recentBadges) { badge in
-                        BadgeIconView(badge: badge, size: 60)
-                            .scaleEffect(animateBadge ? 1.1 : 1.0)
-                            .animation(
-                                .spring(response: 0.3, dampingFraction: 0.6), value: animateBadge)
-                    }
-                }
-            }
-        }
-        .padding(ModernDesignSystem.Spacing.md)
-        .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(Color(.secondarySystemGroupedBackground))
-                .shadow(color: .black.opacity(0.05), radius: 2, x: 0, y: 1)
-        )
-    }
-}
-
-// MARK: - Quick Actions Card
-struct QuickActionsCard: View {
-    @Binding var showingBadgeGallery: Bool
-    @Binding var showingXPHistory: Bool
-
-    var body: some View {
-        VStack(spacing: ModernDesignSystem.Spacing.md) {
-            Text("Quick Actions")
-                .font(ModernDesignSystem.Typography.headline)
-                .foregroundColor(.primary)
-                .frame(maxWidth: .infinity, alignment: .leading)
-
-            HStack(spacing: ModernDesignSystem.Spacing.md) {
-                Button(action: { showingBadgeGallery = true }) {
-                    VStack(spacing: 8) {
-                        Image(systemName: "star.fill")
-                            .font(.title2)
-                            .foregroundColor(ModernDesignSystem.Colors.funYellow)
-                        Text("Badges")
-                            .font(ModernDesignSystem.Typography.caption)
-                            .foregroundColor(.primary)
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, ModernDesignSystem.Spacing.md)
-                    .background(
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(Color(.tertiarySystemGroupedBackground))
-                    )
-                }
-                .buttonStyle(.plain)
-
-                Button(action: { showingXPHistory = true }) {
-                    VStack(spacing: 8) {
-                        Image(systemName: "chart.line.uptrend.xyaxis")
-                            .font(.title2)
-                            .foregroundColor(ModernDesignSystem.Colors.funGreen)
-                        Text("XP History")
-                            .font(ModernDesignSystem.Typography.caption)
-                            .foregroundColor(.primary)
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, ModernDesignSystem.Spacing.md)
-                    .background(
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(Color(.tertiarySystemGroupedBackground))
-                    )
-                }
-                .buttonStyle(.plain)
-            }
-        }
-        .padding(ModernDesignSystem.Spacing.md)
-        .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(Color(.secondarySystemGroupedBackground))
-                .shadow(color: .black.opacity(0.05), radius: 2, x: 0, y: 1)
-        )
-    }
-}
-
-// MARK: - Leaderboard Card
-struct LeaderboardCard: View {
-    let leaderboard: [LeaderboardEntry]
-
-    var body: some View {
-        VStack(spacing: ModernDesignSystem.Spacing.md) {
-            HStack {
-                Text("Leaderboard")
-                    .font(ModernDesignSystem.Typography.headline)
-                    .foregroundColor(.primary)
-
-                Spacer()
-
-                Text("Bronze League")
-                    .font(ModernDesignSystem.Typography.caption)
-                    .foregroundColor(ModernDesignSystem.Colors.culturalOrange)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(ModernDesignSystem.Colors.culturalOrange.opacity(0.1))
-                    .cornerRadius(8)
-            }
-
-            VStack(spacing: 0) {
-                ForEach(leaderboard.prefix(5)) { entry in
+                // Smooth Progress to Next Level
+                VStack(alignment: .leading, spacing: 6) {
                     HStack {
-                        Text("\(entry.rank)")
-                            .font(.subheadline)
-                            .fontWeight(.bold)
-                            .foregroundColor(.secondary)
-                            .frame(width: 24)
-
-                        Text(entry.name)
-                            .font(.body)
-                            .fontWeight(entry.isCurrentUser ? .bold : .regular)
-                            .foregroundColor(
-                                entry.isCurrentUser ? ModernDesignSystem.Colors.funBlue : .primary)
-
-                        if entry.isCurrentUser {
-                            Text("(You)")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                        }
+                        Text("Progress to Next Level")
+                            .font(ManaTheme.Typography.caption1)
+                            .foregroundColor(ManaTheme.Colors.secondaryLabel)
 
                         Spacer()
 
-                        Text("\(entry.score) XP")
-                            .font(.subheadline)
-                            .fontWeight(.medium)
-                            .foregroundColor(.secondary)
+                        if let nextLevel = gamification.nextLevel {
+                            Text(nextLevel.teluguName)
+                                .font(ManaTheme.Typography.caption1.weight(.semibold))
+                                .foregroundColor(ManaTheme.Colors.primary)
+                        }
                     }
-                    .padding(.vertical, 12)
-                    .background(
-                        entry.isCurrentUser
-                            ? ModernDesignSystem.Colors.funBlue.opacity(0.05) : Color.clear)
 
-                    if entry.id != leaderboard.prefix(5).last?.id {
-                        Divider()
+                    ManaProgressBar(
+                        progress: gamification.progressToNextLevel,
+                        color: ManaTheme.Colors.primary,
+                        height: 10
+                    )
+                }
+            }
+        }
+    }
+
+    // MARK: - Stats Summary Row
+    private var statsSummaryRow: some View {
+        HStack(spacing: ManaTheme.Spacing.sm) {
+            ManaCard(style: .elevated, padding: ManaTheme.Spacing.sm) {
+                VStack(spacing: 4) {
+                    Image(systemName: "flame.fill")
+                        .font(.system(size: 20, weight: .semibold))
+                        .foregroundColor(ManaTheme.Colors.primary)
+
+                    Text("\(gamification.streakCount) Days")
+                        .font(ManaTheme.Typography.headline)
+                        .foregroundColor(ManaTheme.Colors.label)
+
+                    Text("Current Streak")
+                        .font(ManaTheme.Typography.caption2)
+                        .foregroundColor(ManaTheme.Colors.secondaryLabel)
+                }
+                .frame(maxWidth: .infinity)
+            }
+
+            ManaCard(style: .elevated, padding: ManaTheme.Spacing.sm) {
+                VStack(spacing: 4) {
+                    Image(systemName: "heart.fill")
+                        .font(.system(size: 20, weight: .semibold))
+                        .foregroundColor(ManaTheme.Colors.error)
+
+                    Text("\(session.hearts)")
+                        .font(ManaTheme.Typography.headline)
+                        .foregroundColor(ManaTheme.Colors.label)
+
+                    Text("Hearts Left")
+                        .font(ManaTheme.Typography.caption2)
+                        .foregroundColor(ManaTheme.Colors.secondaryLabel)
+                }
+                .frame(maxWidth: .infinity)
+            }
+
+            ManaCard(style: .elevated, padding: ManaTheme.Spacing.sm) {
+                VStack(spacing: 4) {
+                    Image(systemName: "character.book.closed.fill")
+                        .font(.system(size: 20, weight: .semibold))
+                        .foregroundColor(ManaTheme.Colors.peacockBlue)
+
+                    Text("\(session.learnedLetters)")
+                        .font(ManaTheme.Typography.headline)
+                        .foregroundColor(ManaTheme.Colors.label)
+
+                    Text("Letters Mastered")
+                        .font(ManaTheme.Typography.caption2)
+                        .foregroundColor(ManaTheme.Colors.secondaryLabel)
+                }
+                .frame(maxWidth: .infinity)
+            }
+        }
+    }
+
+    // MARK: - Daily Goal Card
+    private var dailyGoalCard: some View {
+        ManaCard(style: .elevated) {
+            VStack(spacing: ManaTheme.Spacing.md) {
+                HStack {
+                    HStack(spacing: 8) {
+                        Image(systemName: "target")
+                            .font(.system(size: 18, weight: .semibold))
+                            .foregroundColor(ManaTheme.Colors.emeraldGreen)
+
+                        Text("Daily Learning Target")
+                            .font(ManaTheme.Typography.headline)
+                            .foregroundColor(ManaTheme.Colors.label)
+                    }
+
+                    Spacer()
+
+                    Text("+\(gamification.dailyGoal.xpTarget) XP Reward")
+                        .font(ManaTheme.Typography.caption1.weight(.semibold))
+                        .foregroundColor(ManaTheme.Colors.emeraldGreen)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(ManaTheme.Colors.emeraldGreen.opacity(0.12))
+                        .clipShape(Capsule())
+                }
+
+                Text("Learn \(gamification.dailyGoal.wordsToLearn) new words or concepts today")
+                    .font(ManaTheme.Typography.subheadline)
+                    .foregroundColor(ManaTheme.Colors.secondaryLabel)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                HStack(spacing: 8) {
+                    ForEach(0..<gamification.dailyGoal.wordsToLearn, id: \.self) { index in
+                        Circle()
+                            .fill(index < 3 ? ManaTheme.Colors.emeraldGreen : ManaTheme.Colors.fill)
+                            .frame(width: 12, height: 12)
+                    }
+                    Spacer()
+                }
+            }
+        }
+    }
+
+    // MARK: - Recent Badges Card
+    private var recentBadgesCard: some View {
+        ManaCard(style: .elevated) {
+            VStack(alignment: .leading, spacing: ManaTheme.Spacing.md) {
+                HStack {
+                    Text("Earned Badges")
+                        .font(ManaTheme.Typography.headline)
+                        .foregroundColor(ManaTheme.Colors.label)
+
+                    Spacer()
+
+                    Button("View Gallery") {
+                        showingBadgeGallery = true
+                    }
+                    .font(ManaTheme.Typography.caption1.weight(.semibold))
+                    .foregroundColor(ManaTheme.Colors.primary)
+                }
+
+                if gamification.badges.filter({ $0.isUnlocked }).isEmpty {
+                    HStack(spacing: 12) {
+                        Image(systemName: "award.fill")
+                            .font(.system(size: 24))
+                            .foregroundColor(ManaTheme.Colors.tertiaryLabel)
+
+                        Text("Complete lessons & games to unlock achievement badges!")
+                            .font(ManaTheme.Typography.subheadline)
+                            .foregroundColor(ManaTheme.Colors.secondaryLabel)
+                    }
+                    .padding(.vertical, 8)
+                } else {
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: ManaTheme.Spacing.md) {
+                            ForEach(gamification.badges.filter { $0.isUnlocked }) { badge in
+                                VStack(spacing: 4) {
+                                    ZStack {
+                                        Circle()
+                                            .fill(ManaTheme.Colors.primary.opacity(0.15))
+                                            .frame(width: 56, height: 56)
+
+                                        Text(badge.emoji)
+                                            .font(.system(size: 24))
+                                    }
+
+                                    Text(badge.name)
+                                        .font(ManaTheme.Typography.caption2)
+                                        .foregroundColor(ManaTheme.Colors.label)
+                                        .lineLimit(1)
+                                }
+                                .frame(width: 72)
+                            }
+                        }
                     }
                 }
             }
         }
-        .padding(ModernDesignSystem.Spacing.md)
-        .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(Color(.secondarySystemGroupedBackground))
-                .shadow(color: .black.opacity(0.05), radius: 2, x: 0, y: 1)
-        )
     }
-}
 
-// MARK: - Badge Icon View
-struct BadgeIconView: View {
-    let badge: GamificationBadge
-    let size: CGFloat
-
-    var body: some View {
-        VStack(spacing: 4) {
-            ZStack {
-                Circle()
-                    .fill(Color(badge.color))
-                    .frame(width: size, height: size)
-                    .shadow(color: Color(badge.color).opacity(0.3), radius: 4, x: 0, y: 2)
-
-                Text(badge.emoji)
-                    .font(.system(size: size * 0.4, weight: .medium))
-                    .foregroundColor(.white)
+    // MARK: - Quick Actions Section
+    private var quickActionsSection: some View {
+        HStack(spacing: ManaTheme.Spacing.md) {
+            NavigationLink(destination: StickerAlbumView()) {
+                HStack {
+                    Image(systemName: "photo.on.rectangle.angled")
+                        .foregroundColor(ManaTheme.Colors.peacockBlue)
+                    Text("Sticker Album")
+                        .font(ManaTheme.Typography.bodyEmphasized)
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundColor(ManaTheme.Colors.tertiaryLabel)
+                }
+                .padding(ManaTheme.Spacing.md)
+                .background(ManaTheme.Colors.secondaryGroupedBackground)
+                .clipShape(RoundedRectangle(cornerRadius: ManaTheme.CornerRadius.card, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: ManaTheme.CornerRadius.card, style: .continuous)
+                        .stroke(ManaTheme.Colors.separator.opacity(0.3), lineWidth: 1)
+                )
             }
+            .buttonStyle(.plain)
 
-            Text(badge.name)
-                .font(ModernDesignSystem.Typography.caption2)
-                .foregroundColor(.primary)
-                .multilineTextAlignment(.center)
-                .lineLimit(2)
+            Button(action: { showingXPHistory = true }) {
+                HStack {
+                    Image(systemName: "chart.line.uptrend.xyaxis")
+                        .foregroundColor(ManaTheme.Colors.emeraldGreen)
+                    Text("XP Log")
+                        .font(ManaTheme.Typography.bodyEmphasized)
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundColor(ManaTheme.Colors.tertiaryLabel)
+                }
+                .padding(ManaTheme.Spacing.md)
+                .background(ManaTheme.Colors.secondaryGroupedBackground)
+                .clipShape(RoundedRectangle(cornerRadius: ManaTheme.CornerRadius.card, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: ManaTheme.CornerRadius.card, style: .continuous)
+                        .stroke(ManaTheme.Colors.separator.opacity(0.3), lineWidth: 1)
+                )
+            }
+            .buttonStyle(.plain)
         }
-        .frame(width: size + 20)
     }
-}
-
-#Preview {
-    GamificationDashboardView()
-        .environmentObject(AppSession())
 }

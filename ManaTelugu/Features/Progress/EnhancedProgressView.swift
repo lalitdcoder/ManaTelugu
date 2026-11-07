@@ -109,7 +109,7 @@ struct EnhancedProgressView: View {
                 statsGrid
                 weeklyProgressChart
                 recentActivity
-                LeaderboardCard(leaderboard: session.leaderboardService.leaderboard)
+                LeaderboardCardView(leaderboard: session.leaderboardService.leaderboard)
             }
             .padding(.horizontal, 20)
             .padding(.bottom, 20)

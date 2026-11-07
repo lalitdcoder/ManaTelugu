@@ -7,6 +7,7 @@ class ProgressTracker: ObservableObject {
     @Published var totalXP: Int = 0
     @Published var lettersMastered: Set<String> = []
     @Published var wordsLearned: Set<String> = []
+    @Published var maxCompletedLevelIndex: Int = -1 // Tracks the highest completed index in the S-Curve Map
     
     private init() {
         loadProgress()
@@ -33,5 +34,13 @@ class ProgressTracker: ObservableObject {
     
     func updateStreak() {
         streakDays += 1
+    }
+    
+    func completeLevel(at index: Int) {
+        if index > maxCompletedLevelIndex {
+            maxCompletedLevelIndex = index
+            awardXP(100) // Reward for completing a level node
+            HapticsManager.shared.trigger(.success)
+        }
     }
 }

@@ -215,9 +215,9 @@ class GamificationService: ObservableObject {
         if let milestone = milestone {
             // Award milestone badge
             if let badgeName = milestone.badgeReward,
-                let badge = gamificationState.badges.first(where: { $0.name == badgeName })
+                gamificationState.badges.contains(where: { $0.name == badgeName })
             {
-                // popupManager.showBadgeEarned(badge) // Removed as per new_code
+                // Badge existence confirmed for this milestone.
             }
 
             // Award milestone XP
