@@ -55,7 +55,7 @@ struct LessonEngineView: View {
                     }
                 }
             } else {
-                ProgressView("Loading adaptive lesson...")
+                ProgressView("Loading lesson...")
                     .scaleEffect(1.2)
                     .tint(.orange)
             }
@@ -171,7 +171,7 @@ struct LessonEngineView: View {
             }
             isAnswerChecked = true
 
-            // Record learner activity attempt & skill score adjustment
+            // Record learner activity attempt & skill score adjustment locally
             LearnerRepository.shared.recordActivityAttempt(activityType: activity.type, isCorrect: isAnswerCorrect, contentId: activity.id)
 
             HapticsManager.shared.notification(isAnswerCorrect ? .success : .warning)
@@ -191,10 +191,6 @@ struct LessonEngineView: View {
             // Complete Lesson
             session.completedLessons += 1
             session.gamificationService.awardXP(xpEarned, type: .quizCompleted, description: "Completed \(module.title)")
-
-            Task {
-                await SupabaseManager.shared.recordLessonAttempt(moduleId: module.id, score: 1.0, xpEarned: xpEarned)
-            }
 
             HapticsManager.shared.notification(.success)
             withAnimation {
@@ -278,362 +274,298 @@ struct LessonActivityRendererView: View {
         VStack(alignment: .leading, spacing: 16) {
             // Activity Type Tag Badge
             HStack(spacing: 6) {
-                Image(systemName: activity.type.iconName)
+                Image(systemName: activityIcon(for: activity.type))
                     .font(.caption.bold())
                 Text(activity.type.displayName.uppercased())
                     .font(.caption2.bold())
             }
             .foregroundColor(.orange)
             .padding(.horizontal, 10)
-            .padding(.vertical, 4)
+            .padding(.vertical, 5)
             .background(Color.orange.opacity(0.12))
             .clipShape(Capsule())
 
-            Text(activity.title)
-                .font(.title2.bold())
+            // Main Instruction / Title
+            Text(activity.instruction ?? activity.title)
+                .font(.title3.bold())
                 .foregroundColor(.primary)
 
-            if let instruction = activity.instruction {
-                Text(instruction)
-                    .font(.subheadline)
+            // Dynamic Step Content
+            switch activity.type {
+            case .introduction, .reading, .writing:
+                introductionCard(activity: activity)
+            case .vocabulary, .matching:
+                vocabularyCard(activity: activity)
+            case .multipleChoice, .listening, .fillBlank, .translation:
+                quizCard(activity: activity)
+            case .sentenceBuilder:
+                sentenceBuilderCard(activity: activity)
+            case .conversation, .speaking:
+                conversationCard(activity: activity)
+            case .review:
+                reviewCard(activity: activity)
+            }
+        }
+    }
+
+    private func activityIcon(for type: EngineActivityType) -> String {
+        switch type {
+        case .introduction: return "lightbulb.fill"
+        case .vocabulary: return "book.fill"
+        case .multipleChoice: return "questionmark.circle.fill"
+        case .matching: return "square.grid.2x2.fill"
+        case .sentenceBuilder: return "text.badge.plus"
+        case .fillBlank: return "pencil.line"
+        case .listening: return "speaker.wave.3.fill"
+        case .reading: return "eye.fill"
+        case .writing: return "pencil.tip"
+        case .speaking: return "mic.fill"
+        case .translation: return "globe"
+        case .conversation: return "bubble.left.and.bubble.right.fill"
+        case .review: return "star.fill"
+        }
+    }
+
+    // MARK: - Activity Sub-Cards
+    private func introductionCard(activity: EngineLessonActivity) -> some View {
+        VStack(spacing: 16) {
+            if let telugu = activity.teluguText {
+                Text(telugu)
+                    .font(.system(size: 48, weight: .bold))
+                    .foregroundColor(.primary)
+            }
+
+            if let trans = activity.transliteration {
+                Text(trans)
+                    .font(.title3)
                     .foregroundColor(.secondary)
             }
 
-            Divider()
-
-            // Route activity type
-            switch activity.type {
-            case .introduction:
-                introductionView
-
-            case .vocabulary:
-                vocabularyView
-
-            case .multipleChoice, .listening, .reading, .translation:
-                multipleChoiceView
-
-            case .matching:
-                matchingView
-
-            case .sentenceBuilder:
-                sentenceBuilderView
-
-            case .fillBlank:
-                fillBlankView
-
-            case .conversation:
-                conversationView
-
-            case .review:
-                reviewView
-
-            case .writing, .speaking:
-                unsupportedActivityBadgeView
-            }
-        }
-        .padding(20)
-        .background(
-            RoundedRectangle(cornerRadius: 20)
-                .fill(Color(uiColor: .secondarySystemGroupedBackground))
-                .shadow(color: .black.opacity(0.04), radius: 8, x: 0, y: 4)
-        )
-    }
-
-    // MARK: - Subviews for Activity Types
-
-    private var introductionView: some View {
-        VStack(spacing: 16) {
-            if let telugu = activity.teluguText {
-                VStack(spacing: 8) {
-                    Text(telugu)
-                        .font(.system(size: 48, weight: .bold))
-                        .foregroundColor(.primary)
-
-                    if let translit = activity.transliteration {
-                        Text(translit)
-                            .font(.title3.weight(.semibold))
-                            .foregroundColor(.orange)
-                    }
-
-                    if let english = activity.englishTranslation {
-                        Text(english)
-                            .font(.title2)
-                            .foregroundColor(.secondary)
-                    }
-                }
-                .padding()
-                .frame(maxWidth: .infinity)
-                .background(RoundedRectangle(cornerRadius: 16).fill(Color.orange.opacity(0.08)))
-
-                Button {
-                    session.audioService.play(name: "greeting.mp3", rate: 1.0)
-                    HapticsManager.shared.impact(.medium)
-                } label: {
-                    HStack(spacing: 8) {
-                        Image(systemName: "speaker.wave.2.fill")
-                        Text("Listen Pronunciation")
-                    }
+            if let english = activity.englishTranslation {
+                Text(english)
                     .font(.headline)
-                    .padding(.horizontal, 20)
-                    .padding(.vertical, 10)
-                    .background(Color.orange.opacity(0.15))
                     .foregroundColor(.orange)
-                    .cornerRadius(12)
-                }
             }
 
-            Text(activity.prompt)
-                .font(.body)
-                .foregroundColor(.primary)
-                .lineSpacing(4)
-        }
-    }
-
-    private var vocabularyView: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text(activity.prompt)
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-
-            if let items = activity.options {
-                VStack(spacing: 10) {
-                    ForEach(items, id: \.self) { item in
-                        HStack {
-                            Text(item)
-                                .font(.body.weight(.semibold))
-                                .foregroundColor(.primary)
-                            Spacer()
-                            Button {
-                                let parts = item.components(separatedBy: " • ")
-                                if let teluguWord = parts.first {
-                                    session.audioService.play(name: teluguWord, rate: 1.0)
-                                }
-                                HapticsManager.shared.impact(.light)
-                            } label: {
-                                Image(systemName: "speaker.wave.2.fill")
-                                    .foregroundColor(.orange)
-                            }
-                        }
-                        .padding()
-                        .background(RoundedRectangle(cornerRadius: 12).fill(Color(uiColor: .systemGroupedBackground)))
-                    }
-                }
+            if !activity.prompt.isEmpty {
+                Text(activity.prompt)
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
+                    .padding(.top, 4)
             }
         }
+        .frame(maxWidth: .infinity)
+        .padding(24)
+        .background(Color(uiColor: .secondarySystemGroupedBackground))
+        .cornerRadius(18)
     }
 
-    private var multipleChoiceView: some View {
+    private func vocabularyCard(activity: EngineLessonActivity) -> some View {
         VStack(alignment: .leading, spacing: 14) {
+            if !activity.prompt.isEmpty {
+                Text(activity.prompt)
+                    .font(.body)
+                    .foregroundColor(.secondary)
+            }
+
             if let telugu = activity.teluguText {
                 HStack {
                     VStack(alignment: .leading, spacing: 4) {
                         Text(telugu)
-                            .font(.system(size: 32, weight: .bold))
+                            .font(.title.bold())
                             .foregroundColor(.primary)
-                        if let translit = activity.transliteration {
-                            Text(translit)
-                                .font(.headline)
-                                .foregroundColor(.orange)
+
+                        if let trans = activity.transliteration {
+                            Text(trans)
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
                         }
                     }
+
                     Spacer()
-                    Button {
-                        session.audioService.play(name: telugu, rate: 1.0)
-                        HapticsManager.shared.impact(.medium)
-                    } label: {
-                        Image(systemName: "speaker.wave.2.fill")
-                            .font(.title2)
+
+                    if let english = activity.englishTranslation {
+                        Text(english)
+                            .font(.headline)
                             .foregroundColor(.orange)
                     }
                 }
                 .padding()
-                .background(RoundedRectangle(cornerRadius: 14).fill(Color.orange.opacity(0.08)))
+                .background(Color(uiColor: .tertiarySystemGroupedBackground))
+                .cornerRadius(12)
             }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(20)
+        .background(Color(uiColor: .secondarySystemGroupedBackground))
+        .cornerRadius(18)
+    }
 
-            Text(activity.prompt)
-                .font(.body.weight(.medium))
-                .foregroundColor(.primary)
+    private func quizCard(activity: EngineLessonActivity) -> some View {
+        VStack(alignment: .leading, spacing: 16) {
+            if !activity.prompt.isEmpty {
+                Text(activity.prompt)
+                    .font(.headline)
+                    .foregroundColor(.primary)
+            }
 
             if let options = activity.options {
                 VStack(spacing: 10) {
                     ForEach(options, id: \.self) { option in
-                        let isSelected = selectedOption == option
                         Button {
                             guard !isAnswerChecked else { return }
                             selectedOption = option
-                            HapticsManager.shared.selection()
+                            HapticsManager.shared.impact(.light)
                         } label: {
                             HStack {
                                 Text(option)
-                                    .font(.body.weight(.semibold))
-                                    .foregroundColor(isSelected ? .orange : .primary)
+                                    .font(.body.weight(.medium))
+                                    .foregroundColor(selectedOption == option ? .white : .primary)
                                 Spacer()
-                                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
-                                    .foregroundColor(isSelected ? .orange : .secondary)
+                                if selectedOption == option {
+                                    Image(systemName: "checkmark.circle.fill")
+                                        .foregroundColor(.white)
+                                }
                             }
                             .padding()
-                            .background(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .fill(isSelected ? Color.orange.opacity(0.12) : Color(uiColor: .systemGroupedBackground))
-                            )
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .stroke(isSelected ? Color.orange : Color.clear, lineWidth: 2)
-                            )
+                            .background(selectedOption == option ? Color.orange : Color(uiColor: .tertiarySystemGroupedBackground))
+                            .cornerRadius(12)
                         }
                         .buttonStyle(.plain)
+                        .disabled(isAnswerChecked)
                     }
                 }
             }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(20)
+        .background(Color(uiColor: .secondarySystemGroupedBackground))
+        .cornerRadius(18)
     }
 
-    private var matchingView: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text(activity.prompt)
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-
-            if let options = activity.options {
-                LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 10) {
-                    ForEach(options, id: \.self) { item in
-                        let isSelected = selectedOption == item
-                        Button {
-                            selectedOption = item
-                            HapticsManager.shared.selection()
-                        } label: {
-                            Text(item)
-                                .font(.body.weight(.semibold))
-                                .foregroundColor(isSelected ? .white : .primary)
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 14)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 12)
-                                        .fill(isSelected ? Color.orange : Color(uiColor: .systemGroupedBackground))
-                                )
-                        }
-                        .buttonStyle(.plain)
-                    }
-                }
+    private func sentenceBuilderCard(activity: EngineLessonActivity) -> some View {
+        VStack(alignment: .leading, spacing: 16) {
+            if !activity.prompt.isEmpty {
+                Text(activity.prompt)
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
             }
-        }
-    }
 
-    private var sentenceBuilderView: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            Text(activity.prompt)
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-
-            // Selected tokens container
-            HStack {
+            // Word drop/assembled canvas
+            HStack(spacing: 8) {
                 if builtSentence.isEmpty {
-                    Text("Tap words below to construct sentence...")
+                    Text("Tap words below in order...")
                         .font(.caption)
                         .foregroundColor(.secondary)
+                        .padding(.vertical, 8)
                 } else {
-                    ForEach(builtSentence, id: \.self) { word in
-                        Text(word)
-                            .font(.headline)
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 6)
-                            .background(Color.orange)
-                            .foregroundColor(.white)
-                            .cornerRadius(8)
-                            .onTapGesture {
-                                builtSentence.removeAll { $0 == word }
-                            }
+                    ForEach(Array(builtSentence.enumerated()), id: \.offset) { index, word in
+                        Button {
+                            guard !isAnswerChecked else { return }
+                            builtSentence.remove(at: index)
+                        } label: {
+                            Text(word)
+                                .font(.body.bold())
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 6)
+                                .background(Color.orange)
+                                .clipShape(Capsule())
+                        }
                     }
                 }
                 Spacer()
             }
             .padding()
-            .frame(minHeight: 60)
-            .background(RoundedRectangle(cornerRadius: 12).fill(Color(uiColor: .systemGroupedBackground)))
+            .frame(minHeight: 54)
+            .background(Color(uiColor: .tertiarySystemGroupedBackground))
+            .cornerRadius(12)
 
-            // Word choices bank
-            if let words = activity.options {
-                HStack(spacing: 8) {
-                    ForEach(words, id: \.self) { word in
-                        let isUsed = builtSentence.contains(word)
+            // Available word chips
+            if let options = activity.options {
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: 100), spacing: 8)], spacing: 8) {
+                    ForEach(options, id: \.self) { option in
+                        let isUsed = builtSentence.contains(option)
                         Button {
+                            guard !isAnswerChecked else { return }
                             if !isUsed {
-                                builtSentence.append(word)
-                                HapticsManager.shared.selection()
+                                builtSentence.append(option)
+                                HapticsManager.shared.impact(.light)
                             }
                         } label: {
-                            Text(word)
-                                .font(.headline)
-                                .padding(.horizontal, 14)
-                                .padding(.vertical, 10)
-                                .background(isUsed ? Color.gray.opacity(0.2) : Color.orange.opacity(0.12))
-                                .foregroundColor(isUsed ? .gray : .orange)
+                            Text(option)
+                                .font(.body)
+                                .foregroundColor(isUsed ? .secondary : .primary)
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 8)
+                                .frame(maxWidth: .infinity)
+                                .background(Color(uiColor: .tertiarySystemGroupedBackground).opacity(isUsed ? 0.4 : 1.0))
                                 .cornerRadius(10)
                         }
-                        .disabled(isUsed)
+                        .disabled(isUsed || isAnswerChecked)
                     }
                 }
             }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(20)
+        .background(Color(uiColor: .secondarySystemGroupedBackground))
+        .cornerRadius(18)
     }
 
-    private var fillBlankView: some View {
-        multipleChoiceView
-    }
-
-    private var conversationView: some View {
+    private func conversationCard(activity: EngineLessonActivity) -> some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text(activity.prompt)
-                .font(.body)
-                .foregroundColor(.primary)
+            if !activity.prompt.isEmpty {
+                Text(activity.prompt)
+                    .font(.body)
+                    .foregroundColor(.secondary)
+            }
 
             if let telugu = activity.teluguText {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text(telugu)
-                        .font(.title3.bold())
-                        .foregroundColor(.primary)
+                Text(telugu)
+                    .font(.title2.bold())
+                    .foregroundColor(.primary)
+                    .padding()
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(Color.orange.opacity(0.08))
+                    .cornerRadius(12)
+            }
 
-                    if let english = activity.englishTranslation {
-                        Text(english)
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                    }
-                }
-                .padding()
-                .background(RoundedRectangle(cornerRadius: 14).fill(Color.orange.opacity(0.08)))
+            if let english = activity.englishTranslation {
+                Text(english)
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                    .italic()
             }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(20)
+        .background(Color(uiColor: .secondarySystemGroupedBackground))
+        .cornerRadius(18)
     }
 
-    private var reviewView: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Image(systemName: "checkmark.seal.fill")
-                .font(.system(size: 44))
+    private func reviewCard(activity: EngineLessonActivity) -> some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Text("Key Takeaways")
+                .font(.headline)
                 .foregroundColor(.orange)
 
-            Text(activity.prompt)
-                .font(.body)
-                .foregroundColor(.primary)
-        }
-    }
-
-    private var unsupportedActivityBadgeView: some View {
-        VStack(spacing: 12) {
-            HStack {
-                Image(systemName: "info.circle.fill")
-                    .foregroundColor(.blue)
-                Text("Activity Type '\(activity.type.rawValue)' Guided Mode")
-                    .font(.caption.bold())
-                    .foregroundColor(.blue)
+            if !activity.prompt.isEmpty {
+                Text(activity.prompt)
+                    .font(.body)
+                    .foregroundColor(.primary)
             }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 6)
-            .background(Color.blue.opacity(0.1))
-            .cornerRadius(8)
 
-            Text(activity.prompt)
-                .font(.body)
-                .foregroundColor(.primary)
+            if let explanation = activity.explanation {
+                Text(explanation)
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+            }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(20)
+        .background(Color(uiColor: .secondarySystemGroupedBackground))
+        .cornerRadius(18)
     }
 }

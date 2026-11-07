@@ -13,14 +13,10 @@ struct LearnView: View {
                     // Header Card: Curriculum Journey Overview
                     overviewHeaderCard
 
-                    if curriculumRepo.isLoading {
-                        loadingStateCard
-                    } else if let errorMsg = curriculumRepo.errorMessage {
-                        errorStateCard(message: errorMsg)
-                    } else if curriculumRepo.modules.isEmpty {
+                    if curriculumRepo.modules.isEmpty {
                         emptyStateCard
                     } else {
-                        // Level Selector Picker (if stages returned, or default levels 1-4)
+                        // Level Selector Picker (Levels 1-4)
                         levelPickerSection
 
                         // Level Modules List
@@ -43,7 +39,7 @@ struct LearnView: View {
                 }
             }
             .refreshable {
-                await curriculumRepo.fetchCurriculum()
+                curriculumRepo.loadOfflineCurriculum()
             }
             .fullScreenCover(item: $selectedModule) { module in
                 LessonEngineView(module: module)
@@ -57,11 +53,11 @@ struct LearnView: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Supabase Course")
+                    Text("Telugu Journey")
                         .font(.caption.bold())
                         .foregroundStyle(.secondary)
                         .textCase(.uppercase)
-                    Text("\(curriculumRepo.modules.count) Published Modules")
+                    Text("\(curriculumRepo.modules.count) Course Modules")
                         .font(.title3.bold())
                         .foregroundColor(.primary)
                 }
@@ -98,79 +94,26 @@ struct LearnView: View {
         )
     }
 
-    private var loadingStateCard: some View {
-        VStack(spacing: 16) {
-            ProgressView()
-                .scaleEffect(1.3)
-                .tint(.orange)
-            Text("Connecting to Supabase...")
-                .font(.headline)
-                .foregroundColor(.secondary)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 40)
-        .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(Color(uiColor: .secondarySystemGroupedBackground))
-        )
-    }
-
-    private func errorStateCard(message: String) -> some View {
-        VStack(spacing: 16) {
-            Image(systemName: "wifi.exclamationmark")
-                .font(.system(size: 44))
-                .foregroundColor(.red)
-
-            Text("Supabase Connection Error")
-                .font(.headline)
-                .foregroundColor(.primary)
-
-            Text(message)
-                .font(.caption)
-                .foregroundColor(.secondary)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal)
-
-            Button {
-                Task {
-                    await curriculumRepo.fetchCurriculum()
-                }
-            } label: {
-                HStack {
-                    Image(systemName: "arrow.clockwise")
-                    Text("Retry Connection")
-                }
-                .font(.subheadline.bold())
-                .foregroundColor(.white)
-                .padding(.horizontal, 20)
-                .padding(.vertical, 10)
-                .background(Color.orange)
-                .cornerRadius(10)
-            }
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 30)
-        .padding(.horizontal, 16)
-        .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(Color(uiColor: .secondarySystemGroupedBackground))
-        )
-    }
-
     private var emptyStateCard: some View {
         VStack(spacing: 12) {
-            Image(systemName: "tray.fill")
+            Image(systemName: "book.closed")
                 .font(.system(size: 40))
                 .foregroundColor(.secondary)
 
-            Text("No Published Modules Found")
+            Text("No Modules Loaded")
                 .font(.headline)
                 .foregroundColor(.primary)
 
-            Text("Publish modules in the Supabase database to see them here.")
+            Text("Tap reload to refresh the offline curriculum.")
                 .font(.caption)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
+
+            Button("Reload Curriculum") {
+                curriculumRepo.loadOfflineCurriculum()
+            }
+            .font(.subheadline.bold())
+            .padding(.top, 4)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 30)
